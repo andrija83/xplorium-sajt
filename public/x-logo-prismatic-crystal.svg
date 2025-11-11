@@ -1,0 +1,129 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Glow filters -->
+    <filter id="crystal-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="specular-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+
+    <!-- Facet gradients -->
+    <linearGradient id="facet-cyan-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0891b2;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="facet-cyan-2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#67e8f9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="facet-purple-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="facet-purple-2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#c084fc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="facet-pink-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ec4899;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#db2777;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="facet-pink-2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f9a8d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="facet-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+
+    <radialGradient id="center-glow" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#a855f7;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#6b21a8;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Outer glow -->
+  <g opacity="0.3">
+    <path d="M 40 35 L 100 95 L 160 35 L 165 40 L 105 100 L 165 160 L 160 165 L 100 105 L 40 165 L 35 160 L 95 100 L 35 40 Z"
+          fill="url(#center-glow)" filter="url(#crystal-glow)"/>
+  </g>
+
+  <!-- Left diagonal bar - Cyan to Purple -->
+  <g>
+    <!-- Base facets -->
+    <polygon points="45,35 55,35 105,85 105,95 95,95 45,45" fill="url(#facet-cyan-1)" opacity="0.9"/>
+    <polygon points="55,35 65,40 110,85 105,85 55,35" fill="url(#facet-cyan-2)" opacity="0.95"/>
+    <polygon points="45,45 95,95 95,105 45,55" fill="#0e7490" opacity="0.8"/>
+
+    <polygon points="95,95 105,95 155,145 155,155 145,155 95,105" fill="url(#facet-purple-1)" opacity="0.9"/>
+    <polygon points="105,95 115,100 160,145 155,145 105,95" fill="url(#facet-purple-2)" opacity="0.95"/>
+    <polygon points="95,105 145,155 145,165 95,115" fill="#6b21a8" opacity="0.8"/>
+
+    <!-- Center connection -->
+    <polygon points="95,95 105,95 105,105 95,105" fill="url(#facet-gold)" opacity="1" filter="url(#specular-glow)"/>
+  </g>
+
+  <!-- Right diagonal bar - Pink to Purple -->
+  <g>
+    <!-- Base facets -->
+    <polygon points="155,35 145,35 95,85 95,95 105,95 155,45" fill="url(#facet-pink-1)" opacity="0.9"/>
+    <polygon points="145,35 135,40 90,85 95,85 145,35" fill="url(#facet-pink-2)" opacity="0.95"/>
+    <polygon points="155,45 105,95 105,105 155,55" fill="#9f1239" opacity="0.8"/>
+
+    <polygon points="105,95 95,95 45,145 45,155 55,155 105,105" fill="url(#facet-purple-1)" opacity="0.9"/>
+    <polygon points="95,95 85,100 40,145 45,145 95,95" fill="url(#facet-purple-2)" opacity="0.95"/>
+    <polygon points="105,105 55,155 55,165 105,115" fill="#6b21a8" opacity="0.8"/>
+  </g>
+
+  <!-- Highlights and depth facets -->
+  <g opacity="0.6">
+    <!-- Left bar highlights -->
+    <polygon points="50,35 52,35 100,83 100,85 98,85 50,37" fill="#ffffff" opacity="0.4"/>
+    <polygon points="100,100 102,100 150,148 150,150 148,150 100,102" fill="#ffffff" opacity="0.4"/>
+
+    <!-- Right bar highlights -->
+    <polygon points="150,35 148,35 100,83 100,85 102,85 150,37" fill="#ffffff" opacity="0.4"/>
+    <polygon points="100,100 98,100 50,148 50,150 52,150 100,102" fill="#ffffff" opacity="0.4"/>
+  </g>
+
+  <!-- Inner facets for depth -->
+  <g opacity="0.5">
+    <polygon points="60,45 100,85 95,90 55,50" fill="url(#facet-cyan-1)"/>
+    <polygon points="140,45 100,85 105,90 145,50" fill="url(#facet-pink-1)"/>
+    <polygon points="60,155 100,115 95,110 55,150" fill="url(#facet-purple-1)"/>
+    <polygon points="140,155 100,115 105,110 145,150" fill="url(#facet-purple-1)"/>
+  </g>
+
+  <!-- Center core glow -->
+  <circle cx="100" cy="100" r="12" fill="url(#center-glow)" filter="url(#specular-glow)"/>
+
+  <!-- Specular highlights -->
+  <g opacity="0.8">
+    <polygon points="48,38 52,38 98,84 98,88 94,88 48,42" fill="#ffffff" opacity="0.6" filter="url(#specular-glow)"/>
+    <polygon points="152,38 148,38 102,84 102,88 106,88 152,42" fill="#ffffff" opacity="0.6" filter="url(#specular-glow)"/>
+    <polygon points="98,102 102,102 148,148 148,152 144,152 98,106" fill="#ffffff" opacity="0.6" filter="url(#specular-glow)"/>
+    <polygon points="102,102 98,102 52,148 52,152 56,152 102,106" fill="#ffffff" opacity="0.6" filter="url(#specular-glow)"/>
+  </g>
+
+  <!-- Edge highlights -->
+  <g opacity="0.9">
+    <path d="M 45,35 L 100,90" stroke="#ffffff" stroke-width="1.5" fill="none" opacity="0.7"/>
+    <path d="M 155,35 L 100,90" stroke="#ffffff" stroke-width="1.5" fill="none" opacity="0.7"/>
+    <path d="M 100,110 L 45,165" stroke="#ffffff" stroke-width="1.5" fill="none" opacity="0.7"/>
+    <path d="M 100,110 L 155,165" stroke="#ffffff" stroke-width="1.5" fill="none" opacity="0.7"/>
+  </g>
+</svg>

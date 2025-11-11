@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xplorium Logo Comparison</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000000;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 20px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+    }
+
+    .header h1 {
+      font-size: 48px;
+      font-weight: 300;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #22d3ee, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      font-size: 18px;
+      color: rgba(255,255,255,0.6);
+      font-weight: 300;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 40px;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .logo-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 30px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.1), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .logo-card:hover {
+      border-color: rgba(255,255,255,0.3);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .logo-card:hover::before {
+      opacity: 1;
+    }
+
+    .logo-title {
+      font-size: 24px;
+      font-weight: 300;
+      margin-bottom: 8px;
+      text-align: center;
+      font-family: 'Great Vibes', cursive;
+    }
+
+    .logo-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .logo-container {
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, rgba(0,0,0,0.5), black);
+      border-radius: 16px;
+      margin-bottom: 25px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Starfield background for containers */
+    .logo-container::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image:
+        radial-gradient(2px 2px at 20% 30%, white, transparent),
+        radial-gradient(1px 1px at 60% 70%, white, transparent),
+        radial-gradient(1px 1px at 50% 50%, white, transparent),
+        radial-gradient(1px 1px at 80% 10%, white, transparent),
+        radial-gradient(1px 1px at 90% 60%, white, transparent),
+        radial-gradient(2px 2px at 33% 80%, white, transparent),
+        radial-gradient(1px 1px at 15% 90%, white, transparent);
+      background-size: 200% 200%;
+      animation: twinkle 4s ease-in-out infinite;
+      opacity: 0.3;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.5; }
+    }
+
+    .logo-container img {
+      width: 70%;
+      height: 70%;
+      object-fit: contain;
+      animation: floatLogo 3s ease-in-out infinite;
+      transition: transform 0.3s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-card:hover .logo-container img {
+      transform: scale(1.1) rotate(5deg);
+      animation: none;
+    }
+
+    @keyframes floatLogo {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .logo-features {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 20px;
+    }
+
+    .logo-features li {
+      padding: 8px 0;
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-features li::before {
+      content: '✦';
+      margin-right: 10px;
+      color: #a855f7;
+    }
+
+    .logo-features li:last-child {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 15px;
+    }
+
+    .badge-recommended {
+      background: linear-gradient(135deg, #22d3ee, #a855f7);
+      color: white;
+    }
+
+    .badge-unique {
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      color: white;
+    }
+
+    .badge-classic {
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      color: white;
+    }
+
+    .size-preview {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: flex-end;
+      padding: 20px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    .size-preview img {
+      transition: transform 0.2s ease;
+    }
+
+    .size-preview img:hover {
+      transform: scale(1.2);
+    }
+
+    .instructions {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 30px;
+      background: rgba(34, 211, 238, 0.05);
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .instructions h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      font-family: 'Great Vibes', cursive;
+      color: #22d3ee;
+    }
+
+    .instructions p {
+      color: rgba(255,255,255,0.7);
+      line-height: 1.8;
+      margin-bottom: 10px;
+    }
+
+    .instructions code {
+      background: rgba(0,0,0,0.5);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: #22d3ee;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+        padding: 20px;
+      }
+
+      .header h1 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Xplorium Logo Concepts</h1>
+    <p>Compare the three recommended designs</p>
+  </div>
+
+  <div class="comparison-grid">
+    <!-- Concept 1: Neon Tube X -->
+    <div class="logo-card">
+      <h2 class="logo-title" style="color: #22d3ee; text-shadow: 0 0 20px rgba(34, 211, 238, 0.6);">Neon Tube X</h2>
+      <p class="logo-subtitle">Modern & Bold</p>
+
+      <div class="logo-container">
+        <img src="/x-logo-neon-tube.svg" alt="Neon Tube X Logo">
+      </div>
+
+      <ul class="logo-features">
+        <li>Glowing neon tube aesthetic</li>
+        <li>Perfect match for site theme</li>
+        <li>Cyan → Purple gradient tubes</li>
+        <li>Bright center flare point</li>
+        <li>Multi-layer glow effects</li>
+      </ul>
+
+      <div class="badge badge-recommended">✨ Best Overall</div>
+
+      <div class="size-preview">
+        <img src="/x-logo-neon-tube.svg" width="48" height="48" alt="48px">
+        <img src="/x-logo-neon-tube.svg" width="64" height="64" alt="64px">
+        <img src="/x-logo-neon-tube.svg" width="96" height="96" alt="96px">
+      </div>
+    </div>
+
+    <!-- Concept 2: Cosmic Nebula X -->
+    <div class="logo-card">
+      <h2 class="logo-title" style="color: #a855f7; text-shadow: 0 0 20px rgba(168, 85, 247, 0.6);">Cosmic Nebula X</h2>
+      <p class="logo-subtitle">Mysterious & Ethereal</p>
+
+      <div class="logo-container">
+        <img src="/x-logo-cosmic-nebula.svg" alt="Cosmic Nebula X Logo">
+      </div>
+
+      <ul class="logo-features">
+        <li>Swirling space nebula clouds</li>
+        <li>Twinkling star animations</li>
+        <li>Deep cosmic color palette</li>
+        <li>Matches "Extraordinary" theme</li>
+        <li>Most unique and memorable</li>
+      </ul>
+
+      <div class="badge badge-unique">🌌 Most Unique</div>
+
+      <div class="size-preview">
+        <img src="/x-logo-cosmic-nebula.svg" width="48" height="48" alt="48px">
+        <img src="/x-logo-cosmic-nebula.svg" width="64" height="64" alt="64px">
+        <img src="/x-logo-cosmic-nebula.svg" width="96" height="96" alt="96px">
+      </div>
+    </div>
+
+    <!-- Concept 3: Prismatic Crystal X -->
+    <div class="logo-card">
+      <h2 class="logo-title" style="color: #ec4899; text-shadow: 0 0 20px rgba(236, 72, 153, 0.6);">Prismatic Crystal X</h2>
+      <p class="logo-subtitle">Refined & Premium</p>
+
+      <div class="logo-container">
+        <img src="/x-logo-prismatic-crystal.svg" alt="Prismatic Crystal X Logo">
+      </div>
+
+      <ul class="logo-features">
+        <li>Sophisticated faceted design</li>
+        <li>Evolution of current logo</li>
+        <li>Jewelry-like quality</li>
+        <li>Sharp highlights & edges</li>
+        <li>Professional yet playful</li>
+      </ul>
+
+      <div class="badge badge-classic">💎 Refined Classic</div>
+
+      <div class="size-preview">
+        <img src="/x-logo-prismatic-crystal.svg" width="48" height="48" alt="48px">
+        <img src="/x-logo-prismatic-crystal.svg" width="64" height="64" alt="64px">
+        <img src="/x-logo-prismatic-crystal.svg" width="96" height="96" alt="96px">
+      </div>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h2>How to Use These Logos</h2>
+    <p>To replace the logo in your landing page, update the image paths in <code>app/page.tsx</code>:</p>
+    <p style="margin-top: 15px;">
+      <strong>Line 719 & 752:</strong> Replace <code>/crystal-x-logo.jpg</code> with one of:
+    </p>
+    <p style="margin-top: 10px; font-family: monospace; font-size: 13px; color: #22d3ee;">
+      /x-logo-neon-tube.svg<br>
+      /x-logo-cosmic-nebula.svg<br>
+      /x-logo-prismatic-crystal.svg
+    </p>
+    <p style="margin-top: 20px; color: rgba(255,255,255,0.5); font-size: 13px;">
+      💡 Tip: SVG logos scale perfectly and work great with the existing animations!
+    </p>
+  </div>
+</body>
+</html>
