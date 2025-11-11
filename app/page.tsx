@@ -9,7 +9,7 @@ import { ArrowLeft, ChevronDown } from "lucide-react"
 /**
  * ASDASDASDASDASD
  * XPLORIUM LANDING PAGE
- *
+ * asdasdasdasdas
  * Main Sections:
  * 1. Initial X Logo Click Animation
  * 2. Main Navigation Menu (Cafe, Sensory, Igraonica) with Neon Effects
