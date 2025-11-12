@@ -238,6 +238,7 @@ const PlanetOrb = ({
   position,
   delay = 0,
   onClick,
+  image,
 }: {
   label: string
   color: string
@@ -245,6 +246,7 @@ const PlanetOrb = ({
   position: React.CSSProperties
   delay?: number
   onClick: () => void
+  image?: string
 }) => {
   const sizeClasses = {
     sm: "w-24 h-24 sm:w-28 sm:h-28",
@@ -289,78 +291,106 @@ const PlanetOrb = ({
           ease: "easeInOut",
         }}
       >
-        {/* Outer massive glow */}
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            boxShadow: `0 0 40px 15px ${colors.glow}, 0 0 80px 30px ${colors.glow}, 0 0 120px 45px ${colors.dark}`,
-            filter: "blur(8px)",
-          }}
-        />
-
-        {/* Outer ring 1 */}
-        <div
-          className="absolute inset-0 rounded-full border-[3px]"
-          style={{
-            borderColor: colors.main,
-            boxShadow: `0 0 20px ${colors.glow}, inset 0 0 20px ${colors.dark}`,
-          }}
-        />
-
-        {/* Outer ring 2 */}
-        <div
-          className="absolute inset-[6px] rounded-full border-[2px]"
-          style={{
-            borderColor: colors.main,
-            boxShadow: `0 0 15px ${colors.glow}, inset 0 0 15px ${colors.dark}`,
-          }}
-        />
-
-        {/* Inner ring */}
-        <div
-          className="absolute inset-[12px] rounded-full border-[2px]"
-          style={{
-            borderColor: colors.main,
-            boxShadow: `0 0 10px ${colors.glow}`,
-          }}
-        />
-
-        {/* Glass center with radial gradient */}
-        <div
-          className="absolute inset-[18px] rounded-full overflow-hidden"
-          style={{
-            background: `radial-gradient(circle at 40% 40%, ${colors.dark}, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.8))`,
-            backdropFilter: "blur(2px)",
-          }}
-        >
-          {/* Subtle light reflection */}
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6) 0%, transparent 50%)`,
-            }}
-          />
-
-          {/* Label text */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span
-              className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Great_Vibes'] text-center px-2"
+        {image ? (
+          // Simple image display without glow effects
+          <div className="absolute inset-0 rounded-full overflow-hidden">
+            <div
+              className="absolute inset-0"
               style={{
-                textShadow: `0 0 10px ${colors.glow}, 0 0 20px ${colors.glow}, 0 2px 8px rgba(0,0,0,0.8)`,
+                backgroundImage: `url(${image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+            {/* Label text */}
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <span
+                className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Great_Vibes'] text-center px-2"
+                style={{
+                  textShadow: `0 2px 8px rgba(0,0,0,0.8)`,
+                }}
+              >
+                {label}
+              </span>
+            </div>
+          </div>
+        ) : (
+          // Neon planet with rings and glows
+          <>
+            {/* Outer massive glow */}
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                boxShadow: `0 0 40px 15px ${colors.glow}, 0 0 80px 30px ${colors.glow}, 0 0 120px 45px ${colors.dark}`,
+                filter: "blur(8px)",
+              }}
+            />
+
+            {/* Outer ring 1 */}
+            <div
+              className="absolute inset-0 rounded-full border-[3px]"
+              style={{
+                borderColor: colors.main,
+                boxShadow: `0 0 20px ${colors.glow}, inset 0 0 20px ${colors.dark}`,
+              }}
+            />
+
+            {/* Outer ring 2 */}
+            <div
+              className="absolute inset-[6px] rounded-full border-[2px]"
+              style={{
+                borderColor: colors.main,
+                boxShadow: `0 0 15px ${colors.glow}, inset 0 0 15px ${colors.dark}`,
+              }}
+            />
+
+            {/* Inner ring */}
+            <div
+              className="absolute inset-[12px] rounded-full border-[2px]"
+              style={{
+                borderColor: colors.main,
+                boxShadow: `0 0 10px ${colors.glow}`,
+              }}
+            />
+
+            {/* Glass center with radial gradient */}
+            <div
+              className="absolute inset-[18px] rounded-full overflow-hidden"
+              style={{
+                background: `radial-gradient(circle at 40% 40%, ${colors.dark}, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.8))`,
+                backdropFilter: "blur(2px)",
               }}
             >
-              {label}
-            </span>
-          </div>
-        </div>
+              {/* Subtle light reflection */}
+              <div
+                className="absolute inset-0 opacity-20"
+                style={{
+                  background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6) 0%, transparent 50%)`,
+                }}
+              />
 
-        {/* Hover glow enhancement */}
-        <motion.div
-          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{
-            boxShadow: `0 0 60px 20px ${colors.glow}`,
-          }}
-        />
+              {/* Label text */}
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <span
+                  className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Great_Vibes'] text-center px-2"
+                  style={{
+                    textShadow: `0 0 10px ${colors.glow}, 0 0 20px ${colors.glow}, 0 2px 8px rgba(0,0,0,0.8)`,
+                  }}
+                >
+                  {label}
+                </span>
+              </div>
+            </div>
+
+            {/* Hover glow enhancement */}
+            <motion.div
+              className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{
+                boxShadow: `0 0 60px 20px ${colors.glow}`,
+              }}
+            />
+          </>
+        )}
       </motion.div>
     </motion.button>
   )
@@ -549,6 +579,7 @@ export default function Landing() {
       color: "purple",
       size: "md" as const,
       position: { top: "20%", left: "15%", transform: "translate(-50%, -50%)" },
+      image: "/Untitled.jpg",
     },
     {
       label: "Wall",
@@ -1837,6 +1868,7 @@ export default function Landing() {
                             position={planet.position}
                             delay={0.3 + index * 0.2}
                             onClick={() => setSensorySubView(planet.section)}
+                            image={(planet as any).image}
                           />
                         ))}
                       </motion.div>
