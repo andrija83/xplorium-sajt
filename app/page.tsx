@@ -808,7 +808,7 @@ export default function Landing() {
               <motion.button
                 key="x-button"
                 onClick={handleXClick}
-                className="cursor-pointer focus:outline-none group"
+                className="cursor-pointer focus:outline-none group relative"
                 whileHover={!isAnimating ? { scale: 1.05 } : {}}
                 whileTap={!isAnimating ? { scale: 0.95 } : {}}
                 initial={{ opacity: 0, scale: 0.5 }}
@@ -823,10 +823,92 @@ export default function Landing() {
                   ease: [0.4, 0, 0.2, 1],
                 }}
               >
+                {/* Starburst Explosion - Triggers on click */}
+                {isAnimating && [...Array(16)].map((_, i) => {
+                  const angle = (i * 360) / 16;
+                  const colors = [
+                    "from-cyan-400 to-cyan-600",
+                    "from-purple-400 to-purple-600",
+                    "from-pink-400 to-pink-600",
+                  ];
+                  const color = colors[i % 3];
+
+                  return (
+                    <motion.div
+                      key={`starburst-${i}`}
+                      className={`absolute w-1 bg-gradient-to-r ${color} rounded-full`}
+                      style={{
+                        left: "50%",
+                        top: "50%",
+                        transformOrigin: "0 50%",
+                        rotate: `${angle}deg`,
+                        height: "2px",
+                      }}
+                      initial={{
+                        width: 0,
+                        opacity: 0,
+                        x: 0,
+                      }}
+                      animate={{
+                        width: [0, 150, 200],
+                        opacity: [0, 1, 0],
+                        x: [0, 0, 0],
+                      }}
+                      transition={{
+                        duration: 0.8,
+                        ease: "easeOut",
+                        delay: i * 0.01,
+                      }}
+                    />
+                  );
+                })}
+
+                {/* Star particles for explosion */}
+                {isAnimating && [...Array(50)].map((_, i) => {
+                  const angle = (i * 360) / 50 + Math.random() * 10;
+                  const distance = 150 + Math.random() * 500;
+                  const colors = ["bg-cyan-400", "bg-purple-400", "bg-pink-400", "bg-yellow-400"];
+                  const color = colors[i % 4];
+
+                  return (
+                    <motion.div
+                      key={`star-${i}`}
+                      className={`absolute ${color} rounded-full`}
+                      style={{
+                        left: "50%",
+                        top: "50%",
+                        width: `${3 + Math.random() * 10}px`,
+                        height: `${3 + Math.random() * 10}px`,
+                        marginLeft: "-2px",
+                        marginTop: "-2px",
+                        boxShadow: `0 0 15px currentColor, 0 0 25px currentColor`,
+                      }}
+                      initial={{
+                        x: 0,
+                        y: 0,
+                        scale: 0,
+                        opacity: 0,
+                      }}
+                      animate={{
+                        x: Math.cos((angle * Math.PI) / 180) * distance,
+                        y: Math.sin((angle * Math.PI) / 180) * distance,
+                        scale: [0, 1.5, 0],
+                        opacity: [0, 1, 0],
+                        rotate: [0, 0],
+                      }}
+                      transition={{
+                        duration: 0.9,
+                        ease: "easeOut",
+                        delay: i * 0.008,
+                      }}
+                    />
+                  );
+                })}
+
                 {/* X Logo Image */}
                 {/* Sizes: 96px→128px→160px→192px (mobile→desktop) */}
                 {/* group-hover:brightness-125: Brightens on hover */}
-                <div className="rounded-3xl overflow-hidden">
+                <div className="rounded-3xl overflow-hidden relative z-10">
                   <img
                     src="/crystal-x-logo.jpg"
                     alt="X Logo"
@@ -871,12 +953,75 @@ export default function Landing() {
 
                     {/* "plorium" text (X + plorium = Xplorium) */}
                     <motion.h1
-                      className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light text-white tracking-tight"
+                      className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light text-white tracking-tight relative"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.6, delay: 0.3 }}
                     >
-                      plorium
+                      {"plorium".split("").map((char, index) => {
+                        const colors = [
+                          { bg: "bg-cyan-400", shadow: "rgba(34, 211, 238, 1)" },
+                          { bg: "bg-purple-400", shadow: "rgba(168, 85, 247, 1)" },
+                          { bg: "bg-pink-400", shadow: "rgba(236, 72, 153, 1)" },
+                          { bg: "bg-yellow-400", shadow: "rgba(250, 204, 21, 1)" },
+                        ];
+
+                        return (
+                          <span key={index} className="relative inline-block">
+                            {/* Letter with typewriter animation */}
+                            <motion.span
+                              className="inline-block"
+                              initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              transition={{
+                                duration: 0.3,
+                                delay: 0.5 + index * 0.08,
+                                ease: [0.34, 1.56, 0.64, 1],
+                              }}
+                            >
+                              {char}
+                            </motion.span>
+
+                            {/* Spark particles on each letter */}
+                            {[...Array(8)].map((_, sparkIndex) => {
+                              const angle = (sparkIndex * 360) / 8 + Math.random() * 20;
+                              const distance = 30 + Math.random() * 20;
+                              const sparkColor = colors[sparkIndex % 4];
+
+                              return (
+                                <motion.div
+                                  key={`spark-${index}-${sparkIndex}`}
+                                  className={`absolute ${sparkColor.bg} rounded-full pointer-events-none`}
+                                  style={{
+                                    left: "50%",
+                                    top: "50%",
+                                    width: `${2 + Math.random() * 3}px`,
+                                    height: `${2 + Math.random() * 3}px`,
+                                    boxShadow: `0 0 10px ${sparkColor.shadow}, 0 0 20px ${sparkColor.shadow}`,
+                                  }}
+                                  initial={{
+                                    x: 0,
+                                    y: 0,
+                                    scale: 0,
+                                    opacity: 0,
+                                  }}
+                                  animate={{
+                                    x: Math.cos((angle * Math.PI) / 180) * distance,
+                                    y: Math.sin((angle * Math.PI) / 180) * distance,
+                                    scale: [0, 1.5, 0],
+                                    opacity: [0, 1, 0],
+                                  }}
+                                  transition={{
+                                    duration: 0.6,
+                                    delay: 0.5 + index * 0.08,
+                                    ease: "easeOut",
+                                  }}
+                                />
+                              );
+                            })}
+                          </span>
+                        );
+                      })}
                     </motion.h1>
                   </div>
 
