@@ -5,7 +5,15 @@
       "Bash(npm install:*)",
       "Bash(npx playwright install:*)",
       "Bash(npm run dev:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:github.com)",
+      "Bash(git clone:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm run lint)",
+      "Bash(nul)",
+      "Bash(npm run build:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

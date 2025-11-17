@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono, Great_Vibes } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -66,7 +67,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className={`font-sans antialiased ${_greatVibes.variable}`}>
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
         <Analytics />
       </body>
     </html>
