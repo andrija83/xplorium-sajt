@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { EventCalendar, BookingForm, type CalendarEvent } from '@/components/common'
 
 interface CafeSectionProps {
   cafeSubView: string | null
@@ -27,6 +29,42 @@ interface CafeSectionProps {
  * 3. Each subsection has unique content and styling
  */
 export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) => {
+  // Event calendar state
+  const [events, setEvents] = useState<CalendarEvent[]>([
+    // Sample events
+    {
+      id: '1',
+      title: 'Rođendan - Marko',
+      date: new Date(new Date().setDate(new Date().getDate() + 3)),
+      time: '14:00',
+      type: 'birthday',
+      name: 'Marko Petrović',
+      guestCount: 15,
+      phone: '+381 64 123 4567',
+      email: 'marko@example.com'
+    }
+  ])
+
+  const [showBookingForm, setShowBookingForm] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+
+  // Handle new booking submission
+  const handleBookingSubmit = (newEvent: Omit<CalendarEvent, 'id'>) => {
+    const event: CalendarEvent = {
+      ...newEvent,
+      id: Date.now().toString()
+    }
+    setEvents(prev => [...prev, event])
+    setShowBookingForm(false)
+    setSelectedDate(null)
+  }
+
+  // Handle date click from calendar
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date)
+    setShowBookingForm(true)
+  }
+
   const MENU_ITEMS = [
     {
       label: "Meni",
@@ -761,126 +799,52 @@ export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) =
                 {/* Zakup Prostora Subsection */}
                 {cafeSubView === "zakup" && (
                   <motion.div
-                    className="max-w-lg mx-auto"
+                    className="max-w-6xl mx-auto"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                   >
-                    <p className="text-white/70 text-sm mb-6">
-                      Rezervišite prostor za Vaš poseban događaj
-                    </p>
-
-                    <form className="space-y-4 text-left">
-                      {/* Name */}
-                      <div>
-                        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-                          Ime i Prezime
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-                          placeholder="Vaše ime"
-                        />
-                      </div>
-
-                      {/* Email */}
-                      <div>
-                        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-                          placeholder="vas@email.com"
-                        />
-                      </div>
-
-                      {/* Phone */}
-                      <div>
-                        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-                          Telefon
-                        </label>
-                        <input
-                          type="tel"
-                          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-                          placeholder="+381 XX XXX XXXX"
-                        />
-                      </div>
-
-                      {/* Date and Time Row */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-                            Datum
-                          </label>
-                          <input
-                            type="date"
-                            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-                          />
+                    {!showBookingForm ? (
+                      <>
+                        <div className="flex justify-between items-center mb-6">
+                          <p className="text-white/70 text-sm">
+                            Pregledajte dostupne termine i rezervišite prostor
+                          </p>
+                          <motion.button
+                            onClick={() => setShowBookingForm(true)}
+                            className="px-6 py-2 bg-cyan-400/20 border-2 border-cyan-400/40 rounded-lg text-cyan-400 text-sm font-['Great_Vibes'] text-xl hover:bg-cyan-400/30 transition-all"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            Nova rezervacija
+                          </motion.button>
                         </div>
-                        <div>
-                          <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-                            Vreme
-                          </label>
-                          <input
-                            type="time"
-                            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-                          />
-                        </div>
-                      </div>
 
-                      {/* Number of Guests */}
-                      <div>
-                        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-                          Broj dece
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-                          placeholder="Npr. 10"
+                        <EventCalendar
+                          events={events}
+                          onEventClick={(event) => {
+                            alert(`Događaj: ${event.title}\nVreme: ${event.time}\nOsoba: ${event.name}`)
+                          }}
+                          onDateClick={handleDateClick}
+                          showAddButton={true}
+                        />
+                      </>
+                    ) : (
+                      <div className="max-w-lg mx-auto">
+                        <h3 className="text-cyan-400 font-['Great_Vibes'] text-3xl mb-6 text-center">
+                          Nova rezervacija
+                        </h3>
+                        <BookingForm
+                          onSubmit={handleBookingSubmit}
+                          onCancel={() => {
+                            setShowBookingForm(false)
+                            setSelectedDate(null)
+                          }}
+                          existingEvents={events}
+                          initialDate={selectedDate}
                         />
                       </div>
-
-                      {/* Event Type */}
-                      <div>
-                        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-                          Tip događaja
-                        </label>
-                        <select className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all">
-                          <option value="" className="bg-gray-900">Izaberite...</option>
-                          <option value="birthday" className="bg-gray-900">Rođendan</option>
-                          <option value="private" className="bg-gray-900">Privatni događaj</option>
-                          <option value="school" className="bg-gray-900">Školska poseta</option>
-                          <option value="other" className="bg-gray-900">Ostalo</option>
-                        </select>
-                      </div>
-
-                      {/* Special Requests */}
-                      <div>
-                        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-                          Posebni zahtevi
-                        </label>
-                        <textarea
-                          rows={3}
-                          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all resize-none"
-                          placeholder="Napomene ili posebni zahtevi..."
-                        />
-                      </div>
-
-                      {/* Submit Button */}
-                      <motion.button
-                        type="submit"
-                        className="w-full py-3 bg-cyan-400/20 border-2 border-cyan-400/40 rounded-lg text-cyan-400 font-['Great_Vibes'] text-2xl hover:bg-cyan-400/30 hover:border-cyan-400/60 transition-all"
-                        style={{
-                          textShadow: "0 0 10px #22d3ee",
-                        }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        Pošaljite rezervaciju
-                      </motion.button>
-                    </form>
+                    )}
                   </motion.div>
                 )}
 
