@@ -99,13 +99,11 @@ export function AuthButtons({
         />
       </motion.button>
 
-      {/* Sign Up Button - More prominent */}
+      {/* Sign Up Button - Rainbow border */}
       <motion.button
         onClick={onSignUp}
         className="group relative flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-2.5
-                   rounded-lg backdrop-blur-sm bg-gradient-to-r from-cyan-500/20 to-cyan-600/20
-                   border-2 border-cyan-400/50 overflow-hidden transition-all duration-300
-                   hover:from-cyan-500/30 hover:to-cyan-600/30"
+                   rounded-lg backdrop-blur-sm bg-black/40 overflow-hidden transition-all duration-300"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{
@@ -114,17 +112,35 @@ export function AuthButtons({
           ease: ANIMATION_EASING.SMOOTH
         }}
         whileHover={{
-          scale: 1.05,
-          borderColor: "rgba(34, 211, 238, 0.8)"
+          scale: 1.05
         }}
         whileTap={{ scale: 0.95 }}
         style={{
-          boxShadow: neonCyanGlow
+          boxShadow: "0 0 15px rgba(255, 255, 255, 0.3)"
         }}
       >
+        {/* Animated rainbow border */}
+        <motion.div
+          className="absolute inset-0 rounded-lg p-[2px]"
+          style={{
+            background: "linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000)",
+            backgroundSize: "200% 100%"
+          }}
+          animate={{
+            backgroundPosition: ["0% 0%", "200% 0%"]
+          }}
+          transition={{
+            duration: 3,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "linear"
+          }}
+        >
+          <div className="absolute inset-[2px] rounded-lg bg-black/40 backdrop-blur-sm" />
+        </motion.div>
+
         {/* Animated background shimmer */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent"
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
           animate={{
             x: ["-200%", "200%"]
           }}
@@ -137,30 +153,30 @@ export function AuthButtons({
 
         {/* Icon */}
         <UserPlus
-          className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300 relative z-10
+          className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10
                      transition-all duration-300 group-hover:text-white"
           style={{
-            filter: "drop-shadow(0 0 10px rgba(34, 211, 238, 0.8))"
+            filter: "drop-shadow(0 0 10px rgba(255, 255, 255, 0.8))"
           }}
         />
 
         {/* Text */}
         <span
-          className="text-sm sm:text-base font-semibold text-cyan-300 relative z-10
-                     transition-all duration-300 group-hover:text-white"
+          className="text-sm sm:text-base font-semibold text-white relative z-10
+                     transition-all duration-300"
           style={{
-            textShadow: neonCyanGlow
+            textShadow: "0 0 10px rgba(255, 255, 255, 0.5)"
           }}
         >
           Sign Up
         </span>
 
-        {/* Stronger hover glow */}
+        {/* Hover glow effect */}
         <motion.div
           className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100
                      transition-opacity duration-300 pointer-events-none"
           style={{
-            boxShadow: `${neonCyanGlowHover}, inset 0 0 20px rgba(34, 211, 238, 0.3)`,
+            boxShadow: "0 0 20px rgba(255, 255, 255, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2)",
           }}
         />
       </motion.button>

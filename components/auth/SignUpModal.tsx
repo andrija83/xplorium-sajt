@@ -192,15 +192,6 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
               ease: [0.34, 1.56, 0.64, 1], // Bouncy easing
             }}
           >
-            {/* Glowing background effect */}
-            <div
-              className="absolute inset-0 rounded-2xl"
-              style={{
-                background: glowBackground,
-                filter: "blur(30px)",
-              }}
-            />
-
             {/* Rotating gradient border container */}
             <div className="absolute inset-0 rounded-2xl overflow-hidden">
               <motion.div 
@@ -440,37 +431,68 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleClose}
-                    disabled={isLoading}
-                    className="flex-1 border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10
-                               hover:border-cyan-400/50 transition-all"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="flex-1 bg-gradient-to-r from-cyan-500 to-cyan-600
-                               hover:from-cyan-400 hover:to-cyan-500
-                               text-white font-semibold transition-all duration-300
-                               disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      boxShadow: isLoading ? "none" : AUTH_COLORS.neonCyanGlow
-                    }}
-                  >
-                    {isLoading ? (
-                      <motion.div
-                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                      />
-                    ) : (
-                      "Create Account"
-                    )}
-                  </Button>
+                  <div className="flex-1 relative rounded-lg overflow-hidden">
+                    {/* Rotating gradient border for Cancel */}
+                    <motion.div 
+                      className="absolute w-[300%] h-[300%] top-1/2 left-1/2"
+                      style={{
+                        background: "conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #fb923c, #facc15, #22c55e, #22d3ee)",
+                        x: "-50%",
+                        y: "-50%",
+                      }}
+                      animate={{ rotate: 360 }}
+                      transition={{ 
+                        duration: 3, 
+                        repeat: Number.POSITIVE_INFINITY, 
+                        ease: "linear" 
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleClose}
+                      disabled={isLoading}
+                      className="relative w-full bg-black border-0 text-cyan-300 hover:bg-black/80
+                                 transition-all m-[2px]"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  <div className="flex-1 relative rounded-lg overflow-hidden">
+                    {/* Rotating gradient border */}
+                    <motion.div 
+                      className="absolute w-[300%] h-[300%] top-1/2 left-1/2"
+                      style={{
+                        background: "conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #fb923c, #facc15, #22c55e, #22d3ee)",
+                        x: "-50%",
+                        y: "-50%",
+                      }}
+                      animate={{ rotate: 360 }}
+                      transition={{ 
+                        duration: 3, 
+                        repeat: Number.POSITIVE_INFINITY, 
+                        ease: "linear" 
+                      }}
+                    />
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="relative w-full bg-gradient-to-r from-cyan-500 to-cyan-600
+                                 hover:from-cyan-400 hover:to-cyan-500
+                                 text-white font-semibold transition-all duration-300
+                                 disabled:opacity-50 disabled:cursor-not-allowed m-[2px]"
+                    >
+                      {isLoading ? (
+                        <motion.div
+                          className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                        />
+                      ) : (
+                        "Create Account"
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </form>
 
