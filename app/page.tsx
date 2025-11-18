@@ -335,7 +335,7 @@ export default function Landing() {
         id: dripIndex,
         xOffset: (Math.random() - 0.5) * 40,
         width: 4 + Math.random() * 6,
-        height: 8 + Math.random() * 12,
+        height: 8 + Math.random() * 80,
         colorIndex: dripIndex % PARTICLE_COLORS.LIQUID_DRIP.length,
       }))
     }));
