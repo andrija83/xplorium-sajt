@@ -23,9 +23,8 @@ import { SensorySection } from "@/features/sensory/SensorySection"
 import { CafeSection } from "@/features/cafe/CafeSection"
 
 /**
- * ASDASDASDASDASD
  * XPLORIUM LANDING PAGE
- * asdasdasdasdas
+ *
  * Main Sections:
  * 1. Initial X Logo Click Animation
  * 2. Main Navigation Menu (Cafe, Sensory, Igraonica) with Neon Effects
@@ -222,6 +221,24 @@ export default function Landing() {
     setIsSignUpOpen(true)
   }
 
+  /**
+   * handleSwitchToSignUp: Switches from Sign In to Sign Up
+   * Ensures only one modal is open at a time
+   */
+  const handleSwitchToSignUp = () => {
+    setIsSignInOpen(false)
+    setIsSignUpOpen(true)
+  }
+
+  /**
+   * handleSwitchToSignIn: Switches from Sign Up to Sign In
+   * Ensures only one modal is open at a time
+   */
+  const handleSwitchToSignIn = () => {
+    setIsSignUpOpen(false)
+    setIsSignInOpen(true)
+  }
+
   // ========== DATA STRUCTURES ==========
 
   /**
@@ -351,14 +368,64 @@ export default function Landing() {
       <Starfield activeView={activeView} />
 
       {/* ========== AUTH BUTTONS ========== */}
-      {/* Fixed position in top-right corner, always visible */}
-      {/* z-50: Same level as back button to stay above all content */}
-      <div className="fixed top-6 right-6 sm:top-8 sm:right-8 z-50">
-        <AuthButtons
-          onSignIn={handleSignIn}
-          onSignUp={handleSignUp}
-        />
-      </div>
+      {/* Only appear after brand reveal (showBrand is true) */}
+      {/* Cool animation: slide from top-right with rotation and glow */}
+      <AnimatePresence>
+        {showBrand && (
+          <motion.div
+            className="fixed top-6 right-6 sm:top-8 sm:right-8 z-50"
+            initial={{
+              opacity: 0,
+              x: 100,
+              y: -100,
+              rotate: 45,
+              scale: 0.5,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              y: 0,
+              rotate: 0,
+              scale: 1,
+            }}
+            exit={{
+              opacity: 0,
+              x: 100,
+              y: -100,
+              rotate: 45,
+              scale: 0.5,
+            }}
+            transition={{
+              duration: 0.8,
+              delay: 1.2, // Appears after navigation buttons
+              ease: [0.34, 1.56, 0.64, 1], // Bouncy easing
+            }}
+          >
+            {/* Glowing ring animation around buttons */}
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: "radial-gradient(circle, rgba(34, 211, 238, 0.3) 0%, transparent 70%)",
+                filter: "blur(20px)",
+              }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{
+                scale: [0.8, 1.2, 1],
+                opacity: [0, 0.8, 0],
+              }}
+              transition={{
+                duration: 2,
+                delay: 1.2,
+                ease: "easeOut",
+              }}
+            />
+            <AuthButtons
+              onSignIn={handleSignIn}
+              onSignUp={handleSignUp}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ========== BACK BUTTON ========== */}
       {/* Only shows when inside a section (activeView is not null) */}
@@ -753,12 +820,12 @@ export default function Landing() {
       <SignInModal
         isOpen={isSignInOpen}
         onClose={() => setIsSignInOpen(false)}
-        onSwitchToSignUp={() => setIsSignUpOpen(true)}
+        onSwitchToSignUp={handleSwitchToSignUp}
       />
       <SignUpModal
         isOpen={isSignUpOpen}
         onClose={() => setIsSignUpOpen(false)}
-        onSwitchToSignIn={() => setIsSignInOpen(true)}
+        onSwitchToSignIn={handleSwitchToSignIn}
       />
     </div>
   )

@@ -88,6 +88,14 @@ export const STYLE_CONSTANTS = {
   PARTICLE_BASE_SHADOW: "0 0 15px currentColor, 0 0 25px currentColor",
 } as const;
 
+export const AUTH_COLORS = {
+  neonCyan: "#22d3ee",
+  neonCyanGlow: "0 0 10px #22d3ee, 0 0 20px #22d3ee, 0 0 30px #22d3ee",
+  neonCyanGlowHover: "0 0 15px #22d3ee, 0 0 30px #22d3ee, 0 0 45px #22d3ee, 0 0 60px #06b6d4",
+  inputShadow: "0 0 10px rgba(34, 211, 238, 0.1)",
+  glowBackground: "radial-gradient(circle at top right, rgba(34, 211, 238, 0.2) 0%, transparent 70%)",
+} as const;
+
 // Helper to get particle count based on device
 export const getParticleCount = (isMobile: boolean): number => {
   return isMobile
