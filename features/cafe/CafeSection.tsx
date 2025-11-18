@@ -42,9 +42,57 @@ export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) =
       guestCount: 15,
       phone: '+381 64 123 4567',
       email: 'marko@example.com'
+    },
+     
+    {
+      id: '1',
+      title: 'Rođendan - Marko',
+      date: new Date(new Date().setDate(new Date().getDate() - 3)),
+      time: '14:00',
+      type: 'birthday',
+      name: 'Marko Petrović',
+      guestCount: 15,
+      phone: '+381 64 123 4567',
+      email: 'marko@example.com'
+    },
+    {
+      id: '1',
+      title: 'Rođendan - Marko',
+      date: new Date(new Date().setDate(new Date().getDate() + 3)),
+      time: '14:00',
+      type: 'birthday',
+      name: 'Marko Petrović',
+      guestCount: 15,
+      phone: '+381 64 123 4567',
+      email: 'marko@example.com'
+    },
+    {
+      id: '1',
+      title: 'Rođendan - Marko',
+      date: new Date(new Date().setDate(new Date().getDate() + 3)),
+      time: '14:00',
+      type: 'birthday',
+      name: 'Marko Petrović',
+      guestCount: 15,
+      phone: '+381 64 123 4567',
+      email: 'marko@example.com'
+    },
+    {
+      id: '1',
+      title: 'Rođendan - Marko',
+      date: new Date(new Date().setDate(new Date().getDate() + 3)),
+      time: '14:00',
+      type: 'birthday',
+      name: 'Marko Petrović',
+      guestCount: 15,
+      phone: '+381 64 123 4567',
+      email: 'marko@example.com'
     }
   ])
 
+
+
+  
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
@@ -822,9 +870,6 @@ export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) =
 
                         <EventCalendar
                           events={events}
-                          onEventClick={(event) => {
-                            alert(`Događaj: ${event.title}\nVreme: ${event.time}\nOsoba: ${event.name}`)
-                          }}
                           onDateClick={handleDateClick}
                           showAddButton={true}
                         />

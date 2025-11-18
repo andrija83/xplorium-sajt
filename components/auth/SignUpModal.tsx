@@ -201,8 +201,26 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
               }}
             />
 
+            {/* Rotating gradient border container */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden">
+              <motion.div 
+                className="absolute w-[200%] h-[200%] top-1/2 left-1/2"
+                style={{
+                  background: "conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #fb923c, #facc15, #22c55e, #22d3ee)",
+                  x: "-50%",
+                  y: "-50%",
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Number.POSITIVE_INFINITY, 
+                  ease: "linear" 
+                }}
+              />
+            </div>
+
             {/* Modal content */}
-            <div className="relative bg-black/95 border-2 border-cyan-400/50 backdrop-blur-xl rounded-2xl p-6 shadow-2xl">
+            <div className="relative bg-black/95 backdrop-blur-xl rounded-2xl p-6 m-[3px]">
               {/* Close button */}
               <button
                 onClick={handleClose}

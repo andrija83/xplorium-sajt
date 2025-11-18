@@ -149,9 +149,10 @@ export const EventCalendar = ({ events, onEventClick, onDateClick, showAddButton
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1
           const dayEvents = getEventsForDate(day)
-          const isToday = new Date().getDate() === day &&
-                         new Date().getMonth() === month &&
-                         new Date().getFullYear() === year
+          const dateObj = new Date(year, month, day)
+          const today = new Date()
+          const isToday = dateObj.toDateString() === today.toDateString()
+          const isPast = dateObj < new Date(today.getFullYear(), today.getMonth(), today.getDate())
           const isHovered = hoveredDay === day
 
           return (
@@ -159,21 +160,22 @@ export const EventCalendar = ({ events, onEventClick, onDateClick, showAddButton
               key={day}
               className={`
                 min-h-[120px] border border-white/5 p-1 relative group
-                ${isToday ? 'bg-cyan-400/5' : 'bg-white/[0.02]'}
-                ${isHovered ? 'bg-white/5' : ''}
-                hover:bg-white/5 transition-all
+                ${isToday ? 'bg-cyan-400/5' : isPast ? 'bg-white/[0.01]' : 'bg-white/[0.02]'}
+                ${isHovered && !isPast ? 'bg-white/5' : ''}
+                ${isPast ? 'opacity-50' : 'hover:bg-white/5'}
+                transition-all
               `}
-              onMouseEnter={() => setHoveredDay(day)}
+              onMouseEnter={() => !isPast && setHoveredDay(day)}
               onMouseLeave={() => setHoveredDay(null)}
             >
               {/* Day Number */}
               <div className="flex justify-between items-start mb-1">
-                <span className={`text-xs font-medium ${isToday ? 'text-cyan-400' : 'text-white/70'}`}>
+                <span className={`text-xs font-medium ${isToday ? 'text-cyan-400' : isPast ? 'text-white/30' : 'text-white/70'}`}>
                   {day}
                 </span>
 
-                {/* Add Event Button (shows on hover) */}
-                {showAddButton && isHovered && onDateClick && (
+                {/* Add Event Button (shows on hover, disabled for past dates) */}
+                {showAddButton && isHovered && onDateClick && !isPast && (
                   <motion.button
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}

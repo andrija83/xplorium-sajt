@@ -73,6 +73,17 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Validate required fields
+    if (!formData.time) {
+      setConflictError('Morate izabrati vreme za rezervaciju.')
+      return
+    }
+
+    if (!formData.date) {
+      setConflictError('Morate izabrati datum za rezervaciju.')
+      return
+    }
+
     // Check for time conflicts
     const selectedDate = new Date(formData.date)
     const conflict = existingEvents.find(existingEvent => {
