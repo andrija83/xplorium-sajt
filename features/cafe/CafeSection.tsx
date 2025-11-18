@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, memo, useMemo, useCallback } from 'react'
+import { useState, memo, useMemo, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { EventCalendar, BookingForm, type CalendarEvent } from '@/components/common'
+import { getApprovedBookings, createBooking } from '@/app/actions/bookings'
+import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
 
 interface CafeSectionProps {
   cafeSubView: string | null
@@ -31,89 +34,83 @@ interface CafeSectionProps {
  * 3. Each subsection has unique content and styling
  */
 export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionProps) => {
+  const { data: session } = useSession()
+
   // Event calendar state
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    // Sample events
-    {
-      id: '1',
-      title: 'Rođendan - Marko',
-      date: new Date(new Date().setDate(new Date().getDate() + 3)),
-      time: '14:00',
-      type: 'birthday',
-      name: 'Marko Petrović',
-      guestCount: 15,
-      phone: '+381 64 123 4567',
-      email: 'marko@example.com'
-    },
-     
-    {
-      id: '1',
-      title: 'Rođendan - Marko',
-      date: new Date(new Date().setDate(new Date().getDate() - 3)),
-      time: '14:00',
-      type: 'birthday',
-      name: 'Marko Petrović',
-      guestCount: 15,
-      phone: '+381 64 123 4567',
-      email: 'marko@example.com'
-    },
-    {
-      id: '1',
-      title: 'Rođendan - Marko',
-      date: new Date(new Date().setDate(new Date().getDate() + 3)),
-      time: '14:00',
-      type: 'birthday',
-      name: 'Marko Petrović',
-      guestCount: 15,
-      phone: '+381 64 123 4567',
-      email: 'marko@example.com'
-    },
-    {
-      id: '1',
-      title: 'Rođendan - Marko',
-      date: new Date(new Date().setDate(new Date().getDate() + 3)),
-      time: '14:00',
-      type: 'birthday',
-      name: 'Marko Petrović',
-      guestCount: 15,
-      phone: '+381 64 123 4567',
-      email: 'marko@example.com'
-    },
-    {
-      id: '1',
-      title: 'Rođendan - Marko',
-      date: new Date(new Date().setDate(new Date().getDate() + 3)),
-      time: '14:00',
-      type: 'birthday',
-      name: 'Marko Petrović',
-      guestCount: 15,
-      phone: '+381 64 123 4567',
-      email: 'marko@example.com'
-    }
-  ])
-
-
-
-
+  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
-  // Handle new booking submission (memoized)
-  const handleBookingSubmit = useCallback((newEvent: Omit<CalendarEvent, 'id'>) => {
-    const event: CalendarEvent = {
-      ...newEvent,
-      id: Date.now().toString()
+  // Fetch approved bookings from database
+  const fetchBookings = useCallback(async () => {
+    const result = await getApprovedBookings()
+    if (result.success && result.bookings) {
+      // Transform database bookings to CalendarEvent format
+      const calendarEvents: CalendarEvent[] = result.bookings.map((booking) => ({
+        id: booking.id,
+        title: booking.title,
+        date: new Date(booking.date),
+        time: booking.time,
+        type: booking.type as CalendarEvent['type'],
+        guestCount: booking.guestCount || undefined,
+        phone: booking.phone || undefined,
+        email: booking.email || undefined,
+      }))
+      setEvents(calendarEvents)
     }
-    setEvents(prev => [...prev, event])
-    setShowBookingForm(false)
-    setSelectedDate(null)
   }, [])
+
+  // Load bookings on mount and when "zakup" view is opened
+  useEffect(() => {
+    if (cafeSubView === 'zakup') {
+      fetchBookings()
+    }
+  }, [cafeSubView, fetchBookings])
+
+  // Handle new booking submission (memoized)
+  const handleBookingSubmit = useCallback(async (newEvent: Omit<CalendarEvent, 'id'> & { specialRequests?: string }) => {
+    try {
+      setIsLoading(true)
+
+      // Create booking in database
+      const result = await createBooking({
+        title: newEvent.title,
+        date: newEvent.date,
+        time: newEvent.time,
+        type: newEvent.type,
+        guestCount: newEvent.guestCount || 1,
+        phone: newEvent.phone || '',
+        email: newEvent.email || '',
+        specialRequests: newEvent.specialRequests,
+      })
+
+      if (result.success) {
+        toast.success('Rezervacija poslata! Kontaktiraćemo vas uskoro.')
+        setShowBookingForm(false)
+        setSelectedDate(null)
+        // Refresh bookings list
+        await fetchBookings()
+      } else {
+        toast.error(result.error || 'Greška pri slanju rezervacije')
+      }
+    } catch (error) {
+      console.error('Booking submit error:', error)
+      toast.error('Došlo je do greške. Pokušajte ponovo.')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [fetchBookings])
 
   // Handle date click from calendar (memoized)
   const handleDateClick = useCallback((date: Date) => {
+    if (!session?.user) {
+      toast.error('Morate biti prijavljeni da biste kreirali rezervaciju')
+      return
+    }
     setSelectedDate(date)
     setShowBookingForm(true)
-  }, [])
+  }, [session])
 
   // Memoized menu items
   const MENU_ITEMS = useMemo(() => [
@@ -863,7 +860,13 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                             Pregledajte dostupne termine i rezervišite prostor
                           </p>
                           <motion.button
-                            onClick={() => setShowBookingForm(true)}
+                            onClick={() => {
+                              if (!session?.user) {
+                                toast.error('Morate biti prijavljeni da biste kreirali rezervaciju')
+                                return
+                              }
+                              setShowBookingForm(true)
+                            }}
                             className="px-6 py-2 bg-cyan-400/20 border-2 border-cyan-400/40 rounded-lg text-cyan-400 text-sm font-['Great_Vibes'] text-xl hover:bg-cyan-400/30 transition-all"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -891,6 +894,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                           }}
                           existingEvents={events}
                           initialDate={selectedDate}
+                          isLoading={isLoading}
                         />
                       </div>
                     )}

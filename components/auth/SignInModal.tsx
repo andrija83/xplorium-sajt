@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AUTH_COLORS } from "@/constants/animations"
 import { validateEmail, sanitizeInput } from "@/lib/validation"
+import { signInAction } from "@/app/actions/auth"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 /**
  * SignInModal Component
@@ -35,6 +39,8 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  const router = useRouter()
+  const { update } = useSession()
   const modalRef = useRef<HTMLDivElement>(null)
   const { neonCyanGlow, inputShadow, glowBackground } = AUTH_COLORS
 
@@ -98,14 +104,28 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
 
     setIsLoading(true)
 
-    // TODO: Implement actual authentication logic
-    // NOTE: Never log passwords or sensitive data
+    try {
+      const result = await signInAction(email, password)
 
-    // Simulate API call
-    setTimeout(() => {
+      if (result.success) {
+        toast.success('Signed in successfully!')
+
+        // Update the session to reflect the new authenticated state
+        await update()
+
+        handleClose()
+
+        // Refresh the page to update all components
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Failed to sign in')
+        setIsLoading(false)
+      }
+    } catch (error) {
+      console.error('Sign in error:', error)
+      toast.error('An unexpected error occurred')
       setIsLoading(false)
-      handleClose()
-    }, 1500)
+    }
   }
 
   return (

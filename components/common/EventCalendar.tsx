@@ -9,9 +9,8 @@ export interface CalendarEvent {
   title: string
   date: Date
   time: string
-  type: 'birthday' | 'private' | 'school' | 'other'
+  type: 'CAFE' | 'SENSORY_ROOM' | 'PLAYGROUND' | 'PARTY' | 'EVENT'
   guestCount?: number
-  name: string
   phone?: string
   email?: string
 }
@@ -85,10 +84,11 @@ export const EventCalendar = ({ events, onEventClick, onDateClick, showAddButton
   const dayNames = ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub']
 
   const eventTypeColors = {
-    birthday: { bg: 'bg-pink-500', text: 'text-white', border: 'border-pink-500' },
-    private: { bg: 'bg-purple-500', text: 'text-white', border: 'border-purple-500' },
-    school: { bg: 'bg-cyan-500', text: 'text-white', border: 'border-cyan-500' },
-    other: { bg: 'bg-emerald-500', text: 'text-white', border: 'border-emerald-500' },
+    CAFE: { bg: 'bg-cyan-500', text: 'text-white', border: 'border-cyan-500', label: 'Café' },
+    SENSORY_ROOM: { bg: 'bg-purple-500', text: 'text-white', border: 'border-purple-500', label: 'Sensory Soba' },
+    PLAYGROUND: { bg: 'bg-pink-500', text: 'text-white', border: 'border-pink-500', label: 'Igraonica' },
+    PARTY: { bg: 'bg-fuchsia-500', text: 'text-white', border: 'border-fuchsia-500', label: 'Rođendan' },
+    EVENT: { bg: 'bg-emerald-500', text: 'text-white', border: 'border-emerald-500', label: 'Događaj' },
   }
 
   return (
@@ -208,7 +208,7 @@ export const EventCalendar = ({ events, onEventClick, onDateClick, showAddButton
                       title={`${event.time} - ${event.title}`}
                     >
                       <div className="font-medium truncate">{event.time}</div>
-                      <div className="truncate opacity-90">{event.name}</div>
+                      <div className="truncate opacity-90">{event.title}</div>
                     </motion.button>
                   )
                 })}
@@ -235,20 +235,24 @@ export const EventCalendar = ({ events, onEventClick, onDateClick, showAddButton
       {/* Legend */}
       <div className="mt-6 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-pink-400" />
+          <div className="w-3 h-3 rounded-full bg-cyan-500" />
+          <span className="text-white/70">Café</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-purple-500" />
+          <span className="text-white/70">Sensory Soba</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-pink-500" />
+          <span className="text-white/70">Igraonica</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-fuchsia-500" />
           <span className="text-white/70">Rođendan</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-purple-400" />
-          <span className="text-white/70">Privatni</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-cyan-400" />
-          <span className="text-white/70">Školski</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-emerald-400" />
-          <span className="text-white/70">Ostalo</span>
+          <div className="w-3 h-3 rounded-full bg-emerald-500" />
+          <span className="text-white/70">Događaj</span>
         </div>
       </div>
 
@@ -306,13 +310,13 @@ export const EventCalendar = ({ events, onEventClick, onDateClick, showAddButton
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-bold text-lg">{event.name}</h4>
-                          <p className="text-sm opacity-90">{event.title}</p>
+                          <h4 className="font-bold text-lg">{event.title}</h4>
+                          <p className="text-sm opacity-90">{colors.label}</p>
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-lg">{event.time}</div>
                           {event.guestCount && (
-                            <div className="text-sm opacity-90">{event.guestCount} dece</div>
+                            <div className="text-sm opacity-90">{event.guestCount} gostiju</div>
                           )}
                         </div>
                       </div>

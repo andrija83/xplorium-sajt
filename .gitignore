@@ -31,3 +31,5 @@ next-env.d.ts
 /playwright-report/
 /playwright/.cache/
 .vercel
+
+/lib/generated/prisma

@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AUTH_COLORS } from "@/constants/animations"
 import { validateEmail, validatePassword, validateFullName, sanitizeInput } from "@/lib/validation"
+import { signUp } from "@/app/actions/auth"
+import { toast } from "sonner"
 
 /**
  * SignUpModal Component
@@ -134,14 +136,27 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
 
     setIsLoading(true)
 
-    // TODO: Implement actual registration logic
-    // NOTE: Never log passwords or sensitive data
+    try {
+      const result = await signUp({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      })
 
-    // Simulate API call
-    setTimeout(() => {
+      if (result.success) {
+        toast.success('Account created successfully! Please sign in.')
+        handleClose()
+        // Optionally switch to sign in modal
+        onSwitchToSignIn?.()
+      } else {
+        toast.error(result.error || 'Failed to create account')
+        setIsLoading(false)
+      }
+    } catch (error) {
+      console.error('Sign up error:', error)
+      toast.error('An unexpected error occurred')
       setIsLoading(false)
-      handleClose()
-    }, 1500)
+    }
   }
 
   return (

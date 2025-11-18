@@ -4,12 +4,15 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Clock } from 'lucide-react'
 import type { CalendarEvent } from './EventCalendar'
+import PhoneInput from 'react-phone-number-input'
+import 'react-phone-number-input/style.css'
 
 interface BookingFormProps {
-  onSubmit: (event: Omit<CalendarEvent, 'id'>) => void
+  onSubmit: (event: Omit<CalendarEvent, 'id'> & { specialRequests?: string }) => void | Promise<void>
   onCancel?: () => void
   existingEvents?: CalendarEvent[]
   initialDate?: Date | null
+  isLoading?: boolean
 }
 
 /**
@@ -20,7 +23,7 @@ interface BookingFormProps {
  * Prevents double-booking by checking existing events
  * Can accept an initial date from calendar click
  */
-export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDate = null }: BookingFormProps) => {
+export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDate = null, isLoading = false }: BookingFormProps) => {
   // Helper to format date without timezone issues
   const formatDateForInput = (date: Date | null) => {
     if (!date) return ''
@@ -31,13 +34,13 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
   }
 
   const [formData, setFormData] = useState({
-    name: '',
+    title: '',
     email: '',
     phone: '',
     date: formatDateForInput(initialDate),
     time: '',
     guestCount: '',
-    type: 'birthday' as 'birthday' | 'private' | 'school' | 'other',
+    type: 'PARTY' as 'CAFE' | 'SENSORY_ROOM' | 'PLAYGROUND' | 'PARTY' | 'EVENT',
     notes: ''
   })
 
@@ -73,19 +76,76 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validate required fields
-    if (!formData.time) {
-      setConflictError('Morate izabrati vreme za rezervaciju.')
+    // Validate title
+    if (!formData.title.trim()) {
+      setConflictError('Naziv događaja je obavezan.')
       return
     }
 
+    if (formData.title.trim().length < 3) {
+      setConflictError('Naziv događaja mora imati najmanje 3 karaktera.')
+      return
+    }
+
+    // Validate email
+    if (!formData.email.trim()) {
+      setConflictError('Email je obavezan.')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setConflictError('Unesite validnu email adresu.')
+      return
+    }
+
+    // Validate phone
+    if (!formData.phone.trim()) {
+      setConflictError('Telefon je obavezan.')
+      return
+    }
+
+    if (formData.phone.trim().length < 10) {
+      setConflictError('Unesite kompletan broj telefona sa pozivnim brojem.')
+      return
+    }
+
+    // Validate date
     if (!formData.date) {
       setConflictError('Morate izabrati datum za rezervaciju.')
       return
     }
 
-    // Check for time conflicts
+    // Check if date is in the past
     const selectedDate = new Date(formData.date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    if (selectedDate < today) {
+      setConflictError('Ne možete rezervisati datum u prošlosti.')
+      return
+    }
+
+    // Validate time
+    if (!formData.time) {
+      setConflictError('Morate izabrati vreme za rezervaciju.')
+      return
+    }
+
+    // Validate guest count if provided
+    if (formData.guestCount) {
+      const count = parseInt(formData.guestCount)
+      if (isNaN(count) || count < 1) {
+        setConflictError('Broj gostiju mora biti najmanje 1.')
+        return
+      }
+      if (count > 100) {
+        setConflictError('Maksimalan broj gostiju je 100.')
+        return
+      }
+    }
+
+    // Check for time conflicts
     const conflict = existingEvents.find(existingEvent => {
       const existingDate = new Date(existingEvent.date)
       return (
@@ -102,28 +162,28 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
     // Clear any previous errors
     setConflictError('')
 
-    const event: Omit<CalendarEvent, 'id'> = {
-      title: `${formData.type === 'birthday' ? 'Rođendan' : formData.type === 'private' ? 'Privatni događaj' : formData.type === 'school' ? 'Školska poseta' : 'Događaj'} - ${formData.name}`,
+    const event: Omit<CalendarEvent, 'id'> & { specialRequests?: string } = {
+      title: formData.title,
       date: new Date(formData.date),
       time: formData.time,
       type: formData.type,
       guestCount: formData.guestCount ? parseInt(formData.guestCount) : undefined,
-      name: formData.name,
       phone: formData.phone || undefined,
       email: formData.email || undefined,
+      specialRequests: formData.notes || undefined,
     }
 
     onSubmit(event)
 
     // Reset form
     setFormData({
-      name: '',
+      title: '',
       email: '',
       phone: '',
       date: '',
       time: '',
       guestCount: '',
-      type: 'birthday',
+      type: 'PARTY',
       notes: ''
     })
   }
@@ -132,6 +192,13 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
+    }))
+  }
+
+  const handlePhoneChange = (value: string | undefined) => {
+    setFormData(prev => ({
+      ...prev,
+      phone: value || ''
     }))
   }
 
@@ -205,50 +272,55 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
         )}
       </AnimatePresence>
 
-      {/* Name */}
+      {/* Title */}
       <div>
         <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-          Ime i Prezime *
+          Naziv događaja *
         </label>
         <input
           type="text"
-          name="name"
-          value={formData.name}
+          name="title"
+          value={formData.title}
           onChange={handleChange}
           required
           className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-          placeholder="Vaše ime"
+          placeholder="Npr. Rođendan Marka"
         />
       </div>
 
-      {/* Email */}
-      <div>
-        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-          Email
-        </label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-          placeholder="vas@email.com"
-        />
-      </div>
+      {/* Email and Phone Row */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Email */}
+        <div>
+          <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
+            Email *
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
+            placeholder="vas@email.com"
+          />
+        </div>
 
-      {/* Phone */}
-      <div>
-        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-          Telefon
-        </label>
-        <input
-          type="tel"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
-          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-          placeholder="+381 XX XXX XXXX"
-        />
+        {/* Phone */}
+        <div>
+          <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
+            Telefon *
+          </label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
+            placeholder="+381 XX XXX XXXX"
+          />
+        </div>
       </div>
 
       {/* Date and Time Row */}
@@ -406,39 +478,43 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
         </div>
       </div>
 
-      {/* Number of Guests */}
-      <div>
-        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-          Broj dece
-        </label>
-        <input
-          type="number"
-          name="guestCount"
-          value={formData.guestCount}
-          onChange={handleChange}
-          min="1"
-          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-          placeholder="Npr. 10"
-        />
-      </div>
+      {/* Event Type and Guest Count Row */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Event Type */}
+        <div>
+          <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
+            Tip rezervacije *
+          </label>
+          <select
+            name="type"
+            value={formData.type}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
+          >
+            <option value="CAFE" className="bg-gray-900">Café</option>
+            <option value="SENSORY_ROOM" className="bg-gray-900">Sensory Soba</option>
+            <option value="PLAYGROUND" className="bg-gray-900">Igraonica</option>
+            <option value="PARTY" className="bg-gray-900">Rođendan</option>
+            <option value="EVENT" className="bg-gray-900">Događaj</option>
+          </select>
+        </div>
 
-      {/* Event Type */}
-      <div>
-        <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
-          Tip događaja *
-        </label>
-        <select
-          name="type"
-          value={formData.type}
-          onChange={handleChange}
-          required
-          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-        >
-          <option value="birthday" className="bg-gray-900">Rođendan</option>
-          <option value="private" className="bg-gray-900">Privatni događaj</option>
-          <option value="school" className="bg-gray-900">Školska poseta</option>
-          <option value="other" className="bg-gray-900">Ostalo</option>
-        </select>
+        {/* Number of Guests */}
+        <div>
+          <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
+            Broj gostiju
+          </label>
+          <input
+            type="number"
+            name="guestCount"
+            value={formData.guestCount}
+            onChange={handleChange}
+            min="1"
+            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
+            placeholder="Npr. 10"
+          />
+        </div>
       </div>
 
       {/* Special Requests */}
@@ -460,14 +536,15 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
       <div className="flex gap-3 pt-2">
         <motion.button
           type="submit"
-          className="flex-1 py-3 bg-cyan-400/20 border-2 border-cyan-400/40 rounded-lg text-cyan-400 font-['Great_Vibes'] text-2xl hover:bg-cyan-400/30 hover:border-cyan-400/60 transition-all"
+          disabled={isLoading}
+          className={`flex-1 py-3 bg-cyan-400/20 border-2 border-cyan-400/40 rounded-lg text-cyan-400 font-['Great_Vibes'] text-2xl transition-all ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-cyan-400/30 hover:border-cyan-400/60'}`}
           style={{
             textShadow: '0 0 10px #22d3ee',
           }}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={!isLoading ? { scale: 1.02 } : {}}
+          whileTap={!isLoading ? { scale: 0.98 } : {}}
         >
-          Potvrdi rezervaciju
+          {isLoading ? 'Šalje se...' : 'Potvrdi rezervaciju'}
         </motion.button>
 
         {onCancel && (

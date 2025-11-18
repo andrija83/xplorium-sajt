@@ -16,7 +16,17 @@
       "Bash(npm uninstall:*)",
       "WebFetch(domain:demo.mobiscroll.com)",
       "Bash(cat:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx prisma:*)",
+      "Bash(test:*)",
+      "Bash(openssl rand:*)",
+      "Bash(echo:*)",
+      "Bash(copy:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(npm run db:studio:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(timeout /t 3)"
     ],
     "deny": [],
     "ask": []

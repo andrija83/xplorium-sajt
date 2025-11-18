@@ -1,0 +1,178 @@
+// Xplorium Admin Panel Database Schema
+// This schema defines all models for the admin panel backend
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  password      String    // bcrypt hashed
+  role          Role      @default(USER)
+  image         String?
+  blocked       Boolean   @default(false)
+
+  // Relations
+  bookings      Booking[]
+  auditLogs     AuditLog[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+// ============================================
+// BOOKINGS
+// ============================================
+
+model Booking {
+  id          String        @id @default(cuid())
+
+  // User relationship (optional - allow guest bookings)
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Booking details
+  title       String
+  date        DateTime
+  time        String
+  type        BookingType
+  guestCount  Int
+
+  // Contact info (required even for logged-in users)
+  phone       String
+  email       String
+
+  // Special requests from user
+  specialRequests String?   @db.Text
+
+  // Status & notes
+  status      BookingStatus @default(PENDING)
+  adminNotes  String?       @db.Text
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+  @@index([date])
+  @@index([email])
+  @@index([userId])
+}
+
+// ============================================
+// EVENTS
+// ============================================
+
+model Event {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  title       String
+  description String      @db.Text
+
+  // Schedule
+  date        DateTime
+  time        String
+
+  // Media & categorization
+  image       String?
+  category    String
+
+  // Publishing
+  status      EventStatus @default(DRAFT)
+  order       Int         @default(0) // For drag-and-drop reordering
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([status])
+  @@index([date])
+  @@index([slug])
+}
+
+// ============================================
+// CONTENT MANAGEMENT
+// ============================================
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  section   String   @unique // 'cafe', 'sensory', 'igraonica'
+  content   Json     // Flexible JSON structure
+  updatedAt DateTime @updatedAt
+  updatedBy String?  // User ID who made the change
+
+  @@index([section])
+}
+
+// ============================================
+// AUDIT LOGGING
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+
+  // Who performed the action
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // What was done
+  action    String   // 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT'
+  entity    String   // 'Event', 'Booking', 'User', 'Content'
+  entityId  String
+  changes   Json?    // Detailed change log
+
+  // Metadata
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingType {
+  CAFE
+  SENSORY_ROOM
+  PLAYGROUND
+  PARTY
+  EVENT
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

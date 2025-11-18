@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono, Great_Vibes } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
+import { SessionProvider } from "next-auth/react"
+import { Toaster } from "sonner"
 import "./globals.css"
 
 // Optimized font loading with display swap and preload
@@ -82,9 +84,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable}`}>
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
+        <SessionProvider>
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+          <Toaster position="top-right" richColors closeButton />
+        </SessionProvider>
         <Analytics />
       </body>
     </html>
