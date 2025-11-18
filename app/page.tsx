@@ -16,6 +16,8 @@ import {
 import { PenStrokeReveal, TypewriterText, PlanetOrb } from "@/components/animations"
 import { Starfield } from "@/components/common/Starfield"
 import { AuthButtons } from "@/components/common/AuthButtons"
+import { SignInModal } from "@/components/auth/SignInModal"
+import { SignUpModal } from "@/components/auth/SignUpModal"
 import { IgraonicaSection } from "@/features/igraonica/IgraonicaSection"
 import { SensorySection } from "@/features/sensory/SensorySection"
 import { CafeSection } from "@/features/cafe/CafeSection"
@@ -91,6 +93,14 @@ export default function Landing() {
    * - "meni"/"zakup"/"radno"/"kontakt": Specific cafe submenu
    */
   const [cafeSubView, setCafeSubView] = useState<string | null>(null)
+
+  /**
+   * Modal state management following Mobiscroll pattern
+   * - isSignInOpen: Controls Sign In modal visibility
+   * - isSignUpOpen: Controls Sign Up modal visibility
+   */
+  const [isSignInOpen, setIsSignInOpen] = useState(false)
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false)
 
   // ========== PERFORMANCE & ACCESSIBILITY HOOKS ==========
 
@@ -197,21 +207,19 @@ export default function Landing() {
   }
 
   /**
-   * handleSignIn: Handler for Sign In button click
-   * TODO: Implement actual sign in logic
+   * handleSignIn: Opens the Sign In modal
+   * Following Mobiscroll pattern: setState(true)
    */
   const handleSignIn = () => {
-    console.log("Sign In clicked")
-    // TODO: Open sign in modal/redirect to auth page
+    setIsSignInOpen(true)
   }
 
   /**
-   * handleSignUp: Handler for Sign Up button click
-   * TODO: Implement actual sign up logic
+   * handleSignUp: Opens the Sign Up modal
+   * Following Mobiscroll pattern: setState(true)
    */
   const handleSignUp = () => {
-    console.log("Sign Up clicked")
-    // TODO: Open sign up modal/redirect to registration page
+    setIsSignUpOpen(true)
   }
 
   // ========== DATA STRUCTURES ==========
@@ -739,6 +747,19 @@ export default function Landing() {
           )}
         </div>
       </div>
+
+      {/* ========== AUTH MODALS ========== */}
+      {/* Following Mobiscroll pattern for popup management */}
+      <SignInModal
+        isOpen={isSignInOpen}
+        onClose={() => setIsSignInOpen(false)}
+        onSwitchToSignUp={() => setIsSignUpOpen(true)}
+      />
+      <SignUpModal
+        isOpen={isSignUpOpen}
+        onClose={() => setIsSignUpOpen(false)}
+        onSwitchToSignIn={() => setIsSignInOpen(true)}
+      />
     </div>
   )
 }

@@ -45,7 +45,7 @@ npm run test:unit:coverage  # Run with coverage report
 
 ### App Structure (Next.js App Router)
 - `app/layout.tsx` - Root layout with fonts (Geist, Geist Mono, Great Vibes) and Vercel Analytics
-- `app/page.tsx` - **Main landing page** (715 lines) - orchestrates all sections
+- `app/page.tsx` - **Main landing page** (765 lines) - orchestrates all sections
 - `app/globals.css` - Tailwind v4 configuration with CSS variables for theming (oklch color format)
 
 ### Feature-Based Organization
@@ -68,9 +68,15 @@ features/
 - `CharacterReveal.tsx` - Character-by-character slide-in
 - `HandwritingEffect.tsx` - Alternative handwriting animation
 
+**Auth Components** (`components/auth/`):
+- `SignInModal.tsx` - Sign in modal with email/password form
+- `SignUpModal.tsx` - Sign up modal with registration form
+- `AuthButtons.tsx` - Fixed position Sign In/Sign Up buttons in top-right corner
+
 **Common Components** (`components/common/`):
 - `Starfield.tsx` - Animated starfield background (100 stars)
 - `LoadingSpinner.tsx` - Loading indicator
+- `AuthButtons.tsx` - Authentication button group
 
 **UI Components** (`components/ui/`):
 Full shadcn/ui component library (50+ components) including forms, layout, feedback, and navigation primitives.
@@ -85,6 +91,22 @@ Full shadcn/ui component library (50+ components) including forms, layout, feedb
 
 - `lib/utils.ts` - Single utility: `cn()` for className merging (clsx + tailwind-merge)
 
+- `types/` - TypeScript type definitions organized by domain:
+  - `types/index.ts` - Main export point for all types
+  - `types/common.ts` - Shared types (TextAnimationProps, etc.)
+  - `types/navigation.ts` - Navigation-related types
+
+### Custom Hooks
+
+Located in `hooks/` directory:
+- `useReducedMotion.ts` - Detects prefers-reduced-motion setting
+- `useKeyboardNavigation.ts` - Keyboard navigation support (Escape to go back)
+- `useNavigation.ts` - Navigation state management helpers
+- `use-mobile.ts` - Mobile device detection
+- `use-toast.ts` - Toast notification system
+
+Export pattern: Import from `@/hooks` (barrel export via index.ts)
+
 ### State Management Architecture
 
 The main landing page (`app/page.tsx`) uses React state hooks:
@@ -98,8 +120,13 @@ The main landing page (`app/page.tsx`) uses React state hooks:
    - `sensorySubView` - Sensory subsection (null | "floor" | "wall" | "ceiling")
    - `cafeSubView` - Cafe subsection (null | "meni" | "zakup" | "radno" | "kontakt")
 
-3. **Performance**:
+3. **Modal State** (following Mobiscroll pattern):
+   - `isSignInOpen` - Controls Sign In modal visibility
+   - `isSignUpOpen` - Controls Sign Up modal visibility
+
+4. **Performance & Accessibility**:
    - `prefersReducedMotion` - Detects user's motion preference for accessibility
+   - `isMobile` - Device detection for particle count optimization
 
 ### Navigation Flow
 
@@ -112,6 +139,10 @@ Brand Reveal → Three Main Sections
     └── Igraonica → Direct Content (Typewriter Description)
 ```
 
+**Keyboard Navigation:**
+- Escape key goes back to previous view/menu
+- Implements progressive navigation (subview → section → main menu)
+
 ## TypeScript Configuration
 
 **Path Aliases:**
@@ -123,6 +154,7 @@ Usage: `import { cn } from "@/lib/utils"`
 **Important Settings:**
 - `jsx: "react-jsx"` - New JSX transform (no React import needed)
 - `moduleResolution: "bundler"` - Next.js 16 bundler resolution
+- `strict: true` - Strict type checking enabled
 
 ## Styling & Design System
 
@@ -200,6 +232,12 @@ viewport={{ once: true }}
 - Descriptions: `TypewriterText` or `HandwritingEffect`
 - Stagger delays: 0.05-0.20s per character depending on effect
 
+### Performance Optimization
+- Particle count reduced on mobile (25 vs 50 particles)
+- `useMemo` for particle configurations to prevent hydration mismatches
+- `prefersReducedMotion` respected throughout for accessibility
+- `willChange` CSS property used for animated elements
+
 ## Testing
 
 ### E2E Tests (Playwright)
@@ -211,6 +249,9 @@ viewport={{ once: true }}
 
 ### Unit Tests (Vitest)
 - Test files: `*.test.tsx` or `*.test.ts` co-located with components
+- Config: `vitest.config.ts`
+- Setup file: `vitest.setup.ts`
+- Environment: jsdom
 - Existing tests:
   - `components/common/LoadingSpinner.test.tsx`
   - `components/ErrorBoundary.test.tsx`
@@ -239,6 +280,7 @@ poweredByHeader: false  // Remove X-Powered-By header
 3. **Animations in `components/animations/`** - For shared animation patterns
 4. **Use constants** - Reference `constants/animations.ts` for timing/colors
 5. **Export from index** - Add to `components/animations/index.ts` for clean imports
+6. **Types in `types/`** - Add shared types to appropriate files in types directory
 
 ### Error Handling
 - All pages wrapped in `<ErrorBoundary>` (see `components/ErrorBoundary.tsx`)
@@ -249,6 +291,20 @@ poweredByHeader: false  // Remove X-Powered-By header
 - Use `whileInView` with `viewport={{ once: true }}` for scroll animations
 - Memoize expensive calculations with `useMemo`
 - Use `AnimatePresence mode="wait"` to prevent layout shift
+- Check `isMobile` for particle count optimization
+
+### Modal Pattern (Mobiscroll-Inspired)
+When creating modals, follow this pattern:
+```typescript
+const [isOpen, setIsOpen] = useState(false)
+
+// Modal component receives:
+<Modal
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+/>
+```
+See `SignInModal.tsx` and `SignUpModal.tsx` for reference implementations.
 
 ## Content Structure
 
