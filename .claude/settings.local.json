@@ -14,7 +14,8 @@
       "Bash(npm run build:*)",
       "Bash(git checkout:*)",
       "Bash(npm uninstall:*)",
-      "WebFetch(domain:demo.mobiscroll.com)"
+      "WebFetch(domain:demo.mobiscroll.com)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

@@ -27,472 +27,237 @@ npm start            # Start production server
 
 # Linting
 npm run lint         # Run ESLint
+
+# Testing
+npm test             # Run Playwright E2E tests
+npm run test:ui      # Run tests in Playwright UI mode
+npm run test:headed  # Run tests in headed browser mode
+npm run test:report  # Show test report
+
+# Unit Testing
+npm run test:unit           # Run Vitest in watch mode
+npm run test:unit:ui        # Run Vitest with UI
+npm run test:unit:run       # Run Vitest once
+npm run test:unit:coverage  # Run with coverage report
 ```
 
 ## Project Architecture
 
 ### App Structure (Next.js App Router)
 - `app/layout.tsx` - Root layout with fonts (Geist, Geist Mono, Great Vibes) and Vercel Analytics
-- `app/page.tsx` - **Main landing page** (1335 lines) - all site content and logic
-- `app/globals.css` - Tailwind v4 configuration with CSS variables for theming
+- `app/page.tsx` - **Main landing page** (715 lines) - orchestrates all sections
+- `app/globals.css` - Tailwind v4 configuration with CSS variables for theming (oklch color format)
 
-### Component Organization
-The landing page (`app/page.tsx`) is organized as a **single-file component** with:
+### Feature-Based Organization
+The application is organized by features, not components:
 
-1. **Animation Components** (lines 36-218):
-   - `HandwritingText` - Clip-path reveal animation
-   - `CharacterReveal` - Character-by-character slide-in
-   - `PenStrokeReveal` - **CURRENTLY USED** for navigation - pen stroke effect with rotation
-   - `TypewriterText` - **CURRENTLY USED** in Igraonica section
-   - `HandwritingEffect` - Alternative handwriting animation
-   - `PlanetOrb` - **CURRENTLY USED** in Sensory section - animated planet navigation
+```
+features/
+├── cafe/CafeSection.tsx           # Cafe section with glass frame submenu
+├── sensory/SensorySection.tsx     # Sensory room with planet orb navigation
+└── igraonica/IgraonicaSection.tsx # Playground section with typewriter effect
+```
 
-2. **Main State** (lines 384-421):
-   - `isAnimating` - Controls X logo animation
-   - `showBrand` - Shows/hides brand name + navigation
+### Reusable Components
+
+**Animation Components** (`components/animations/`):
+- `PenStrokeReveal.tsx` - **CURRENTLY USED** for navigation - pen stroke effect with rotation
+- `TypewriterText.tsx` - **CURRENTLY USED** in Igraonica section
+- `PlanetOrb.tsx` - **CURRENTLY USED** in Sensory section - animated planet navigation
+- `HandwritingText.tsx` - Clip-path reveal animation
+- `CharacterReveal.tsx` - Character-by-character slide-in
+- `HandwritingEffect.tsx` - Alternative handwriting animation
+
+**Common Components** (`components/common/`):
+- `Starfield.tsx` - Animated starfield background (100 stars)
+- `LoadingSpinner.tsx` - Loading indicator
+
+**UI Components** (`components/ui/`):
+Full shadcn/ui component library (50+ components) including forms, layout, feedback, and navigation primitives.
+
+### Configuration & Constants
+
+- `constants/animations.ts` - Centralized animation configuration:
+  - `ANIMATION_TIMING` - Durations, delays, counts
+  - `ANIMATION_EASING` - Easing curves ([0.22, 1, 0.36, 1] for smooth, [0.34, 1.56, 0.64, 1] for bouncy)
+  - `NEON_COLORS` - Section color schemes (Cafe: cyan, Sensory: purple, Igraonica: pink)
+  - `PARTICLE_COLORS` - Starburst and particle effects
+
+- `lib/utils.ts` - Single utility: `cn()` for className merging (clsx + tailwind-merge)
+
+### State Management Architecture
+
+The main landing page (`app/page.tsx`) uses React state hooks:
+
+1. **Navigation State**:
+   - `isAnimating` - Controls X logo animation (prevents multiple clicks)
+   - `showBrand` - Shows/hides brand name + navigation after X logo click
    - `activeView` - Tracks active section (null | "cafe" | "discover" | "igraonica")
+
+2. **Subsection State**:
    - `sensorySubView` - Sensory subsection (null | "floor" | "wall" | "ceiling")
    - `cafeSubView` - Cafe subsection (null | "meni" | "zakup" | "radno" | "kontakt")
 
-3. **Navigation Flow**:
-   - Start: X logo click → Brand reveal → Three main navigation items (Cafe, Sensory, Igraonica)
-   - Cafe: Glass frame menu with 4 neon-glowing options
-   - Sensory: 3 planet orbs (Floor/Wall/Ceiling) with glow effects
-   - Igraonica: Direct content view with typewriter description
+3. **Performance**:
+   - `prefersReducedMotion` - Detects user's motion preference for accessibility
 
-4. **UI Patterns**:
-   - **Starfield Background** - 100 animated stars (lines 573-662)
-   - **Neon Text Effects** - Multi-layer CSS text-shadow for navigation
-   - **Planet Orbs** - Gradient spheres with glow, texture overlays, floating animation
-   - **Glass Frame** - Border glow, corner screws, backdrop-blur
-   - **Scroll Galleries** - Snap-scroll sections with whileInView animations
+### Navigation Flow
 
-### UI Components (`components/ui/`)
-Full shadcn/ui component library (50+ components) including:
-- Forms: `input.tsx`, `button.tsx`, `select.tsx`, `checkbox.tsx`, `textarea.tsx`
-- Layout: `card.tsx`, `dialog.tsx`, `sheet.tsx`, `sidebar.tsx`, `tabs.tsx`
-- Feedback: `toast.tsx`, `alert.tsx`, `progress.tsx`, `skeleton.tsx`
-- Navigation: `navigation-menu.tsx`, `breadcrumb.tsx`, `menubar.tsx`
+```
+X Logo Click
+    ↓
+Brand Reveal → Three Main Sections
+    ├── Cafe → Glass Frame Menu (4 neon options)
+    ├── Sensory → 3 Planet Orbs (Floor/Wall/Ceiling)
+    └── Igraonica → Direct Content (Typewriter Description)
+```
 
-### Utilities
-- `lib/utils.ts` - Single function `cn()` for className merging (clsx + tailwind-merge)
-- `components/theme-provider.tsx` - next-themes integration
+## TypeScript Configuration
 
-## Key Configuration
-
-### TypeScript Paths
+**Path Aliases:**
 ```typescript
 "@/*": ["./*"]  // Root-level imports
 ```
 Usage: `import { cn } from "@/lib/utils"`
 
+**Important Settings:**
+- `jsx: "react-jsx"` - New JSX transform (no React import needed)
+- `moduleResolution: "bundler"` - Next.js 16 bundler resolution
+
+## Styling & Design System
+
 ### Tailwind v4 Setup
 - PostCSS plugin: `@tailwindcss/postcss`
-- Custom CSS variables for color system (oklch format)
-- Great Vibes font variable for handwriting text: `font-['Great_Vibes']`
+- Custom CSS variables in oklch format for better color manipulation
+- Great Vibes font for handwriting text: `font-['Great_Vibes']`
 - Custom dark variant: `@custom-variant dark (&:is(.dark *))`
 
-### Next.js Config
-```javascript
-typescript: { ignoreBuildErrors: true }  // TypeScript errors don't block builds
-images: { unoptimized: true }            // No image optimization
+### Common UI Patterns
+
+**Neon Text Effects:**
+Multi-layer CSS text-shadow for glowing navigation items:
+```css
+textShadow: "0 0 10px #22d3ee, 0 0 20px #22d3ee, 0 0 30px #22d3ee, 0 0 40px #06b6d4"
 ```
+
+**Planet Orbs:**
+- Gradient spheres with glow and texture overlays
+- Floating animation with random duration (3-5s)
+- WhileHover scale and glow increase
+
+**Glass Frame UI:**
+- Border glow with corner screws
+- `backdrop-blur-sm` with `bg-black/10` or `bg-white/5`
+- Neon-colored borders matching section theme
+
+**Starfield Background:**
+- 100 animated stars with random positions and speeds
+- Continuous vertical scrolling effect
+
+### Responsive Breakpoints
+- `sm:` 640px
+- `md:` 768px
+- `lg:` 1024px
+- `xl:` 1280px
 
 ## Animation Guidelines
 
-When working with animations in this project:
+### Framer Motion Patterns Used
 
-1. **Framer Motion Patterns Used**:
-   - `initial/animate/exit` - Entry/exit states
-   - `whileHover/whileTap` - Interactive states
-   - `whileInView` - Scroll-triggered animations
-   - `AnimatePresence mode="wait"` - Sequential page transitions
+1. **Entry/Exit Animations:**
+```typescript
+initial={{ opacity: 0, y: 20 }}
+animate={{ opacity: 1, y: 0 }}
+exit={{ opacity: 0, y: -20 }}
+```
 
-2. **Common Transition Curves**:
-   - `[0.22, 1, 0.36, 1]` - Smooth ease (most common)
-   - `[0.34, 1.56, 0.64, 1]` - Bouncy ease (pen strokes)
-   - `easeInOut` - Standard easing
+2. **Interactive States:**
+```typescript
+whileHover={{ scale: 1.05 }}
+whileTap={{ scale: 0.95 }}
+```
 
-3. **Text Animations**:
-   - Navigation uses `PenStrokeReveal` (0.2s delay between chars)
-   - Descriptions use `TypewriterText` or `HandwritingEffect`
-   - Stagger delays: 0.05-0.20s per character depending on effect
+3. **Scroll-Triggered:**
+```typescript
+whileInView={{ opacity: 1, y: 0 }}
+viewport={{ once: true }}
+```
 
-## Styling Conventions
+4. **Sequential Transitions:**
+```typescript
+<AnimatePresence mode="wait">
+  {/* Content */}
+</AnimatePresence>
+```
 
-- **Responsive breakpoints**: `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px)
-- **Spacing**: Use Tailwind spacing scale (4px increments)
-- **Colors**:
-  - Neon cyan (`#22d3ee`) for Cafe
-  - Neon purple (`#a855f7`) for Sensory
-  - Neon pink (`#ec4899`) for Igraonica
-- **Backdrop effects**: `backdrop-blur-sm`, `bg-black/10`, `bg-white/5`
-- **Text shadows**: Multi-layer shadows for glow effects
+### Common Transition Timings
+- Smooth ease: `[0.22, 1, 0.36, 1]` (most common)
+- Bouncy ease: `[0.34, 1.56, 0.64, 1]` (pen strokes, playful UI)
+- Standard: `"easeInOut"`, `"easeOut"`
+
+### Text Animation Guidelines
+- Navigation: `PenStrokeReveal` (0.2s delay between characters)
+- Descriptions: `TypewriterText` or `HandwritingEffect`
+- Stagger delays: 0.05-0.20s per character depending on effect
+
+## Testing
+
+### E2E Tests (Playwright)
+- Test directory: `./tests/`
+- Config: `playwright.config.ts`
+- Base URL: `http://localhost:3000`
+- Browser: Chromium (Desktop Chrome)
+- Features: Trace on retry, screenshots on failure
+
+### Unit Tests (Vitest)
+- Test files: `*.test.tsx` or `*.test.ts` co-located with components
+- Existing tests:
+  - `components/common/LoadingSpinner.test.tsx`
+  - `components/ErrorBoundary.test.tsx`
+  - `hooks/useReducedMotion.test.ts`
+
+## Next.js Configuration
+
+Key settings in `next.config.mjs`:
+```javascript
+typescript: { ignoreBuildErrors: false }  // Enforce type safety
+images: {
+  formats: ['image/avif', 'image/webp'],
+  minimumCacheTTL: 60
+}
+compress: true
+reactStrictMode: true
+poweredByHeader: false  // Remove X-Powered-By header
+```
+
+## Component Development Guidelines
+
+### When Creating New Components
+
+1. **Co-locate by feature** - Place in `features/{section}/` if section-specific
+2. **Reusable in `components/`** - Only if used across multiple features
+3. **Animations in `components/animations/`** - For shared animation patterns
+4. **Use constants** - Reference `constants/animations.ts` for timing/colors
+5. **Export from index** - Add to `components/animations/index.ts` for clean imports
+
+### Error Handling
+- All pages wrapped in `<ErrorBoundary>` (see `components/ErrorBoundary.tsx`)
+- Graceful fallback UI with error message and reset button
+
+### Performance Considerations
+- Respect `prefersReducedMotion` for accessibility
+- Use `whileInView` with `viewport={{ once: true }}` for scroll animations
+- Memoize expensive calculations with `useMemo`
+- Use `AnimatePresence mode="wait"` to prevent layout shift
 
 ## Content Structure
 
-The site has **placeholder content** ready to be replaced:
-- Gallery images use `/placeholder.svg?query=...` pattern
-- Contact info has placeholder text (address, phone, email)
-- Google Maps embed is configured for a specific location
+Current content uses **placeholder patterns**:
+- Gallery images: `/placeholder.svg?query=...`
+- Contact info: Placeholder text (address, phone, email)
+- Google Maps: Configured for specific location
 
 When adding real content:
-1. Replace placeholder images in `public/` directory
-2. Update contact information in Cafe > Kontakt section (lines 950-1001)
-3. Consider adding actual descriptions for each section
-
-
-## Visual Development
-
-### Design Principles
-- Comprehensive design checklist in `/context/design-principles.md`
-
-## Agent Coordination
-
-This project uses Claude Code Sub-Agents for specialized tasks. Agents are located in `~/.claude/claude-code-sub-agents/agents/`.
-
-### Available Specialized Agents
-
-**Development Agents:**
-- `frontend-developer` - React/Next.js/TypeScript specialist (PRIMARY for this project)
-- `react-pro` - Advanced React patterns and hooks
-- `nextjs-pro` - Next.js App Router and server components
-- `typescript-pro` - TypeScript type safety and patterns
-- `ui-designer` - UI/UX implementation and responsive design
-- `dx-optimizer` - Developer experience improvements
-
-**Quality & Testing:**
-- `code-reviewer` - Code quality and best practices review
-- `debugger` - Bug investigation and resolution
-- `qa-expert` - Testing strategy and quality assurance
-- `test-automator` - Test automation (Jest, Playwright)
-
-**Infrastructure:**
-- `deployment-engineer` - Vercel deployment and CI/CD
-- `performance-engineer` - Performance optimization
-
-**Specialization:**
-- `documentation-expert` - Technical documentation
-- `api-documenter` - API documentation
-
-### Agent Usage Guidelines
-
-**When to Use Agents:**
-1. **Frontend Development** - Invoke `frontend-developer` or `react-pro` for:
-   - New animation components
-   - Complex state management
-   - Performance optimization of Framer Motion
-   - TypeScript type improvements
-
-2. **Code Review** - Invoke `code-reviewer` before major commits for:
-   - Animation performance review
-   - React best practices validation
-   - TypeScript type safety checks
-
-3. **Bug Fixes** - Invoke `debugger` for:
-   - Animation glitches
-   - State management issues
-   - Responsive design problems
-
-4. **Performance** - Invoke `performance-engineer` for:
-   - Bundle size optimization
-   - Animation performance tuning
-   - Lazy loading strategies
-
-**Project-Specific Context for Agents:**
-- Single-file architecture in `app/page.tsx` (1000+ lines)
-- Heavy use of Framer Motion for animations
-- Three main sections: Cafe (cyan), Sensory (purple), Igraonica (pink)
-- Neon glow effects and glassmorphism UI patterns
-- Mobile-first responsive design required
-
-### Agent Invocation Examples
-
-```
-# Explicit agent invocation
-"Use frontend-developer to optimize the starburst explosion animation"
-"Use code-reviewer to review the liquid morph text effect"
-"Use performance-engineer to analyze bundle size"
-
-# Multi-agent coordination
-"Use frontend-developer and react-pro to refactor the navigation state management"
-```
-
-**Note**: Agent coordination is managed by `agent-organizer` for complex multi-domain tasks
-
-
-
-
-
-
-**ODAVDE SAM DODAO**
-
-
-
-
-
-# Full Stack Development Guidelines
-
-## Philosophy
-
-### Core Beliefs
-
-- **Iterative delivery over massive releases** – Ship small, working slices of functionality from database to UI.
-- **Understand before you code** – Explore both front-end and back-end patterns in the existing codebase.
-- **Pragmatism over ideology** – Choose tools and architectures that serve the project’s goals, not personal preference.
-- **Readable code over clever hacks** – Optimize for the next developer reading your code, not for ego.
-
-### Simplicity Means
-
-- One clear responsibility per module, class, or API endpoint.
-- Avoid premature frameworks, libraries, or abstractions.
-- While latest and new technology is considerable, stable and efficient should be prioritized.
-- If your integration flow diagram needs an explanation longer than 3 sentences, it’s too complex.
-
----
-
-## Process
-
-### 1. Planning & Staging
-
-Break work into 3–5 cross-stack stages (front-end, back-end, database, integration). Document in `IMPLEMENTATION_PLAN.md`:
-
-```markdown
-## Stage N: [Name]
-**Goal**: [Specific deliverable across the stack]  
-**Success Criteria**: [User story + passing tests]  
-**Tests**: [Unit, integration, E2E coverage]  
-**Status**: [Not Started|In Progress|Complete]
-```
-
-- Update status after each merge.
-- Delete the plan file after all stages are verified in staging and production.
-
-### 2. Implementation Flow
-
-- **Understand** – Identify existing patterns for UI, API, DB, and CI/CD.
-- **Test First** – For back-end, write API integration tests; for front-end, write component/unit tests.
-- **Implement Minimal** – Just enough code to pass all tests.
-- **Refactor Safely** – Clean code with test coverage at 60%+ for changed areas.
-- **Commit Clearly** – Reference plan stage, include scope (front-end, back-end, DB).
-
-### 3. When Stuck (Max 3 Attempts)
-
-- **Document Failures** – Include console logs, stack traces, API responses, and network traces.
-- **Research Alternatives** – Compare similar solutions across different tech stacks.
-- **Check Architecture Fit** – Could this be a UI-only change? A DB query rewrite? An API contract change?
-- **Try a Different Layer** – Sometimes a front-end bug is a back-end response problem.
-
----
-
-## Technical Standards
-
-### Architecture
-
-- Composition over inheritance for both UI components and service classes.
-- Interfaces/contracts over direct calls – Use API specs and type definitions.
-- Explicit data flow – Document request/response shapes in OpenAPI/Swagger.
-- TDD when possible – Unit tests + integration tests for each feature slice.
-
-### Code Quality
-
-**Every commit must:**
-
-- Pass linting, type checks, and formatting.
-- Pass all unit, integration, and E2E tests.
-- Include tests for new logic, both UI and API.
-
-**Before committing:**
-
-- Run formatter, linter, and security scans.
-- Ensure commit messages explain *why*, not just *what*.
-
-### Error Handling
-
-- Fail fast with descriptive UI error messages and meaningful API status codes.
-- Include correlation IDs in logs for tracing full-stack requests.
-- Handle expected errors at the right layer; avoid silent catch blocks.
-
-### Decision Framework
-
-When multiple solutions exist, prioritize in this order:
-
-1. **Testability** – Can UI and API behavior be tested in isolation?
-2. **Readability** – Will another dev understand this in 6 months?
-3. **Consistency** – Matches existing API/UI patterns?
-4. **Simplicity** – Is this the least complex full-stack solution?
-5. **Reversibility** – Can we swap frameworks/services easily?
-
-## Project Integration
-
-### Learning the Codebase
-
-- Identify 3 similar features and trace the flow: UI → API → DB.
-- Use the same frameworks, libraries, and test utilities.
-
-### Tooling
-
-- Use the project’s existing CI/CD, build pipeline, and testing stack.
-- No new tools unless approved via RFC with a migration plan.
-
-## Quality Gates
-
-### Definition of Done
-
-- Tests pass at all levels (unit, integration, E2E).
-- Code meets UI and API style guides.
-- No console errors or warnings.
-- No unhandled API errors in the UI.
-- Commit messages follow semantic versioning rules.
-
-### Test Guidelines
-
-- **For UI:** Test user interactions and visible changes, not implementation details.
-- **For APIs:** Test responses, status codes, and side effects.
-- Keep tests deterministic and fast; use mocks/fakes where possible.
-
-## Important Reminders
-
-**NEVER:**
-
-- Merge failing builds.
-- Skip tests locally or in CI.
-- Change API contracts without updating docs and front-end code.
-
-**ALWAYS:**
-
-- Ship vertical slices of functionality.
-- Keep front-end, back-end, and database in sync.
-- Update API docs when endpoints change.
-- Log meaningful errors for both developers and support teams.
-
----
-
-# Agent Dispatch Protocol (Follow once the Agent-Organizer sub agent being called or used)
-
-## Philosophy
-
-### Core Belief: Delegate, Don't Solve
-
-- **Your purpose is delegation, not execution.** You are the central command that receives a request and immediately hands it off to a specialized mission commander (`agent-organizer`).
-- **Structure over speed.** This protocol ensures every complex task is handled with a structured, robust, and expert-driven approach, leveraging the full capabilities of specialized sub-agents.
-- **Clarity of responsibility.** By dispatching tasks, you ensure the right virtual agent with the correct skills is assigned to the job, leading to a higher quality outcome.
-
-### Mental Model: The Workflow You Initiate
-
-Understanding your role is critical. You are the starting point for a larger, more sophisticated process.
-
-```mermaid
-graph TD
-    A[User provides prompt] --> B{You - The Dispatcher};
-    B --> C{Is the request trivial?};
-    C -- YES --> E[Answer directly];
-    C -- NO --> D[**Invoke agent_organizer**];
-    D --> F[Agent Organizer analyzes project & prompt];
-    F --> G[Agent Organizer assembles agent team & defines workflow];
-    G --> H[Sub-agents execute tasks in sequence/parallel];
-    H --> I[Agent Organizer synthesizes results];
-    I --> J[Final output is returned to You];
-    J --> K[You present the final output to the User];
-
-    style B fill:#e3f2fd,stroke:#333,stroke-width:2px
-    style D fill:#dcedc8,stroke:#333,stroke-width:2px
-```
-
----
-
-## Process
-
-### 1. Triage the Request
-
-Analyze the user's prompt to determine if it requires delegation.
-
-**Delegation is MANDATORY if the prompt involves:**
-
-- **Code Generation:** Writing new files, classes, functions, or significant blocks of code.
-- **Refactoring:** Modifying or restructuring existing code.
-- **Debugging:** Investigating and fixing bugs beyond simple syntax errors.
-- **Analysis & Explanation:** Being asked to "understand," "analyze," or "explain" a project, file, or codebase.
-- **Adding Features:** Implementing any new functionality.
-- **Writing Tests:** Creating unit, integration, or end-to-end tests.
-- **Documentation:** Generating or updating API docs, READMEs, or code comments.
-- **Strategy & Planning:** Requests for roadmaps, tech-debt evaluation, or architectural suggestions.
-
-### 2. Execute the Dispatch
-
-If the request meets the criteria above, your sole action is to call the `agent_organizer` tool with the user's prompt.
-
-### 3. Await Completion
-
-Once you have invoked the `agent-organizer`, your role becomes passive. You must wait for the `agent-organizer` to complete its entire workflow and return a final, consolidated output.
-
----
-
-## Follow-Up Question Handling Protocol
-
-When users ask follow-up questions, apply intelligent escalation based on complexity to avoid unnecessary overhead while maintaining quality.
-
-### Complexity Assessment Framework
-
-- **Simple Follow-ups (Handle Directly):**
-  - Clarification questions about previous work ("What does this function do?").
-  - Minor modifications ("Can you fix this typo?").
-  - Single-step tasks taking less than 5 minutes.
-
-- **Moderate Follow-ups (Use Previously Identified Agents):**
-  - Building on existing work within the same domain ("Add error handling to this API").
-  - Extending or refining previous deliverables ("Make the UI more responsive").
-  - Tasks requiring 1-3 of the previously selected agents.
-
-- **Complex Follow-ups (Re-run `agent-organizer`):**
-  - New requirements spanning multiple domains ("Now add authentication and deploy to AWS").
-  - Significant scope changes ("Actually, let's make this a mobile app instead").
-  - Tasks requiring different expertise than previously identified.
-
-### Follow-Up Decision Tree
-
-```mermaid
-graph TD
-    A[User Follow-Up Question] --> B{Assess Complexity}
-    B --> C{New domain or major scope change?}
-    C -- YES --> D[Re-run agent-organizer]
-    C -- NO --> E{Can previous agents handle this?}
-    E -- NO --> G{Simple clarification or minor task?}
-    G -- NO --> D
-    G -- YES --> H[Handle directly without sub-agents]
-    E -- YES ---> F[Use subset of previous team<br/>Max 3 agents]
-
-    style D fill:#dcedc8,stroke:#333,stroke-width:2px
-    style F fill:#fff3e0,stroke:#333,stroke-width:2px  
-    style H fill:#e8f5e8,stroke:#333,stroke-width:2px
-```
-
----
-
-## Important Reminders
-
-**NEVER:**
-
-- Attempt to solve a complex project or coding request on your own.
-- Interfere with the `agent-organizer`'s process or try to "help" the sub-agents.
-- Modify or add commentary to the final output returned by the `agent-organizer`.
-
-**ALWAYS:**
-
-- Delegate to the `agent-organizer` if a prompt is non-trivial or if you are in doubt.
-- Present the final, complete output from the `agent-organizer` directly to the user.
-- Use the Follow-Up Decision Tree to handle subsequent user questions efficiently.
-
----
-
-### Example Scenario
-
-**User Prompt:** "This project is a mess. Can you analyze my Express.js API, create documentation for it, and refactor the `userController.js` file to be more efficient?"
-
-**Your Internal Monologue and Action:**
-
-1. **Analyze Prompt:** The user is asking for analysis, documentation creation, and code refactoring.
-2. **Check Delegation Criteria:** This hits at least three mandatory triggers. This is a non-trivial task.
-3. **Apply Core Philosophy:** My role is to dispatch, not to solve. I must invoke the `agent-organizer`.
-4. **Execute Dispatch:** Run the `agent_organizer` sub-agent with the user's prompt.
-5. **Await Completion:** My job is now done until the organizer returns the complete result. I will then present that result to the user.
+1. Place images in `public/` directory
+2. Update contact information in Cafe > Kontakt section
+3. Replace placeholder descriptions with actual venue details

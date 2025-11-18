@@ -15,6 +15,7 @@ import {
 } from "@/constants/animations"
 import { PenStrokeReveal, TypewriterText, PlanetOrb } from "@/components/animations"
 import { Starfield } from "@/components/common/Starfield"
+import { AuthButtons } from "@/components/common/AuthButtons"
 import { IgraonicaSection } from "@/features/igraonica/IgraonicaSection"
 import { SensorySection } from "@/features/sensory/SensorySection"
 import { CafeSection } from "@/features/cafe/CafeSection"
@@ -195,6 +196,24 @@ export default function Landing() {
     }
   }
 
+  /**
+   * handleSignIn: Handler for Sign In button click
+   * TODO: Implement actual sign in logic
+   */
+  const handleSignIn = () => {
+    console.log("Sign In clicked")
+    // TODO: Open sign in modal/redirect to auth page
+  }
+
+  /**
+   * handleSignUp: Handler for Sign Up button click
+   * TODO: Implement actual sign up logic
+   */
+  const handleSignUp = () => {
+    console.log("Sign Up clicked")
+    // TODO: Open sign up modal/redirect to registration page
+  }
+
   // ========== DATA STRUCTURES ==========
 
   /**
@@ -322,6 +341,16 @@ export default function Landing() {
       {/* ========== STARFIELD BACKGROUND ========== */}
       {/* Fixed layer behind all content with 100+ animated stars */}
       <Starfield activeView={activeView} />
+
+      {/* ========== AUTH BUTTONS ========== */}
+      {/* Fixed position in top-right corner, always visible */}
+      {/* z-50: Same level as back button to stay above all content */}
+      <div className="fixed top-6 right-6 sm:top-8 sm:right-8 z-50">
+        <AuthButtons
+          onSignIn={handleSignIn}
+          onSignUp={handleSignUp}
+        />
+      </div>
 
       {/* ========== BACK BUTTON ========== */}
       {/* Only shows when inside a section (activeView is not null) */}
