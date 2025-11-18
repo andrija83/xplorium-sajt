@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import type { SizeVariant, ColorVariant } from '@/types'
 
@@ -29,6 +30,8 @@ interface PlanetOrbProps {
  * - Floating animation (y: 0→-10→0)
  * - Optional image mode (overrides neon effect)
  *
+ * Optimized with React.memo to prevent unnecessary re-renders
+ *
  * @param label - Display text in the center
  * @param color - Color scheme (yellow, orange, green, blue, purple, pink)
  * @param size - Size variant (sm, md, lg)
@@ -37,7 +40,7 @@ interface PlanetOrbProps {
  * @param onClick - Click handler
  * @param image - Optional image URL (disables neon effect)
  */
-export const PlanetOrb = ({
+export const PlanetOrb = memo(({
   label,
   color,
   size = "md",
@@ -194,4 +197,6 @@ export const PlanetOrb = ({
       </motion.div>
     </motion.button>
   )
-}
+})
+
+PlanetOrb.displayName = 'PlanetOrb'

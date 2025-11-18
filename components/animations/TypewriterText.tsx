@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 
 interface TypewriterTextProps {
   text: string
@@ -18,11 +18,13 @@ interface TypewriterTextProps {
  * - speed=30: 30ms between characters (faster = lower number)
  * - Returns plain span with progressively revealed text
  *
+ * Optimized with React.memo to prevent unnecessary re-renders
+ *
  * @param text - The text content to animate
  * @param delay - Animation delay in seconds (default: 0)
  * @param speed - Milliseconds between each character (default: 30)
  */
-export const TypewriterText = ({ text, delay = 0, speed = 30 }: TypewriterTextProps) => {
+export const TypewriterText = memo(({ text, delay = 0, speed = 30 }: TypewriterTextProps) => {
   const [displayedText, setDisplayedText] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [hasStarted, setHasStarted] = useState(false)
@@ -49,4 +51,6 @@ export const TypewriterText = ({ text, delay = 0, speed = 30 }: TypewriterTextPr
   }, [currentIndex, hasStarted, text, speed])
 
   return <span>{displayedText}</span>
-}
+})
+
+TypewriterText.displayName = 'TypewriterText'

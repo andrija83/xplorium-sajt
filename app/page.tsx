@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback, lazy, Suspense } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, ChevronDown } from "lucide-react"
 import {
@@ -16,11 +16,14 @@ import {
 import { PenStrokeReveal, TypewriterText, PlanetOrb } from "@/components/animations"
 import { Starfield } from "@/components/common/Starfield"
 import { AuthButtons } from "@/components/common/AuthButtons"
-import { SignInModal } from "@/components/auth/SignInModal"
-import { SignUpModal } from "@/components/auth/SignUpModal"
-import { IgraonicaSection } from "@/features/igraonica/IgraonicaSection"
-import { SensorySection } from "@/features/sensory/SensorySection"
-import { CafeSection } from "@/features/cafe/CafeSection"
+import { LoadingSpinner } from "@/components/common/LoadingSpinner"
+
+// Dynamic imports for heavy feature components (code-splitting)
+const SignInModal = lazy(() => import("@/components/auth/SignInModal").then(m => ({ default: m.SignInModal })))
+const SignUpModal = lazy(() => import("@/components/auth/SignUpModal").then(m => ({ default: m.SignUpModal })))
+const IgraonicaSection = lazy(() => import("@/features/igraonica/IgraonicaSection").then(m => ({ default: m.IgraonicaSection })))
+const SensorySection = lazy(() => import("@/features/sensory/SensorySection").then(m => ({ default: m.SensorySection })))
+const CafeSection = lazy(() => import("@/features/cafe/CafeSection").then(m => ({ default: m.CafeSection })))
 
 /**
  * XPLORIUM LANDING PAGE
@@ -134,7 +137,7 @@ export default function Landing() {
     }
   }, [])
 
-  // ========== EVENT HANDLERS ==========
+  // ========== EVENT HANDLERS (MEMOIZED) ==========
 
   /**
    * handleXClick: Handles initial X logo click
@@ -142,11 +145,11 @@ export default function Landing() {
    * - Triggers shrink/rotate animation
    * - Shows brand after 800ms delay
    */
-  const handleXClick = () => {
+  const handleXClick = useCallback(() => {
     if (!isAnimating) {
       setIsAnimating(true)
     }
-  }
+  }, [isAnimating])
 
   // Handle brand reveal with proper cleanup
   useEffect(() => {
@@ -158,6 +161,22 @@ export default function Landing() {
 
     return () => clearTimeout(timer)
   }, [isAnimating])
+
+  /**
+   * goBackToMenu: Handles back button navigation
+   * - If in subview, goes back to section menu
+   * - If in section, goes back to main menu
+   * - Creates breadcrumb-like navigation
+   */
+  const goBackToMenu = useCallback(() => {
+    if (sensorySubView) {
+      setSensorySubView(null)
+    } else if (cafeSubView) {
+      setCafeSubView(null)
+    } else {
+      setActiveView(null)
+    }
+  }, [sensorySubView, cafeSubView])
 
   /**
    * Keyboard navigation support
@@ -175,7 +194,7 @@ export default function Landing() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeView, sensorySubView, cafeSubView])
+  }, [activeView, goBackToMenu])
 
   /**
    * navigateToSection: Navigates to main section
@@ -183,63 +202,47 @@ export default function Landing() {
    * - Resets any active subviews to null
    * @param section - The section identifier
    */
-  const navigateToSection = (section: string) => {
+  const navigateToSection = useCallback((section: string) => {
     setActiveView(section)
     setSensorySubView(null)
     setCafeSubView(null)
-  }
-
-  /**
-   * goBackToMenu: Handles back button navigation
-   * - If in subview, goes back to section menu
-   * - If in section, goes back to main menu
-   * - Creates breadcrumb-like navigation
-   */
-  const goBackToMenu = () => {
-    if (sensorySubView) {
-      setSensorySubView(null)
-    } else if (cafeSubView) {
-      setCafeSubView(null)
-    } else {
-      setActiveView(null)
-    }
-  }
+  }, [])
 
   /**
    * handleSignIn: Opens the Sign In modal
    * Following Mobiscroll pattern: setState(true)
    */
-  const handleSignIn = () => {
+  const handleSignIn = useCallback(() => {
     setIsSignInOpen(true)
-  }
+  }, [])
 
   /**
    * handleSignUp: Opens the Sign Up modal
    * Following Mobiscroll pattern: setState(true)
    */
-  const handleSignUp = () => {
+  const handleSignUp = useCallback(() => {
     setIsSignUpOpen(true)
-  }
+  }, [])
 
   /**
    * handleSwitchToSignUp: Switches from Sign In to Sign Up
    * Ensures only one modal is open at a time
    */
-  const handleSwitchToSignUp = () => {
+  const handleSwitchToSignUp = useCallback(() => {
     setIsSignInOpen(false)
     setIsSignUpOpen(true)
-  }
+  }, [])
 
   /**
    * handleSwitchToSignIn: Switches from Sign Up to Sign In
    * Ensures only one modal is open at a time
    */
-  const handleSwitchToSignIn = () => {
+  const handleSwitchToSignIn = useCallback(() => {
     setIsSignUpOpen(false)
     setIsSignInOpen(true)
-  }
+  }, [])
 
-  // ========== DATA STRUCTURES ==========
+  // ========== DATA STRUCTURES (MEMOIZED) ==========
 
   /**
    * tabs: Main navigation menu items with NEON GLOW EFFECTS
@@ -248,8 +251,9 @@ export default function Landing() {
    * - Sensory: Right side (30% from top)
    * - Igraonica: Bottom center (8% from bottom)
    * Each has PenStrokeReveal animation on initial load
+   * Memoized to prevent recreation on every render
    */
-  const tabs = [
+  const tabs = useMemo(() => [
     {
       label: "Cafe",
       section: "cafe",
@@ -265,44 +269,7 @@ export default function Landing() {
       section: "igraonica",
       position: { bottom: "4%", left: "50%", transform: "translateX(-50%)" },
     },
-  ]
-
-
-  /**
-   * cafePlanets: Planet orb navigation for Cafe section (NOT CURRENTLY USED)
-   * Alternative planet-based navigation (replaced with glass frame menu)
-   * Four orbs with different colors and positions
-   */
-  const cafePlanets = [
-    {
-      label: "Meni",
-      section: "meni",
-      color: "blue",
-      size: "md" as const,
-      position: { top: "15%", left: "20%", transform: "translate(-50%, -50%)" },
-    },
-    {
-      label: "Zakup prostora",
-      section: "zakup",
-      color: "pink",
-      size: "lg" as const,
-      position: { top: "45%", right: "15%", transform: "translate(0%, -50%)" },
-    },
-    {
-      label: "Radno vreme",
-      section: "radno",
-      color: "yellow",
-      size: "md" as const,
-      position: { bottom: "20%", left: "25%", transform: "translate(-50%, 0%)" },
-    },
-    {
-      label: "Kontakt",
-      section: "kontakt",
-      color: "green",
-      size: "sm" as const,
-      position: { top: "30%", left: "50%", transform: "translate(-50%, -50%)" },
-    },
-  ]
+  ], [])
 
   /**
    * starburstParticles: Memoized starburst explosion particles
@@ -766,27 +733,29 @@ export default function Landing() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               >
-                {/* ========== CAFE SECTION ========== */}
-                {/* Glass frame menu with neon-glowing submenu items */}
-                {activeView === "cafe" && (
-                  <CafeSection
-                    cafeSubView={cafeSubView}
-                    setCafeSubView={setCafeSubView}
-                  />
-                )}
+                <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><LoadingSpinner /></div>}>
+                  {/* ========== CAFE SECTION ========== */}
+                  {/* Glass frame menu with neon-glowing submenu items */}
+                  {activeView === "cafe" && (
+                    <CafeSection
+                      cafeSubView={cafeSubView}
+                      setCafeSubView={setCafeSubView}
+                    />
+                  )}
 
-                {/* ========== SENSORY SECTION ========== */}
-                {/* Planet orb navigation with Floor/Wall/Ceiling options */}
-                {activeView === "discover" && (
-                  <SensorySection
-                    sensorySubView={sensorySubView}
-                    setSensorySubView={setSensorySubView}
-                  />
-                )}
+                  {/* ========== SENSORY SECTION ========== */}
+                  {/* Planet orb navigation with Floor/Wall/Ceiling options */}
+                  {activeView === "discover" && (
+                    <SensorySection
+                      sensorySubView={sensorySubView}
+                      setSensorySubView={setSensorySubView}
+                    />
+                  )}
 
-                {/* ========== IGRAONICA SECTION ========== */}
-                {/* Interactive playground section */}
-                {activeView === "igraonica" && <IgraonicaSection />}
+                  {/* ========== IGRAONICA SECTION ========== */}
+                  {/* Interactive playground section */}
+                  {activeView === "igraonica" && <IgraonicaSection />}
+                </Suspense>
               </motion.div>
             )}
           </AnimatePresence>
@@ -817,16 +786,22 @@ export default function Landing() {
 
       {/* ========== AUTH MODALS ========== */}
       {/* Following Mobiscroll pattern for popup management */}
-      <SignInModal
-        isOpen={isSignInOpen}
-        onClose={() => setIsSignInOpen(false)}
-        onSwitchToSignUp={handleSwitchToSignUp}
-      />
-      <SignUpModal
-        isOpen={isSignUpOpen}
-        onClose={() => setIsSignUpOpen(false)}
-        onSwitchToSignIn={handleSwitchToSignIn}
-      />
+      <Suspense fallback={null}>
+        {isSignInOpen && (
+          <SignInModal
+            isOpen={isSignInOpen}
+            onClose={() => setIsSignInOpen(false)}
+            onSwitchToSignUp={handleSwitchToSignUp}
+          />
+        )}
+        {isSignUpOpen && (
+          <SignUpModal
+            isOpen={isSignUpOpen}
+            onClose={() => setIsSignUpOpen(false)}
+            onSwitchToSignIn={handleSwitchToSignIn}
+          />
+        )}
+      </Suspense>
     </div>
   )
 }

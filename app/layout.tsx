@@ -5,11 +5,26 @@ import { Analytics } from "@vercel/analytics/next"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import "./globals.css"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+// Optimized font loading with display swap and preload
+const _geist = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,
+  variable: "--font-geist",
+})
+
+const _geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  preload: false, // Less critical, load after main font
+  variable: "--font-geist-mono",
+})
+
 const _greatVibes = Great_Vibes({
   weight: "400",
   subsets: ["latin"],
+  display: "swap",
+  preload: true, // Used heavily in navigation
   variable: "--font-great-vibes",
 })
 
@@ -66,7 +81,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={`font-sans antialiased ${_greatVibes.variable}`}>
+      <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable}`}>
         <ErrorBoundary>
           {children}
         </ErrorBoundary>

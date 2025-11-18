@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import type { TextAnimationProps } from '@/types'
 
@@ -15,10 +16,12 @@ import type { TextAnimationProps } from '@/types'
  * - delay + index * 0.20: 0.2s between each character (slower = more dramatic)
  * - ease: Bouncy curve for playful pen landing effect
  *
+ * Optimized with React.memo to prevent unnecessary re-renders
+ *
  * @param text - The text content to animate
  * @param delay - Animation delay in seconds (default: 0)
  */
-export const PenStrokeReveal = ({ text, delay = 0 }: TextAnimationProps) => {
+export const PenStrokeReveal = memo(({ text, delay = 0 }: TextAnimationProps) => {
   const characters = text.split("")
 
   return (
@@ -41,4 +44,6 @@ export const PenStrokeReveal = ({ text, delay = 0 }: TextAnimationProps) => {
       ))}
     </span>
   )
-}
+})
+
+PenStrokeReveal.displayName = 'PenStrokeReveal'

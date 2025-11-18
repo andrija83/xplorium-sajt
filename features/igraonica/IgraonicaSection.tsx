@@ -1,18 +1,10 @@
 'use client'
 
+import { memo, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { TypewriterText } from '@/components/animations'
 import type { GalleryImage } from '@/types'
-
-const GALLERY_IMAGES: GalleryImage[] = [
-  { id: 1, query: "children playing with interactive floor projection" },
-  { id: 2, query: "kids enjoying interactive wall games" },
-  { id: 3, query: "colorful playground with projection technology" },
-  { id: 4, query: "children playing interactive motion games" },
-  { id: 5, query: "modern indoor playground with digital games" },
-  { id: 6, query: "kids having fun in interactive play area" },
-]
 
 /**
  * IgraonicaSection Component
@@ -26,11 +18,21 @@ const GALLERY_IMAGES: GalleryImage[] = [
  * - WhileInView animations for scroll-triggered effects
  * - Snap scroll behavior
  *
+ * Optimized with React.memo and memoized gallery images
+ *
  * Layout:
  * - First screen: Title + Description + Scroll indicator
  * - Second screen: Gallery grid (6 images)
  */
-export const IgraonicaSection = () => {
+export const IgraonicaSection = memo(() => {
+  const GALLERY_IMAGES: GalleryImage[] = useMemo(() => [
+    { id: 1, query: "children playing with interactive floor projection" },
+    { id: 2, query: "kids enjoying interactive wall games" },
+    { id: 3, query: "colorful playground with projection technology" },
+    { id: 4, query: "children playing interactive motion games" },
+    { id: 5, query: "modern indoor playground with digital games" },
+    { id: 6, query: "kids having fun in interactive play area" },
+  ], [])
   return (
     <div className="h-[80vh] overflow-y-auto scroll-smooth snap-y snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Title & Description Screen */}
@@ -137,4 +139,6 @@ export const IgraonicaSection = () => {
       </motion.div>
     </div>
   )
-}
+})
+
+IgraonicaSection.displayName = 'IgraonicaSection'

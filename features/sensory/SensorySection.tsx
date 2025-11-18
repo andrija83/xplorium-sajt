@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { memo, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { PlanetOrb } from '@/components/animations'
@@ -10,40 +10,6 @@ interface SensorySectionProps {
   sensorySubView: string | null
   setSensorySubView: (view: string | null) => void
 }
-
-const SENSORY_PLANETS = [
-  {
-    label: "Floor",
-    section: "floor",
-    color: "purple" as const,
-    size: "md" as const,
-    position: { top: "20%", left: "15%", transform: "translate(-50%, -50%)" },
-    image: "/Untitled.jpg",
-  },
-  {
-    label: "Wall",
-    section: "wall",
-    color: "orange" as const,
-    size: "lg" as const,
-    position: { top: "50%", right: "10%", transform: "translate(0%, -50%)" },
-  },
-  {
-    label: "Ceiling",
-    section: "ceiling",
-    color: "pink" as const,
-    size: "sm" as const,
-    position: { bottom: "15%", left: "50%", transform: "translate(-50%, 0%)" },
-  },
-]
-
-const GALLERY_IMAGES: GalleryImage[] = [
-  { id: 1, query: "sensory room with bubble tubes and fiber optic lights" },
-  { id: 2, query: "interactive sensory wall with colorful lights" },
-  { id: 3, query: "children playing in sensory room with projection" },
-  { id: 4, query: "glowing fiber optic sensory equipment" },
-  { id: 5, query: "sensory room bubble tube column" },
-  { id: 6, query: "interactive floor projection in sensory room" },
-]
 
 /**
  * SensorySection Component
@@ -57,12 +23,47 @@ const GALLERY_IMAGES: GalleryImage[] = [
  * - Subsection galleries with scroll behavior
  * - Smooth animations and transitions
  *
+ * Optimized with React.memo and memoized constants
+ *
  * Navigation Flow:
  * 1. Shows 3 planet orbs
  * 2. Click planet → Shows subsection title + gallery
  * 3. Gallery grid with 6 images
  */
-export const SensorySection = ({ sensorySubView, setSensorySubView }: SensorySectionProps) => {
+export const SensorySection = memo(({ sensorySubView, setSensorySubView }: SensorySectionProps) => {
+  const SENSORY_PLANETS = useMemo(() => [
+    {
+      label: "Floor",
+      section: "floor",
+      color: "purple" as const,
+      size: "md" as const,
+      position: { top: "20%", left: "15%", transform: "translate(-50%, -50%)" },
+      image: "/Untitled.jpg",
+    },
+    {
+      label: "Wall",
+      section: "wall",
+      color: "orange" as const,
+      size: "lg" as const,
+      position: { top: "50%", right: "10%", transform: "translate(0%, -50%)" },
+    },
+    {
+      label: "Ceiling",
+      section: "ceiling",
+      color: "pink" as const,
+      size: "sm" as const,
+      position: { bottom: "15%", left: "50%", transform: "translate(-50%, 0%)" },
+    },
+  ], [])
+
+  const GALLERY_IMAGES: GalleryImage[] = useMemo(() => [
+    { id: 1, query: "sensory room with bubble tubes and fiber optic lights" },
+    { id: 2, query: "interactive sensory wall with colorful lights" },
+    { id: 3, query: "children playing in sensory room with projection" },
+    { id: 4, query: "glowing fiber optic sensory equipment" },
+    { id: 5, query: "sensory room bubble tube column" },
+    { id: 6, query: "interactive floor projection in sensory room" },
+  ], [])
   return (
     <>
       {!sensorySubView ? (
@@ -183,4 +184,6 @@ export const SensorySection = ({ sensorySubView, setSensorySubView }: SensorySec
       )}
     </>
   )
-}
+})
+
+SensorySection.displayName = 'SensorySection'

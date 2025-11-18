@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { memo, useMemo } from "react"
 import { motion } from "framer-motion"
 import { LogIn, UserPlus } from "lucide-react"
 import { ANIMATION_EASING } from "@/constants/animations"
@@ -17,6 +18,8 @@ import { ANIMATION_EASING } from "@/constants/animations"
  * - Glass morphism backdrop effect
  * - Responsive sizing for mobile/desktop
  * - Icon + text layout
+ *
+ * Optimized with React.memo and memoized color constants
  */
 
 interface AuthButtonsProps {
@@ -28,16 +31,18 @@ interface AuthButtonsProps {
   onSignUp?: () => void
 }
 
-export function AuthButtons({
+export const AuthButtons = memo(function AuthButtons({
   className = "",
   onSignIn,
   onSignUp
 }: AuthButtonsProps) {
 
-  // Neon cyan color matching Cafe section
-  const neonCyan = "#22d3ee"
-  const neonCyanGlow = "0 0 10px #22d3ee, 0 0 20px #22d3ee, 0 0 30px #22d3ee"
-  const neonCyanGlowHover = "0 0 15px #22d3ee, 0 0 30px #22d3ee, 0 0 45px #22d3ee, 0 0 60px #06b6d4"
+  // Memoized neon color constants
+  const colors = useMemo(() => ({
+    neonCyan: "#22d3ee",
+    neonCyanGlow: "0 0 10px #22d3ee, 0 0 20px #22d3ee, 0 0 30px #22d3ee",
+    neonCyanGlowHover: "0 0 15px #22d3ee, 0 0 30px #22d3ee, 0 0 45px #22d3ee, 0 0 60px #06b6d4"
+  }), [])
 
   return (
     <div className={`flex items-center gap-3 sm:gap-4 ${className}`}>
@@ -82,7 +87,7 @@ export function AuthButtons({
           className="text-sm sm:text-base font-medium text-cyan-400 relative z-10
                      transition-all duration-300 group-hover:text-cyan-300"
           style={{
-            textShadow: neonCyanGlow
+            textShadow: colors.neonCyanGlow
           }}
         >
           Sign In
@@ -93,8 +98,8 @@ export function AuthButtons({
           className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100
                      transition-opacity duration-300 pointer-events-none"
           style={{
-            boxShadow: neonCyanGlowHover,
-            border: `1px solid ${neonCyan}`
+            boxShadow: colors.neonCyanGlowHover,
+            border: `1px solid ${colors.neonCyan}`
           }}
         />
       </motion.button>
@@ -182,4 +187,6 @@ export function AuthButtons({
       </motion.button>
     </div>
   )
-}
+})
+
+AuthButtons.displayName = 'AuthButtons'

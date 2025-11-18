@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { EventCalendar, BookingForm, type CalendarEvent } from '@/components/common'
 
@@ -23,12 +23,14 @@ interface CafeSectionProps {
  * - Booking form
  * - Contact information with map
  *
+ * Optimized with React.memo, useCallback, and memoized constants
+ *
  * Navigation Flow:
  * 1. Shows glass frame menu with 6 options
  * 2. Click option → Shows subsection content inside glass frame
  * 3. Each subsection has unique content and styling
  */
-export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) => {
+export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionProps) => {
   // Event calendar state
   const [events, setEvents] = useState<CalendarEvent[]>([
     // Sample events
@@ -92,12 +94,12 @@ export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) =
 
 
 
-  
+
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
-  // Handle new booking submission
-  const handleBookingSubmit = (newEvent: Omit<CalendarEvent, 'id'>) => {
+  // Handle new booking submission (memoized)
+  const handleBookingSubmit = useCallback((newEvent: Omit<CalendarEvent, 'id'>) => {
     const event: CalendarEvent = {
       ...newEvent,
       id: Date.now().toString()
@@ -105,15 +107,16 @@ export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) =
     setEvents(prev => [...prev, event])
     setShowBookingForm(false)
     setSelectedDate(null)
-  }
+  }, [])
 
-  // Handle date click from calendar
-  const handleDateClick = (date: Date) => {
+  // Handle date click from calendar (memoized)
+  const handleDateClick = useCallback((date: Date) => {
     setSelectedDate(date)
     setShowBookingForm(true)
-  }
+  }, [])
 
-  const MENU_ITEMS = [
+  // Memoized menu items
+  const MENU_ITEMS = useMemo(() => [
     {
       label: "Meni",
       section: "meni",
@@ -150,14 +153,15 @@ export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) =
       color: "cyan",
       shadow: "0 0 20px #22d3ee, 0 0 40px #22d3ee, 0 0 60px #22d3ee",
     },
-  ]
+  ], [])
 
-  const CORNER_SCREWS = [
+  // Memoized corner screws positions
+  const CORNER_SCREWS = useMemo(() => [
     { top: "1rem", left: "1rem" },
     { top: "1rem", right: "1rem" },
     { bottom: "1rem", left: "1rem" },
     { bottom: "1rem", right: "1rem" },
-  ]
+  ], [])
 
   return (
     <>
@@ -953,4 +957,6 @@ export const CafeSection = ({ cafeSubView, setCafeSubView }: CafeSectionProps) =
       )}
     </>
   )
-}
+})
+
+CafeSection.displayName = 'CafeSection'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { StarParticle } from '@/types'
 
@@ -25,9 +25,11 @@ interface StarfieldProps {
  * - Fixed layer behind all content (z-0)
  * - Pointer events disabled (stars don't block clicks)
  *
+ * Optimized with React.memo and willChange CSS property
+ *
  * @param activeView - The currently active section identifier
  */
-export const Starfield = ({ activeView }: StarfieldProps) => {
+export const Starfield = memo(({ activeView }: StarfieldProps) => {
   /**
    * stars: Background starfield animation
    * useMemo: Cached array to prevent regenerating on every render
@@ -103,6 +105,7 @@ export const Starfield = ({ activeView }: StarfieldProps) => {
             width: `${star.size}px`,
             height: `${star.size}px`,
             boxShadow: `0 0 ${star.size * 2}px rgba(255,255,255,${star.opacity * 0.8})`,
+            willChange: 'opacity, transform',
           }}
           animate={{
             opacity: [star.opacity * 0.7, star.opacity, star.opacity * 0.7],
@@ -130,6 +133,7 @@ export const Starfield = ({ activeView }: StarfieldProps) => {
               height: `${star.size}px`,
               backgroundColor: star.color,
               boxShadow: `0 0 ${star.size * 3}px ${star.color}, 0 0 ${star.size * 6}px ${star.color}`,
+              willChange: 'opacity, transform',
             }}
             initial={{
               opacity: 0,
@@ -157,4 +161,6 @@ export const Starfield = ({ activeView }: StarfieldProps) => {
       </AnimatePresence>
     </motion.div>
   )
-}
+})
+
+Starfield.displayName = 'Starfield'
