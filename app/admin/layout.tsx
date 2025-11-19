@@ -44,9 +44,9 @@ export default function AdminLayout({
   useEffect(() => {
     const fetchPendingCount = async () => {
       try {
-        const result = await getBookings({ status: 'PENDING', limit: 1 })
-        if (result.success && result.pagination) {
-          setPendingCount(result.pagination.total)
+        const result = await getBookings({ status: 'PENDING' })
+        if (result.success && result.bookings) {
+          setPendingCount(result.bookings.length)
         }
       } catch (error) {
         console.error('Failed to fetch pending count:', error)
