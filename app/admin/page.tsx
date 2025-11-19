@@ -22,15 +22,20 @@ import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tool
 interface DashboardStats {
   totalBookings: number
   totalUsers: number
-  totalEvents: number
+  upcomingEvents: number
   pendingBookings: number
-  bookingsThisWeek: number
-  bookingsThisMonth: number
+  todayBookings: number
+  weekBookings: number
+  monthBookings: number
   bookingsTrend: number
+}
+
+interface DashboardData {
+  stats: DashboardStats
   recentBookings: any[]
-  upcomingEvents: any[]
+  recentEvents: any[]
   bookingsByType: Array<{ type: string; count: number }>
-  bookingsOverTime: Array<{ date: string; count: number }>
+  bookingsOverTime: Array<{ date: any; count: number }>
 }
 
 const COLORS = {
@@ -42,7 +47,7 @@ const COLORS = {
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [activities, setActivities] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -58,12 +63,12 @@ export default function AdminDashboard() {
           getRecentActivity(10)
         ])
 
-        if (statsResult.success && statsResult.stats) {
-          setStats(statsResult.stats as DashboardStats)
+        if (statsResult.success) {
+          setDashboardData(statsResult as DashboardData)
         }
 
-        if (activityResult.success && activityResult.activities) {
-          setActivities(activityResult.activities)
+        if (activityResult.success && activityResult.activity) {
+          setActivities(activityResult.activity)
         }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error)
@@ -80,7 +85,7 @@ export default function AdminDashboard() {
     return () => clearInterval(interval)
   }, [])
 
-  if (isLoading || !stats) {
+  if (isLoading || !dashboardData) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <motion.div
@@ -91,6 +96,8 @@ export default function AdminDashboard() {
       </div>
     )
   }
+
+  const { stats } = dashboardData
 
   return (
     <div className="space-y-6">
@@ -136,7 +143,7 @@ export default function AdminDashboard() {
         />
         <StatsCard
           title="Total Events"
-          value={stats.totalEvents}
+          value={stats.upcomingEvents}
           icon={FileText}
           iconColor="text-pink-400"
           iconBgColor="bg-pink-400/20"
@@ -158,7 +165,7 @@ export default function AdminDashboard() {
             Bookings Over Time (Last 30 Days)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={stats.bookingsOverTime || []}>
+            <LineChart data={dashboardData.bookingsOverTime || []}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 211, 238, 0.1)" />
               <XAxis
                 dataKey="date"
@@ -209,7 +216,7 @@ export default function AdminDashboard() {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={stats.bookingsByType || []}
+                data={dashboardData.bookingsByType || []}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -218,7 +225,7 @@ export default function AdminDashboard() {
                 fill="#8884d8"
                 dataKey="count"
               >
-                {(stats.bookingsByType || []).map((entry, index) => (
+                {(dashboardData.bookingsByType || []).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[entry.type as keyof typeof COLORS] || '#22d3ee'} />
                 ))}
               </Pie>
