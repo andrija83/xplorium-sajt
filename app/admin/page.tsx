@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { Calendar, Users, FileText, Clock } from "lucide-react"
 import { StatsCard } from "@/components/admin/StatsCard"
@@ -116,24 +117,32 @@ export default function AdminDashboard() {
         </p>
       </div>
 
+
+
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <StatsCard
-          title="Total Bookings"
-          value={stats.totalBookings}
-          icon={Calendar}
-          trend={stats.bookingsTrend}
-          trendLabel="vs last week"
-          iconColor="text-cyan-400"
-          iconBgColor="bg-cyan-400/20"
-        />
-        <StatsCard
-          title="Pending Bookings"
-          value={stats.pendingBookings}
-          icon={Clock}
-          iconColor="text-yellow-400"
-          iconBgColor="bg-yellow-400/20"
-        />
+        <Link href="/admin/bookings" className="block">
+          <StatsCard
+            title="Total Bookings"
+            value={stats.totalBookings}
+            icon={Calendar}
+            trend={stats.bookingsTrend}
+            trendLabel="vs last week"
+            iconColor="text-cyan-400"
+            iconBgColor="bg-cyan-400/20"
+            className="cursor-pointer hover:bg-black/30 transition-colors"
+          />
+        </Link>
+        <Link href="/admin/bookings?status=PENDING" className="block">
+          <StatsCard
+            title="Pending Bookings"
+            value={stats.pendingBookings}
+            icon={Clock}
+            iconColor="text-yellow-400"
+            iconBgColor="bg-yellow-400/20"
+            className="cursor-pointer hover:bg-black/30 transition-colors"
+          />
+        </Link>
         <StatsCard
           title="Total Users"
           value={stats.totalUsers}

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Search, Filter, Calendar, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react"
 import { DataTable, type Column } from "@/components/admin/DataTable"
@@ -60,8 +60,9 @@ const TYPE_LABELS = {
   EVENT: "Event",
 }
 
-export default function BookingsPage() {
+function BookingsContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [pagination, setPagination] = useState({
@@ -73,7 +74,7 @@ export default function BookingsPage() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("ALL")
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "ALL")
   const [typeFilter, setTypeFilter] = useState<string>("ALL")
 
   // Fetch bookings
@@ -282,5 +283,13 @@ export default function BookingsPage() {
         onRowClick={handleRowClick}
       />
     </div>
+  )
+}
+
+export default function BookingsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BookingsContent />
+    </Suspense>
   )
 }
