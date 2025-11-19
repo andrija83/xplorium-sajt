@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
  * GET /api/test-db
  *
  * Tests if Vercel can connect to the database and query data
+ * Updated to trigger redeploy after adding DATABASE_URL
  */
 export async function GET() {
   try {
