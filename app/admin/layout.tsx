@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react"
 import { AdminSidebar } from "@/components/admin/AdminSidebar"
 import { AdminHeader } from "@/components/admin/AdminHeader"
 import { getBookings } from "@/app/actions/bookings"
+import { useActivityTracker } from "@/hooks/useActivityTracker"
 
 /**
  * Admin Layout Component
@@ -16,6 +17,7 @@ import { getBookings } from "@/app/actions/bookings"
  * - Header with user menu
  * - Responsive mobile menu
  * - Automatic pending count updates
+ * - Activity tracking for session refresh
  */
 
 // Map routes to page titles
@@ -39,6 +41,9 @@ export default function AdminLayout({
   const { data: session, status } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
+
+  // Track admin activity to prevent session timeout
+  useActivityTracker()
 
   // Get page title based on current route
   const pageTitle = getPageTitle(pathname || '')

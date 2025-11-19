@@ -52,6 +52,8 @@ export const AuthButtons = memo(function AuthButtons({
   const handleSignOut = async () => {
     setShowDropdown(false)
     await signOut({ redirect: false })
+    // Replace current history entry to prevent back button access
+    router.replace('/')
     router.refresh()
   }
 

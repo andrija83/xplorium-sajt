@@ -101,7 +101,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // 7 days for regular users (will be overridden for admins)
+  },
+  callbacks: {
+    async jwt({ token, user, trigger }) {
+      // Initial sign in
+      if (user) {
+        token.id = user.id
+        token.role = user.role
+        token.lastActivity = Date.now()
+      }
+
+      // Session update or token refresh
+      if (trigger === 'update') {
+        token.lastActivity = Date.now()
+      }
+
+      // Check admin inactivity timeout (30 minutes)
+      if (token.role === 'ADMIN' || token.role === 'SUPER_ADMIN') {
+        const lastActivity = token.lastActivity as number
+        const inactivityTimeout = 30 * 60 * 1000 // 30 minutes in milliseconds
+        const now = Date.now()
+
+        if (now - lastActivity > inactivityTimeout) {
+          // Session expired due to inactivity
+          return {} // Return empty token to invalidate session
+        }
+      }
+
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string
+        session.user.role = token.role as 'USER' | 'ADMIN' | 'SUPER_ADMIN'
+      }
+      return session
+    },
   },
   secret: process.env.AUTH_SECRET,
 })
