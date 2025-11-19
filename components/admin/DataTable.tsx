@@ -258,6 +258,6 @@ export const DataTable = memo(function DataTable<T extends { id: string }>({
       )}
     </div>
   )
-}) as <T extends { id: string }>(props: DataTableProps<T>) => React.ReactElement
+}) as React.FC<any>
 
 DataTable.displayName = 'DataTable'
