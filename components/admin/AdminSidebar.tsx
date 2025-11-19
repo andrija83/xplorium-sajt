@@ -199,11 +199,9 @@ export const AdminSidebar = memo(function AdminSidebar({
                   "w-5 h-5 relative z-10 transition-colors",
                   active ? "text-cyan-400" : "text-cyan-100/60 group-hover:text-cyan-300"
                 )}
-                style={
-                  active
-                    ? { filter: "drop-shadow(0 0 8px rgba(34, 211, 238, 0.8))" }
-                    : undefined
-                }
+                {...(active && {
+                  style: { filter: "drop-shadow(0 0 8px rgba(34, 211, 238, 0.8))" }
+                })}
               />
 
               {/* Label */}
