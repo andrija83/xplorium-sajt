@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { AdminSidebar } from "@/components/admin/AdminSidebar"
 import { AdminHeader } from "@/components/admin/AdminHeader"
 import { getBookings } from "@/app/actions/bookings"
@@ -34,11 +35,28 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { data: session, status } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
 
   // Get page title based on current route
   const pageTitle = getPageTitle(pathname || '')
+
+  // Protect admin routes - redirect if not authorized
+  useEffect(() => {
+    if (status === 'loading') return
+
+    if (!session?.user) {
+      router.push('/')
+      return
+    }
+
+    if (!['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
+      router.push('/')
+      return
+    }
+  }, [session, status, router])
 
   // Fetch pending bookings count
   useEffect(() => {
