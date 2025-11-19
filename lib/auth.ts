@@ -29,56 +29,72 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // Load dependencies
-        await loadDependencies()
+        try {
+          console.log('[AUTH] authorize() called with email:', credentials?.email)
 
-        // Validate credentials
-        const validatedFields = signInSchema.safeParse(credentials)
+          // Load dependencies
+          await loadDependencies()
 
-        if (!validatedFields.success) {
-          return null
-        }
+          // Validate credentials
+          const validatedFields = signInSchema.safeParse(credentials)
 
-        const { email, password } = validatedFields.data
+          if (!validatedFields.success) {
+            console.log('[AUTH] Validation failed:', validatedFields.error)
+            return null
+          }
 
-        // Find user by email
-        const user = await prisma.user.findUnique({
-          where: { email },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            password: true,
-            role: true,
-            image: true,
-            blocked: true,
-          },
-        })
+          const { email, password } = validatedFields.data
 
-        // Check if user exists
-        if (!user || !user.password) {
-          return null
-        }
+          // Find user by email
+          console.log('[AUTH] Looking up user:', email)
+          const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              password: true,
+              role: true,
+              image: true,
+              blocked: true,
+            },
+          })
 
-        // Check if user is blocked
-        if (user.blocked) {
-          throw new Error('Account has been blocked. Please contact support.')
-        }
+          // Check if user exists
+          if (!user || !user.password) {
+            console.log('[AUTH] User not found or no password')
+            return null
+          }
 
-        // Verify password
-        const isValidPassword = await comparePassword(password, user.password)
+          console.log('[AUTH] User found:', { email: user.email, role: user.role })
 
-        if (!isValidPassword) {
-          return null
-        }
+          // Check if user is blocked
+          if (user.blocked) {
+            console.log('[AUTH] User is blocked')
+            throw new Error('Account has been blocked. Please contact support.')
+          }
 
-        // Return user without password
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          image: user.image,
+          // Verify password
+          const isValidPassword = await comparePassword(password, user.password)
+
+          if (!isValidPassword) {
+            console.log('[AUTH] Invalid password')
+            return null
+          }
+
+          console.log('[AUTH] Authentication successful')
+
+          // Return user without password
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            image: user.image,
+          }
+        } catch (error) {
+          console.error('[AUTH] authorize() error:', error)
+          throw error
         }
       },
     }),

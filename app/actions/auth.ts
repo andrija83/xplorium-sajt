@@ -77,37 +77,47 @@ export async function signUp(data: SignUpInput) {
  */
 export async function signInAction(email: string, password: string) {
   try {
-    await signIn('credentials', {
+    console.log('[AUTH] Attempting sign in for:', email)
+
+    const result = await signIn('credentials', {
       email,
       password,
       redirect: false,
     })
+
+    console.log('[AUTH] Sign in result:', result)
 
     return {
       success: true,
       message: 'Signed in successfully',
     }
   } catch (error) {
-    console.error('Sign in error:', error)
+    console.error('[AUTH] Sign in error:', error)
 
     if (error instanceof AuthError) {
+      console.error('[AUTH] AuthError type:', error.type)
       switch (error.type) {
         case 'CredentialsSignin':
           return {
             success: false,
             error: 'Invalid email or password',
           }
+        case 'CallbackRouteError':
+          return {
+            success: false,
+            error: 'Authentication callback failed. Please check your credentials.',
+          }
         default:
           return {
             success: false,
-            error: 'Failed to sign in',
+            error: `Authentication failed: ${error.type}`,
           }
       }
     }
 
     return {
       success: false,
-      error: 'Failed to sign in',
+      error: error instanceof Error ? error.message : 'Failed to sign in',
     }
   }
 }
