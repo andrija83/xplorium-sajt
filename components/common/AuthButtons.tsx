@@ -167,8 +167,22 @@ export const AuthButtons = memo(function AuthButtons({
                     className="w-full px-4 py-2 flex items-center gap-3 text-cyan-300
                                hover:bg-cyan-400/10 transition-colors text-left"
                   >
-                    <Settings className="w-4 h-4" />
+                    <Shield className="w-4 h-4" />
                     <span className="text-sm">Admin Dashboard</span>
+                  </button>
+                )}
+
+                {!isAdmin && (
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false)
+                      router.push('/profile')
+                    }}
+                    className="w-full px-4 py-2 flex items-center gap-3 text-cyan-300
+                               hover:bg-cyan-400/10 transition-colors text-left"
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="text-sm">My Profile</span>
                   </button>
                 )}
 

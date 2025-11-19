@@ -445,3 +445,43 @@ export async function getApprovedBookings() {
     }
   }
 }
+
+/**
+ * Get current user's bookings
+ * Requires authentication
+ * @returns Array of user's bookings
+ */
+export async function getUserBookings() {
+  try {
+    const session = await auth()
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: 'You must be signed in to view your bookings',
+        bookings: [],
+      }
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    })
+
+    return {
+      success: true,
+      bookings,
+    }
+  } catch (error) {
+    console.error('Get user bookings error:', error)
+    return {
+      success: false,
+      error: 'Failed to load bookings',
+      bookings: [],
+    }
+  }
+}
