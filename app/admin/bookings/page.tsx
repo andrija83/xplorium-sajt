@@ -91,12 +91,12 @@ export default function BookingsPage() {
 
       if (result.success && result.bookings) {
         setBookings(result.bookings as Booking[])
-        if (result.pagination) {
-          setPagination({
-            ...result.pagination,
-            page,
-          })
-        }
+        // Note: Pagination not implemented in getBookings yet
+        setPagination(prev => ({
+          ...prev,
+          page,
+          total: result.bookings?.length || 0,
+        }))
       }
     } catch (error) {
       console.error("Failed to fetch bookings:", error)
