@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Search, Filter, Calendar, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react"
+import { Search, Filter, Calendar, CheckCircle, XCircle, Clock, Trash2, Loader2 } from "lucide-react"
 import { DataTable, type Column } from "@/components/admin/DataTable"
 import { getBookings, deleteBooking } from "@/app/actions/bookings"
 import { format } from "date-fns"
@@ -288,7 +288,11 @@ function BookingsContent() {
 
 export default function BookingsPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+      </div>
+    }>
       <BookingsContent />
     </Suspense>
   )

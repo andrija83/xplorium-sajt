@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Search, Plus, Calendar, MapPin, Edit, Trash2, Eye, EyeOff, Archive } from "lucide-react"
+import { Search, Plus, Calendar, MapPin, Edit, Trash2, Eye, EyeOff, Archive, Loader2 } from "lucide-react"
 import { DataTable, type Column } from "@/components/admin/DataTable"
 import { getEvents, deleteEvent } from "@/app/actions/events"
 import { format } from "date-fns"
@@ -49,7 +49,7 @@ const STATUS_COLORS = {
   ARCHIVED: "bg-gray-400/20 text-gray-400 border-gray-400/50",
 }
 
-export default function EventsPage() {
+function EventsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [events, setEvents] = useState<Event[]>([])
@@ -315,5 +315,17 @@ export default function EventsPage() {
         onRowClick={handleRowClick}
       />
     </div>
+  )
+}
+
+export default function EventsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+      </div>
+    }>
+      <EventsContent />
+    </Suspense>
   )
 }
