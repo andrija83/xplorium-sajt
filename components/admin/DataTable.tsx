@@ -1,6 +1,6 @@
 "use client"
 
-import { memo } from "react"
+import React, { memo } from "react"
 import { motion } from "framer-motion"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -258,6 +258,6 @@ export const DataTable = memo(function DataTable<T extends { id: string }>({
       )}
     </div>
   )
-}) as <T extends { id: string }>(props: DataTableProps<T>) => JSX.Element
+}) as <T extends { id: string }>(props: DataTableProps<T>) => React.ReactElement
 
 DataTable.displayName = 'DataTable'
