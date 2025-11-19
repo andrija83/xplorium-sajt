@@ -311,14 +311,16 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
           <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
             Telefon *
           </label>
-          <input
-            type="tel"
-            name="phone"
+          <PhoneInput
+            international
+            defaultCountry="RS"
             value={formData.phone}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
-            placeholder="+381 XX XXX XXXX"
+            onChange={handlePhoneChange}
+            className="phone-input-wrapper"
+            numberInputProps={{
+              className: "w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all",
+              required: true
+            }}
           />
         </div>
       </div>
