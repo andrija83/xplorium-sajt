@@ -280,6 +280,12 @@ export default function UsersPage() {
             Manage users, roles, and permissions
           </p>
         </div>
+        <Button
+          onClick={() => router.push("/admin/users/new")}
+          className="bg-cyan-500 hover:bg-cyan-600 text-white"
+        >
+          Create User
+        </Button>
       </div>
 
       {/* Filters */}
