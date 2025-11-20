@@ -51,17 +51,20 @@ export async function getMaintenanceLogs(filters?: {
       ]
     }
 
-    const logs = await prisma.maintenanceLog.findMany({
-      where,
-      orderBy: [
-        { priority: "desc" },
-        { scheduledDate: "desc" },
-      ],
-      take: filters?.limit || 50,
-      skip: filters?.offset || 0,
-    })
+    const [logs, total] = await Promise.all([
+      prisma.maintenanceLog.findMany({
+        where,
+        orderBy: [
+          { priority: "desc" },
+          { scheduledDate: "desc" },
+        ],
+        take: filters?.limit || 50,
+        skip: filters?.offset || 0,
+      }),
+      prisma.maintenanceLog.count({ where }),
+    ])
 
-    return { success: true, logs }
+    return { success: true, logs, total }
   } catch (error) {
     console.error("Error fetching maintenance logs:", error)
     return { success: false, error: "Failed to fetch maintenance logs" }

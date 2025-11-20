@@ -42,17 +42,20 @@ export async function getInventoryItems(filters?: {
       ]
     }
 
-    const items = await prisma.inventoryItem.findMany({
-      where,
-      orderBy: [
-        { category: "asc" },
-        { name: "asc" },
-      ],
-      take: filters?.limit || 100,
-      skip: filters?.offset || 0,
-    })
+    const [items, total] = await Promise.all([
+      prisma.inventoryItem.findMany({
+        where,
+        orderBy: [
+          { category: "asc" },
+          { name: "asc" },
+        ],
+        take: filters?.limit || 100,
+        skip: filters?.offset || 0,
+      }),
+      prisma.inventoryItem.count({ where }),
+    ])
 
-    return { success: true, items }
+    return { success: true, items, total }
   } catch (error) {
     console.error("Error fetching inventory items:", error)
     return { success: false, error: "Failed to fetch inventory items" }

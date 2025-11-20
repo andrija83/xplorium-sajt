@@ -31,23 +31,28 @@ export async function getEvents({
   limit?: number
   offset?: number
 } = {}) {
-  const events = await prisma.event.findMany({
-    where: {
-      ...(status && { status: status as any }),
-      ...(category && { category }),
-      ...(search && {
-        OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
-    },
-    orderBy: [{ order: 'asc' }, { date: 'desc' }],
-    take: limit,
-    skip: offset,
-  })
+  const where = {
+    ...(status && { status: status as any }),
+    ...(category && { category }),
+    ...(search && {
+      OR: [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ],
+    }),
+  }
 
-  return { success: true, events }
+  const [events, total] = await Promise.all([
+    prisma.event.findMany({
+      where,
+      orderBy: [{ order: 'asc' }, { date: 'desc' }],
+      take: limit,
+      skip: offset,
+    }),
+    prisma.event.count({ where }),
+  ])
+
+  return { success: true, events, total }
 }
 
 /**

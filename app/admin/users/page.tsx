@@ -62,7 +62,7 @@ export default function UsersPage() {
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 10,
+    limit: 15,
     totalPages: 1,
   })
 
@@ -86,12 +86,12 @@ export default function UsersPage() {
 
       if (result.success && result.users) {
         setUsers(result.users as User[])
-        // Mock pagination for now
+        const total = result.total || 0
         setPagination(prev => ({
           ...prev,
           page,
-          total: result.users?.length || 0,
-          totalPages: 1,
+          total,
+          totalPages: Math.ceil(total / prev.limit),
         }))
       }
     } catch (error) {

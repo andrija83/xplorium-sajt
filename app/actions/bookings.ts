@@ -37,35 +37,40 @@ export async function getBookings({
     return { error: 'Unauthorized' }
   }
 
-  const bookings = await prisma.booking.findMany({
-    where: {
-      ...(status && { status: status as any }),
-      ...(type && { type: type as any }),
-      ...(search && {
-        OR: [
-          { email: { contains: search, mode: 'insensitive' } },
-          { title: { contains: search, mode: 'insensitive' } },
-          { phone: { contains: search } },
-        ],
-      }),
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
+  const where = {
+    ...(status && { status: status as any }),
+    ...(type && { type: type as any }),
+    ...(search && {
+      OR: [
+        { email: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search } },
+      ],
+    }),
+  }
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-    take: limit,
-    skip: offset,
-  })
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.booking.count({ where }),
+  ])
 
-  return { success: true, bookings }
+  return { success: true, bookings, total }
 }
 
 /**

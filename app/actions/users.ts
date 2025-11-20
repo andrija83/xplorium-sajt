@@ -38,36 +38,41 @@ export async function getUsers({
     return { error: 'Unauthorized' }
   }
 
-  const users = await prisma.user.findMany({
-    where: {
-      ...(role && { role: role as any }),
-      ...(blocked !== undefined && { blocked }),
-      ...(search && {
-        OR: [
-          { email: { contains: search, mode: 'insensitive' } },
-          { name: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      image: true,
-      blocked: true,
-      emailVerified: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-    take: limit,
-    skip: offset,
-  })
+  const where = {
+    ...(role && { role: role as any }),
+    ...(blocked !== undefined && { blocked }),
+    ...(search && {
+      OR: [
+        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
+      ],
+    }),
+  }
 
-  return { success: true, users }
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        image: true,
+        blocked: true,
+        emailVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.user.count({ where }),
+  ])
+
+  return { success: true, users, total }
 }
 
 /**

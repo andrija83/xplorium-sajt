@@ -45,7 +45,7 @@ export async function logAudit({
 /**
  * Get audit logs with optional filtering
  * @param filters - Filter options
- * @returns Array of audit logs
+ * @returns Array of audit logs with total count
  */
 export async function getAuditLogs({
   userId,
@@ -60,30 +60,35 @@ export async function getAuditLogs({
   limit?: number
   offset?: number
 } = {}) {
-  const logs = await prisma.auditLog.findMany({
-    where: {
-      ...(userId && { userId }),
-      ...(entity && { entity }),
-      ...(action && { action }),
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
+  const where = {
+    ...(userId && { userId }),
+    ...(entity && { entity }),
+    ...(action && { action }),
+  }
+
+  const [logs, total] = await Promise.all([
+    prisma.auditLog.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-    take: limit,
-    skip: offset,
-  })
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.auditLog.count({ where }),
+  ])
 
-  return logs
+  return { logs, total }
 }
 
 /**

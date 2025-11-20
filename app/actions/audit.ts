@@ -17,8 +17,8 @@ export async function getAuditLogs(params: {
     }
 
     try {
-        const logs = await getLogs(params)
-        return { success: true, logs }
+        const { logs, total } = await getLogs(params)
+        return { success: true, logs, total }
     } catch (error) {
         console.error("Failed to fetch audit logs:", error)
         return { error: "Failed to fetch audit logs" }

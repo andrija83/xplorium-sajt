@@ -39,7 +39,8 @@
       "Bash(tasklist:*)",
       "Bash(TASKKILL /F /IM node.exe)",
       "Bash(del nul 2)",
-      "Bash(del /f nul)"
+      "Bash(del /f nul)",
+      "Bash(TASKKILL /F /IM node.exe 2)"
     ],
     "deny": [],
     "ask": []

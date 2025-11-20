@@ -60,7 +60,7 @@ function InventoryContent() {
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 20,
+    limit: 15,
     totalPages: 1,
   })
 
@@ -84,11 +84,12 @@ function InventoryContent() {
 
       if (result.success && result.items) {
         setItems(result.items as InventoryItem[])
+        const total = result.total || 0
         setPagination(prev => ({
           ...prev,
           page,
-          total: result.items?.length || 0,
-          totalPages: 1,
+          total,
+          totalPages: Math.ceil(total / prev.limit),
         }))
       }
     } catch (error) {

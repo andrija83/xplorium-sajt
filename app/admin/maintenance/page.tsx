@@ -76,7 +76,7 @@ function MaintenanceContent() {
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 10,
+    limit: 15,
     totalPages: 1,
   })
 
@@ -104,11 +104,12 @@ function MaintenanceContent() {
 
       if (result.success && result.logs) {
         setLogs(result.logs as MaintenanceLog[])
+        const total = result.total || 0
         setPagination(prev => ({
           ...prev,
           page,
-          total: result.logs?.length || 0,
-          totalPages: 1,
+          total,
+          totalPages: Math.ceil(total / prev.limit),
         }))
       }
     } catch (error) {

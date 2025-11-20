@@ -57,7 +57,7 @@ function EventsContent() {
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 10,
+    limit: 15,
     totalPages: 1,
   })
 
@@ -81,13 +81,12 @@ function EventsContent() {
 
       if (result.success && result.events) {
         setEvents(result.events as Event[])
-        // Note: Pagination not fully implemented in getEvents yet, mocking total for now
-        // In a real app, getEvents should return total count
+        const total = result.total || 0
         setPagination(prev => ({
           ...prev,
           page,
-          total: result.events?.length || 0, // This should be total count from DB
-          totalPages: 1, // This should be calculated from total count
+          total,
+          totalPages: Math.ceil(total / prev.limit),
         }))
       }
     } catch (error) {

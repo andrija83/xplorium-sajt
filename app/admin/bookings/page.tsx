@@ -68,7 +68,7 @@ function BookingsContent() {
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 10,
+    limit: 15,
     totalPages: 1,
   })
 
@@ -92,11 +92,12 @@ function BookingsContent() {
 
       if (result.success && result.bookings) {
         setBookings(result.bookings as Booking[])
-        // Note: Pagination not implemented in getBookings yet
+        const total = result.total || 0
         setPagination(prev => ({
           ...prev,
           page,
-          total: result.bookings?.length || 0,
+          total,
+          totalPages: Math.ceil(total / prev.limit),
         }))
       }
     } catch (error) {

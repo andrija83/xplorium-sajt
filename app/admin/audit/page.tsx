@@ -46,7 +46,7 @@ export default function AuditPage() {
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 20,
+    limit: 15,
     totalPages: 1,
   })
 
@@ -66,12 +66,12 @@ export default function AuditPage() {
 
       if (result.success && result.logs) {
         setLogs(result.logs as AuditLog[])
-        // Mock pagination
+        const total = result.total || 0
         setPagination(prev => ({
           ...prev,
           page,
-          total: result.logs?.length || 0, // Should be real total
-          totalPages: 1,
+          total,
+          totalPages: Math.ceil(total / prev.limit),
         }))
       } else {
         toast.error(result.error || "Failed to load logs")
@@ -189,6 +189,9 @@ export default function AuditPage() {
               <SelectItem value="Event">Event</SelectItem>
               <SelectItem value="User">User</SelectItem>
               <SelectItem value="Content">Content</SelectItem>
+              <SelectItem value="InventoryItem">Inventory Item</SelectItem>
+              <SelectItem value="MaintenanceLog">Maintenance Log</SelectItem>
+              <SelectItem value="PricingPackage">Pricing Package</SelectItem>
             </SelectContent>
           </Select>
         </div>
