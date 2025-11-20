@@ -14,7 +14,9 @@ import {
   X,
   ChevronLeft,
   BookOpen,
-  DollarSign
+  DollarSign,
+  Wrench,
+  Package
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -75,6 +77,16 @@ export const AdminSidebar = memo(function AdminSidebar({
       label: "Pricing",
       href: "/admin/pricing",
       icon: DollarSign
+    },
+    {
+      label: "Maintenance",
+      href: "/admin/maintenance",
+      icon: Wrench
+    },
+    {
+      label: "Inventory",
+      href: "/admin/inventory",
+      icon: Package
     },
     {
       label: "Users",

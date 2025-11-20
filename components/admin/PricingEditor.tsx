@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createPricingSchema, type CreatePricingInput } from "@/lib/validations/pricing"
+import { createPricingPackage, updatePricingPackage } from "@/app/actions/pricing"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -29,12 +30,12 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 interface PricingEditorProps {
+    packageId?: string
     initialData?: any
-    onSubmit: (data: any) => Promise<any>
     isEditing?: boolean
 }
 
-export function PricingEditor({ initialData, onSubmit, isEditing = false }: PricingEditorProps) {
+export function PricingEditor({ packageId, initialData, isEditing = false }: PricingEditorProps) {
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [features, setFeatures] = useState<string[]>(
@@ -55,54 +56,40 @@ export function PricingEditor({ initialData, onSubmit, isEditing = false }: Pric
     })
 
     const handleSubmit = async (data: CreatePricingInput) => {
-        console.log('🚀 handleSubmit TRIGGERED')
-        console.log('Form data received:', data)
-        console.log('Features state:', features)
-
         try {
             setIsSubmitting(true)
-            console.log('✅ isSubmitting set to true')
 
             // Filter out empty features
             const filteredFeatures = features.filter(f => f.trim() !== "")
-            console.log('Filtered features:', filteredFeatures)
 
             // Validate features
             if (filteredFeatures.length === 0) {
-                console.log('❌ No features - showing error')
                 toast.error("Please add at least one feature")
                 setIsSubmitting(false)
                 return
             }
 
-            console.log('📦 Submitting pricing package:', {
+            const submitData = {
                 ...data,
                 features: filteredFeatures,
-            })
+            }
 
-            console.log('🔄 Calling onSubmit function...')
-            const result = await onSubmit({
-                ...data,
-                features: filteredFeatures,
-            })
-
-            console.log('✅ Submit result received:', result)
+            // Call the appropriate server action
+            const result = isEditing && packageId
+                ? await updatePricingPackage(packageId, submitData)
+                : await createPricingPackage(submitData)
 
             if (result.success) {
-                console.log('✅ Success! Showing toast and redirecting')
                 toast.success(isEditing ? "Package updated successfully" : "Package created successfully")
                 router.push("/admin/pricing")
                 router.refresh()
             } else {
-                console.log('❌ Error in result:', result.error)
                 toast.error(result.error || "Something went wrong")
             }
         } catch (error) {
-            console.error('❌❌❌ CATCH BLOCK - Submit error:', error)
-            console.error('Error details:', error instanceof Error ? error.message : String(error))
+            console.error('Submit error:', error)
             toast.error("An error occurred: " + (error instanceof Error ? error.message : String(error)))
         } finally {
-            console.log('🏁 Finally block - setting isSubmitting to false')
             setIsSubmitting(false)
         }
     }
@@ -132,19 +119,7 @@ export function PricingEditor({ initialData, onSubmit, isEditing = false }: Pric
     return (
         <Form {...form}>
             <form
-                onSubmit={(e) => {
-                    console.log('🎯 Form onSubmit event triggered')
-                    console.log('Form values:', form.getValues())
-                    console.log('Form errors:', form.formState.errors)
-                    console.log('Form is valid:', form.formState.isValid)
-                    form.handleSubmit(
-                        handleSubmit,
-                        (errors) => {
-                            console.error('❌ Form validation failed!')
-                            console.error('Validation errors:', errors)
-                        }
-                    )(e)
-                }}
+                onSubmit={form.handleSubmit(handleSubmit)}
                 className="space-y-8"
             >
                 <div className="flex items-center justify-between">

@@ -214,3 +214,96 @@ enum PricingStatus {
   PUBLISHED
   ARCHIVED
 }
+
+// ============================================
+// MAINTENANCE LOG
+// ============================================
+
+model MaintenanceLog {
+  id            String            @id @default(cuid())
+  equipment     String            // Equipment or area name
+  area          MaintenanceArea
+  description   String            @db.Text
+  type          MaintenanceType
+  status        MaintenanceStatus @default(SCHEDULED)
+  priority      Priority          @default(MEDIUM)
+
+  // Scheduling
+  scheduledDate DateTime
+  completedDate DateTime?
+
+  // Tracking
+  cost          Float?
+  performedBy   String?           // Name of person who performed maintenance
+  notes         String?           @db.Text
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([status])
+  @@index([area])
+  @@index([scheduledDate])
+  @@index([priority])
+}
+
+enum MaintenanceArea {
+  CAFE
+  PLAYGROUND
+  SENSORY_ROOM
+  GENERAL
+  EXTERIOR
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  REPAIR
+  INSPECTION
+  CLEANING
+  UPGRADE
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ============================================
+// INVENTORY MANAGEMENT
+// ============================================
+
+model InventoryItem {
+  id              String            @id @default(cuid())
+  name            String
+  category        InventoryCategory
+  quantity        Int               @default(0)
+  unit            String            // e.g., "pieces", "kg", "liters", "boxes"
+  reorderPoint    Int               @default(10) // Alert when quantity <= this
+  supplierName    String?
+  supplierContact String?
+  lastRestocked   DateTime?
+  notes           String?           @db.Text
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([category])
+  @@index([quantity])
+}
+
+enum InventoryCategory {
+  CAFE
+  PLAYGROUND
+  SENSORY_ROOM
+  PARTY_SUPPLIES
+  CLEANING
+  GENERAL
+}
