@@ -85,6 +85,26 @@ export async function getEventBySlug(slug: string) {
 }
 
 /**
+ * Get published events for public display
+ * @param limit - Maximum number of events to return
+ * @returns Array of published events
+ */
+export async function getPublishedEvents(limit = 10) {
+  try {
+    const events = await prisma.event.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: [{ date: 'asc' }],
+      take: limit,
+    })
+
+    return { success: true, events }
+  } catch (error) {
+    console.error('Get published events error:', error)
+    return { success: false, events: [] }
+  }
+}
+
+/**
  * Create a new event
  * @param data - Event data
  * @returns Created event
@@ -133,6 +153,7 @@ export async function createEvent(data: CreateEventInput) {
     })
 
     revalidatePath('/admin/events')
+    revalidatePath('/', 'page') // Revalidate main page with Cafe section
 
     return {
       success: true,
@@ -201,6 +222,7 @@ export async function updateEvent(id: string, data: UpdateEventInput) {
 
     revalidatePath('/admin/events')
     revalidatePath(`/admin/events/${id}`)
+    revalidatePath('/', 'page') // Revalidate main page with Cafe section
 
     return {
       success: true,
@@ -250,6 +272,7 @@ export async function deleteEvent(id: string) {
     })
 
     revalidatePath('/admin/events')
+    revalidatePath('/', 'page') // Revalidate main page with Cafe section
 
     return {
       success: true,

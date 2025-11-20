@@ -66,7 +66,7 @@ export const createEventSchema = z.object({
   date: z.coerce.date(),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
   category: z.string().min(2, 'Category is required'),
-  image: z.string().url('Invalid image URL').optional(),
+  image: z.string().url('Invalid image URL').or(z.literal('')).optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).default('DRAFT'),
 })
 

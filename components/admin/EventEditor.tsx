@@ -305,13 +305,16 @@ export function EventEditor({ initialData, onSubmit, isEditing = false }: EventE
                                 name="image"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-cyan-300">Featured Image</FormLabel>
+                                        <FormLabel className="text-cyan-300">Featured Image (Optional)</FormLabel>
                                         <FormControl>
                                             <ImageUpload
                                                 value={field.value || ""}
                                                 onChange={field.onChange}
                                             />
                                         </FormControl>
+                                        <FormDescription className="text-cyan-100/40">
+                                            Upload an image for the event or leave empty
+                                        </FormDescription>
                                         <FormMessage className="text-red-400" />
                                     </FormItem>
                                 )}

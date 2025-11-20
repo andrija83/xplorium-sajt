@@ -30,7 +30,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push)",
-      "Bash(del \"prisma.config.ts\")"
+      "Bash(del \"prisma.config.ts\")",
+      "Bash(node scripts/check-events.mjs:*)",
+      "Bash(del /f \"app\\dogadjaji\\page.tsx\")"
     ],
     "deny": [],
     "ask": []

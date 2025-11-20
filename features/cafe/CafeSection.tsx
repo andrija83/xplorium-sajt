@@ -4,8 +4,11 @@ import { useState, memo, useMemo, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { EventCalendar, BookingForm, type CalendarEvent } from '@/components/common'
 import { getApprovedBookings, createBooking } from '@/app/actions/bookings'
+import { getPublishedEvents } from '@/app/actions/events'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
+import { format } from 'date-fns'
+import { sr } from 'date-fns/locale'
 
 interface CafeSectionProps {
   cafeSubView: string | null
@@ -42,6 +45,10 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
+  // Published events state (for Dogadjaji section)
+  const [publishedEvents, setPublishedEvents] = useState<any[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
+
   // Fetch approved bookings from database
   const fetchBookings = useCallback(async () => {
     const result = await getApprovedBookings()
@@ -61,12 +68,43 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
     }
   }, [])
 
+  // Fetch published events from database
+  const fetchPublishedEvents = useCallback(async () => {
+    setEventsLoading(true)
+    try {
+      const result = await getPublishedEvents(10) // Get up to 10 upcoming events
+      if (result.success && result.events) {
+        // Filter only future events (compare by date only, not time)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const futureEvents = result.events.filter(event => {
+          const eventDate = new Date(event.date)
+          eventDate.setHours(0, 0, 0, 0)
+          return eventDate >= today
+        })
+        setPublishedEvents(futureEvents)
+      }
+    } catch (error) {
+      console.error('Failed to fetch events:', error)
+    } finally {
+      setEventsLoading(false)
+    }
+  }, [])
+
   // Load bookings on mount and when "zakup" view is opened
   useEffect(() => {
     if (cafeSubView === 'zakup') {
       fetchBookings()
     }
   }, [cafeSubView, fetchBookings])
+
+  // Load published events when "dogadjaji" view is opened
+  useEffect(() => {
+    if (cafeSubView === 'dogadjaji') {
+      fetchPublishedEvents()
+    }
+  }, [cafeSubView, fetchPublishedEvents])
 
   // Handle new booking submission (memoized)
   const handleBookingSubmit = useCallback(async (newEvent: Omit<CalendarEvent, 'id'> & { specialRequests?: string }) => {
@@ -703,70 +741,52 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                     {/* Event Calendar */}
                     <div className="mb-4">
                       <p className="text-white/70 text-sm mb-8">
-                        Nadolazeci dogadjaji u Xplorium-u
+                        Nadolazeći događaji u Xplorium-u
                       </p>
-                      <div className="space-y-4">
-                        {[
-                          {
-                            title: "Dečija Radionica",
-                            date: "15. Novembar",
-                            time: "10:00 - 12:00",
-                            description: "Kreativna radionica za decu 5-10 godina"
-                          },
-                          {
-                            title: "Porodični Dan",
-                            date: "18. Novembar",
-                            time: "14:00 - 18:00",
-                            description: "Specijalne aktivnosti i popusti za porodice"
-                          },
-                          {
-                            title: "Muzička Zabava",
-                            date: "22. Novembar",
-                            time: "16:00 - 19:00",
-                            description: "Live muzika i animatori za decu"
-                          },
-                          {
-                            title: "Čarobni Petak",
-                            date: "25. Novembar",
-                            time: "17:00 - 20:00",
-                            description: "Magične predstave i zabavne igre"
-                          },
-                          {
-                            title: "Zimska Čarolija",
-                            date: "29. Novembar",
-                            time: "15:00 - 19:00",
-                            description: "Specijalni zimski program sa ukrašavanjem"
-                          },
-                        ].map((event, index) => (
-                          <motion.div
-                            key={index}
-                            className="bg-white/5 border border-purple-400/20 rounded-lg p-4"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-                            whileHover={{
-                              borderColor: "rgba(168, 85, 247, 0.5)",
-                              backgroundColor: "rgba(255, 255, 255, 0.08)",
-                              scale: 1.02
-                            }}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="text-white font-['Great_Vibes'] text-xl">
-                                {event.title}
-                              </h4>
-                              <span className="text-purple-400 text-xs font-medium">
-                                {event.time}
-                              </span>
-                            </div>
-                            <p className="text-purple-400/80 text-xs mb-2">
-                              {event.date}
-                            </p>
-                            <p className="text-white/70 text-xs leading-relaxed">
-                              {event.description}
-                            </p>
-                          </motion.div>
-                        ))}
-                      </div>
+
+                      {eventsLoading ? (
+                        <div className="text-center py-8">
+                          <div className="inline-block w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                          <p className="text-white/60 text-sm mt-4">Učitavanje događaja...</p>
+                        </div>
+                      ) : publishedEvents.length > 0 ? (
+                        <div className="space-y-4">
+                          {publishedEvents.map((event, index) => (
+                            <motion.div
+                              key={event.id}
+                              className="bg-white/5 border border-purple-400/20 rounded-lg p-4"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
+                              whileHover={{
+                                borderColor: "rgba(168, 85, 247, 0.5)",
+                                backgroundColor: "rgba(255, 255, 255, 0.08)",
+                                scale: 1.02
+                              }}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="text-white font-['Great_Vibes'] text-xl">
+                                  {event.title}
+                                </h4>
+                                <span className="text-purple-400 text-xs font-medium">
+                                  {event.time}
+                                </span>
+                              </div>
+                              <p className="text-purple-400/80 text-xs mb-2">
+                                {format(new Date(event.date), 'd. MMMM yyyy', { locale: sr })}
+                              </p>
+                              <p className="text-white/70 text-xs leading-relaxed">
+                                {event.description}
+                              </p>
+                            </motion.div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-white/60 text-sm">Trenutno nema zakazanih događaja</p>
+                          <p className="text-white/40 text-xs mt-2">Vratite se uskoro!</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Special Note */}
