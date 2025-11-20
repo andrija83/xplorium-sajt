@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useMemo, useEffect, useCallback, lazy, Suspense } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, ChevronDown } from "lucide-react"
 import {
@@ -17,15 +18,37 @@ import { PenStrokeReveal, TypewriterText, PlanetOrb } from "@/components/animati
 import { Starfield } from "@/components/common/Starfield"
 import { AuthButtons } from "@/components/common/AuthButtons"
 import { LoadingSpinner } from "@/components/common/LoadingSpinner"
+import { SectionSkeleton } from "@/components/loading/SectionSkeleton"
 
-// Dynamic imports for heavy feature components (code-splitting)
-const SignInModal = lazy(() => import("@/components/auth/SignInModal").then(m => ({ default: m.SignInModal })))
-const SignUpModal = lazy(() => import("@/components/auth/SignUpModal").then(m => ({ default: m.SignUpModal })))
-const IgraonicaSection = lazy(() => import("@/features/igraonica/IgraonicaSection").then(m => ({ default: m.IgraonicaSection })))
-const SensorySection = lazy(() => import("@/features/sensory/SensorySection").then(m => ({ default: m.SensorySection })))
-const CafeSection = lazy(() => import("@/features/cafe/CafeSection").then(m => ({ default: m.CafeSection })))
-const ProfileSection = lazy(() => import("@/components/profile/ProfileSection").then(m => ({ default: m.ProfileSection })))
-const ForgotPasswordModal = lazy(() => import("@/components/auth/ForgotPasswordModal").then(m => ({ default: m.ForgotPasswordModal })))
+// Dynamic imports for heavy feature components (code-splitting with SSR disabled)
+const SignInModal = dynamic(() => import("@/components/auth/SignInModal").then(m => ({ default: m.SignInModal })), {
+  loading: () => <SectionSkeleton />,
+  ssr: false
+})
+const SignUpModal = dynamic(() => import("@/components/auth/SignUpModal").then(m => ({ default: m.SignUpModal })), {
+  loading: () => <SectionSkeleton />,
+  ssr: false
+})
+const IgraonicaSection = dynamic(() => import("@/features/igraonica/IgraonicaSection").then(m => ({ default: m.IgraonicaSection })), {
+  loading: () => <SectionSkeleton />,
+  ssr: false
+})
+const SensorySection = dynamic(() => import("@/features/sensory/SensorySection").then(m => ({ default: m.SensorySection })), {
+  loading: () => <SectionSkeleton />,
+  ssr: false
+})
+const CafeSection = dynamic(() => import("@/features/cafe/CafeSection").then(m => ({ default: m.CafeSection })), {
+  loading: () => <SectionSkeleton />,
+  ssr: false
+})
+const ProfileSection = dynamic(() => import("@/components/profile/ProfileSection").then(m => ({ default: m.ProfileSection })), {
+  loading: () => <SectionSkeleton />,
+  ssr: false
+})
+const ForgotPasswordModal = dynamic(() => import("@/components/auth/ForgotPasswordModal").then(m => ({ default: m.ForgotPasswordModal })), {
+  loading: () => <SectionSkeleton />,
+  ssr: false
+})
 
 /**
  * XPLORIUM LANDING PAGE
@@ -752,32 +775,30 @@ export default function Landing() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               >
-                <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><LoadingSpinner /></div>}>
-                  {/* ========== CAFE SECTION ========== */}
-                  {/* Glass frame menu with neon-glowing submenu items */}
-                  {activeView === "cafe" && (
-                    <CafeSection
-                      cafeSubView={cafeSubView}
-                      setCafeSubView={setCafeSubView}
-                    />
-                  )}
+                {/* ========== CAFE SECTION ========== */}
+                {/* Glass frame menu with neon-glowing submenu items */}
+                {activeView === "cafe" && (
+                  <CafeSection
+                    cafeSubView={cafeSubView}
+                    setCafeSubView={setCafeSubView}
+                  />
+                )}
 
-                  {/* ========== SENSORY SECTION ========== */}
-                  {/* Planet orb navigation with Floor/Wall/Ceiling options */}
-                  {activeView === "discover" && (
-                    <SensorySection
-                      sensorySubView={sensorySubView}
-                      setSensorySubView={setSensorySubView}
-                    />
-                  )}
+                {/* ========== SENSORY SECTION ========== */}
+                {/* Planet orb navigation with Floor/Wall/Ceiling options */}
+                {activeView === "discover" && (
+                  <SensorySection
+                    sensorySubView={sensorySubView}
+                    setSensorySubView={setSensorySubView}
+                  />
+                )}
 
-                  {/* ========== IGRAONICA SECTION ========== */}
-                  {/* Interactive playground section */}
-                  {activeView === "igraonica" && <IgraonicaSection />}
+                {/* ========== IGRAONICA SECTION ========== */}
+                {/* Interactive playground section */}
+                {activeView === "igraonica" && <IgraonicaSection />}
 
-                  {/* ========== PROFILE SECTION ========== */}
-                  {activeView === "profile" && <ProfileSection />}
-                </Suspense>
+                {/* ========== PROFILE SECTION ========== */}
+                {activeView === "profile" && <ProfileSection />}
               </motion.div>
             )}
           </AnimatePresence>
@@ -808,24 +829,23 @@ export default function Landing() {
 
       {/* ========== AUTH MODALS ========== */}
       {/* Following Mobiscroll pattern for popup management */}
-      <Suspense fallback={null}>
-        <SignInModal
-          isOpen={isSignInOpen}
-          onClose={() => setIsSignInOpen(false)}
-          onSwitchToSignUp={handleSwitchToSignUp}
-          onForgotPassword={handleSwitchToForgotPassword}
-        />
-        <SignUpModal
-          isOpen={isSignUpOpen}
-          onClose={() => setIsSignUpOpen(false)}
-          onSwitchToSignIn={handleSwitchToSignIn}
-        />
-        <ForgotPasswordModal
-          isOpen={isForgotPasswordOpen}
-          onClose={() => setIsForgotPasswordOpen(false)}
-          onBackToSignIn={handleSwitchToSignIn}
-        />
-      </Suspense>
+      {/* Dynamic imports handle loading automatically */}
+      <SignInModal
+        isOpen={isSignInOpen}
+        onClose={() => setIsSignInOpen(false)}
+        onSwitchToSignUp={handleSwitchToSignUp}
+        onForgotPassword={handleSwitchToForgotPassword}
+      />
+      <SignUpModal
+        isOpen={isSignUpOpen}
+        onClose={() => setIsSignUpOpen(false)}
+        onSwitchToSignIn={handleSwitchToSignIn}
+      />
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        onBackToSignIn={handleSwitchToSignIn}
+      />
     </div>
   )
 }
