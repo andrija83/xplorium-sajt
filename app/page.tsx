@@ -24,6 +24,7 @@ const SignUpModal = lazy(() => import("@/components/auth/SignUpModal").then(m =>
 const IgraonicaSection = lazy(() => import("@/features/igraonica/IgraonicaSection").then(m => ({ default: m.IgraonicaSection })))
 const SensorySection = lazy(() => import("@/features/sensory/SensorySection").then(m => ({ default: m.SensorySection })))
 const CafeSection = lazy(() => import("@/features/cafe/CafeSection").then(m => ({ default: m.CafeSection })))
+const ProfileSection = lazy(() => import("@/components/profile/ProfileSection").then(m => ({ default: m.ProfileSection })))
 
 /**
  * XPLORIUM LANDING PAGE
@@ -242,6 +243,15 @@ export default function Landing() {
     setIsSignInOpen(true)
   }, [])
 
+  /**
+   * handleProfileClick: Switches view to Profile section
+   */
+  const handleProfileClick = useCallback(() => {
+    setActiveView("profile")
+    setSensorySubView(null)
+    setCafeSubView(null)
+  }, [])
+
   // ========== DATA STRUCTURES (MEMOIZED) ==========
 
   /**
@@ -389,6 +399,7 @@ export default function Landing() {
             <AuthButtons
               onSignIn={handleSignIn}
               onSignUp={handleSignUp}
+              onProfileClick={handleProfileClick}
             />
           </motion.div>
         )}
@@ -755,6 +766,9 @@ export default function Landing() {
                   {/* ========== IGRAONICA SECTION ========== */}
                   {/* Interactive playground section */}
                   {activeView === "igraonica" && <IgraonicaSection />}
+
+                  {/* ========== PROFILE SECTION ========== */}
+                  {activeView === "profile" && <ProfileSection />}
                 </Suspense>
               </motion.div>
             )}

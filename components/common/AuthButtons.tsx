@@ -33,12 +33,15 @@ interface AuthButtonsProps {
   onSignIn?: () => void
   /** Callback when Sign Up is clicked */
   onSignUp?: () => void
+  /** Callback when Profile is clicked */
+  onProfileClick?: () => void
 }
 
 export const AuthButtons = memo(function AuthButtons({
   className = "",
   onSignIn,
-  onSignUp
+  onSignUp,
+  onProfileClick
 }: AuthButtonsProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -68,6 +71,15 @@ export const AuthButtons = memo(function AuthButtons({
   const handleAdminDashboard = () => {
     setShowDropdown(false)
     router.push('/admin')
+  }
+
+  const handleProfile = () => {
+    setShowDropdown(false)
+    if (onProfileClick) {
+      onProfileClick()
+    } else {
+      router.push('/profile')
+    }
   }
 
   const renderContent = () => {
@@ -185,10 +197,7 @@ export const AuthButtons = memo(function AuthButtons({
 
                   {!isAdmin && (
                     <button
-                      onClick={() => {
-                        setShowDropdown(false)
-                        router.push('/profile')
-                      }}
+                      onClick={handleProfile}
                       className="w-full px-4 py-2 flex items-center gap-3 text-cyan-300
                                  hover:bg-cyan-400/10 transition-colors text-left"
                     >
