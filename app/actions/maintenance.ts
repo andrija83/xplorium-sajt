@@ -45,9 +45,9 @@ export async function getMaintenanceLogs(filters?: {
 
     if (filters?.search) {
       where.OR = [
-        { equipment: { contains: filters.search, mode: "insensitive" } },
-        { description: { contains: filters.search, mode: "insensitive" } },
-        { performedBy: { contains: filters.search, mode: "insensitive" } },
+        { equipment: { contains: filters.search, mode: "insensitive" as const } },
+        { description: { contains: filters.search, mode: "insensitive" as const } },
+        { performedBy: { contains: filters.search, mode: "insensitive" as const } },
       ]
     }
 

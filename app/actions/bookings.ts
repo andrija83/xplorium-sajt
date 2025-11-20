@@ -42,8 +42,8 @@ export async function getBookings({
     ...(type && { type: type as any }),
     ...(search && {
       OR: [
-        { email: { contains: search, mode: 'insensitive' } },
-        { title: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' as const } },
+        { title: { contains: search, mode: 'insensitive' as const } },
         { phone: { contains: search } },
       ],
     }),

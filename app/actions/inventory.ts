@@ -37,8 +37,8 @@ export async function getInventoryItems(filters?: {
 
     if (filters?.search) {
       where.OR = [
-        { name: { contains: filters.search, mode: "insensitive" } },
-        { supplierName: { contains: filters.search, mode: "insensitive" } },
+        { name: { contains: filters.search, mode: "insensitive" as const } },
+        { supplierName: { contains: filters.search, mode: "insensitive" as const } },
       ]
     }
 

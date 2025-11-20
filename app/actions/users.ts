@@ -43,8 +43,8 @@ export async function getUsers({
     ...(blocked !== undefined && { blocked }),
     ...(search && {
       OR: [
-        { email: { contains: search, mode: 'insensitive' } },
-        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' as const } },
+        { name: { contains: search, mode: 'insensitive' as const } },
       ],
     }),
   }
