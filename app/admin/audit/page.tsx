@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Search, History, User, FileText, Calendar, Activity } from "lucide-react"
+import { Search, History, User, FileText, Calendar, Activity, Download } from "lucide-react"
 import { DataTable, type Column } from "@/components/admin/DataTable"
 import { getAuditLogs } from "@/app/actions/audit"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -91,6 +92,60 @@ export default function AuditPage() {
     fetchLogs(page)
   }
 
+  const handleExportCSV = async () => {
+    try {
+      toast.info("Preparing export...")
+
+      // Fetch all logs for export (without pagination)
+      const result = await getAuditLogs({
+        action: actionFilter !== "ALL" ? actionFilter : undefined,
+        entity: entityFilter !== "ALL" ? entityFilter : undefined,
+        limit: 10000, // Large limit to get all records
+        offset: 0,
+      })
+
+      if (!result.success || !result.logs) {
+        toast.error("Failed to export logs")
+        return
+      }
+
+      // Convert logs to CSV
+      const headers = ["Date", "Action", "Entity", "Entity ID", "User Name", "User Email", "User Role", "Changes"]
+      const csvRows = [headers.join(",")]
+
+      result.logs.forEach((log: AuditLog) => {
+        const row = [
+          format(new Date(log.createdAt), "yyyy-MM-dd HH:mm:ss"),
+          log.action,
+          log.entity,
+          log.entityId,
+          `"${(log.user.name || "Unknown").replace(/"/g, '""')}"`, // Escape quotes
+          `"${log.user.email.replace(/"/g, '""')}"`,
+          log.user.role,
+          `"${JSON.stringify(log.changes || {}).replace(/"/g, '""')}"`, // Escape quotes in JSON
+        ]
+        csvRows.push(row.join(","))
+      })
+
+      // Create blob and download
+      const csvContent = csvRows.join("\n")
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `audit-logs-${format(new Date(), "yyyy-MM-dd-HHmmss")}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      toast.success(`Exported ${result.logs.length} logs to CSV`)
+    } catch (error) {
+      console.error("Export error:", error)
+      toast.error("Failed to export logs")
+    }
+  }
+
   const columns: Column<AuditLog>[] = [
     {
       header: "Action",
@@ -157,6 +212,14 @@ export default function AuditPage() {
             Track system activities and changes
           </p>
         </div>
+        <Button
+          onClick={handleExportCSV}
+          disabled={logs.length === 0 || isLoading}
+          className="bg-cyan-500 hover:bg-cyan-600 text-white"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export to CSV
+        </Button>
       </div>
 
       <motion.div

@@ -666,9 +666,285 @@ export async function updateResource(id: string, data: any) {
 
 ---
 
+---
+
+## Audit Logging System
+
+### Overview
+
+The application implements comprehensive audit logging for all admin actions, providing a complete audit trail for compliance, security monitoring, and debugging.
+
+### What Gets Logged
+
+All admin mutations are automatically logged with the following information:
+
+1. **User Information**
+   - User ID performing the action
+   - User name and email
+   - User role
+
+2. **Action Details**
+   - Action type (CREATE, UPDATE, DELETE, APPROVE, REJECT)
+   - Entity type (User, Booking, Event, Content, etc.)
+   - Entity ID
+   - Timestamp
+
+3. **Change Tracking**
+   - Before/after values for updates
+   - Complete data for creates
+   - Metadata for approvals/rejections
+
+4. **Technical Details** (automatically captured in `lib/audit.ts`)
+   - IP address
+   - User agent
+   - Request metadata
+
+### Logged Operations
+
+#### ✅ User Management
+- **CREATE** - New user creation
+- **UPDATE** - Role changes with before/after values
+- **UPDATE** - User blocking/unblocking
+- **DELETE** - User deletion
+
+**Example:**
+```typescript
+await logAudit({
+  userId: session.user.id,
+  action: 'UPDATE',
+  entity: 'User',
+  entityId: userId,
+  changes: { role: { from: 'USER', to: 'ADMIN' } }
+})
+```
+
+#### ✅ Booking Management
+- **CREATE** - New booking creation
+- **UPDATE** - Booking modifications
+- **APPROVE** - Booking approvals with admin notes
+- **REJECT** - Booking rejections with reasons
+- **DELETE** - Booking deletion
+
+**Example:**
+```typescript
+await logAudit({
+  userId: session.user.id,
+  action: 'APPROVE',
+  entity: 'Booking',
+  entityId: bookingId,
+  changes: { status: 'APPROVED', adminNotes: 'Verified payment' }
+})
+```
+
+#### ✅ Event Management
+- **CREATE** - New event creation
+- **UPDATE** - Event modifications (including status changes to PUBLISHED)
+- **UPDATE** - Event reordering
+- **DELETE** - Event deletion
+
+#### ✅ Content Management
+- **UPDATE** - Content section updates with full change tracking
+
+**Example:**
+```typescript
+await logAudit({
+  userId: session.user.id,
+  action: 'UPDATE',
+  entity: 'Content',
+  entityId: section,
+  changes: newContent
+})
+```
+
+#### ✅ Pricing Management
+- **CREATE** - New pricing package
+- **UPDATE** - Price/package updates
+- **UPDATE** - Package reordering
+- **DELETE** - Package deletion
+
+#### ✅ Inventory Management
+- **CREATE** - New inventory items
+- **UPDATE** - Item modifications
+- **UPDATE** - Stock adjustments
+- **DELETE** - Item deletion
+
+#### ✅ Maintenance Logs
+- **CREATE** - New maintenance entries
+- **UPDATE** - Log updates
+- **UPDATE** - Status changes
+- **DELETE** - Log deletion
+
+### Audit Log Viewer
+
+**Location:** `/admin/audit`
+
+**Features:**
+- ✅ Real-time log display
+- ✅ Filter by action type (CREATE, UPDATE, DELETE, APPROVE, REJECT)
+- ✅ Filter by entity type (User, Booking, Event, Content, etc.)
+- ✅ Pagination for performance
+- ✅ **CSV Export** - Download logs for external analysis
+- ✅ Detailed change tracking
+- ✅ Color-coded actions for quick scanning
+
+**CSV Export:**
+- Exports filtered or all logs
+- Includes all log details (date, action, entity, user, changes)
+- Timestamp included in filename
+- Properly escaped CSV format
+- Handles large datasets (up to 10,000 records)
+
+**Usage:**
+```
+1. Navigate to /admin/audit
+2. Apply filters (optional)
+3. Click "Export to CSV" button
+4. Download: audit-logs-YYYY-MM-DD-HHmmss.csv
+```
+
+### Audit Implementation Pattern
+
+For all admin mutations:
+
+```typescript
+export async function adminMutation(data: any) {
+  try {
+    const session = await requireAdmin()
+
+    // Perform operation
+    const result = await prisma.something.create({ data })
+
+    // Log the action
+    await logAudit({
+      userId: session.user.id,
+      action: 'CREATE',
+      entity: 'Something',
+      entityId: result.id,
+      changes: data,
+    })
+
+    revalidatePath('/admin/something')
+    return { success: true, result }
+  } catch (error) {
+    return { error: error.message }
+  }
+}
+```
+
+### Audit Log Retention
+
+**Current Implementation:**
+- All logs stored indefinitely in database
+- No automatic cleanup
+
+**Recommendations for Production:**
+1. Implement retention policy (e.g., 90 days, 1 year, or 7 years for compliance)
+2. Archive old logs to cold storage
+3. Set up automated exports for compliance
+4. Monitor audit log table size
+
+**Example Retention Query:**
+```sql
+-- Archive logs older than 1 year
+DELETE FROM "AuditLog"
+WHERE "createdAt" < NOW() - INTERVAL '1 year';
+```
+
+### Compliance Considerations
+
+The audit logging system supports:
+
+1. **GDPR Compliance**
+   - Tracks all user data modifications
+   - Records who accessed/modified personal data
+   - Provides audit trail for data deletion requests
+
+2. **SOC 2 Compliance**
+   - Logs all administrative actions
+   - Tracks privileged user activities
+   - Immutable audit trail
+
+3. **HIPAA Compliance** (if handling health data)
+   - Logs all access to sensitive information
+   - Records all modifications
+   - Tracks user authentication events
+
+### Security Best Practices
+
+1. **Log Immutability**
+   - Audit logs should not be editable
+   - Only admins can view logs
+   - No deletion of audit logs through UI
+
+2. **Sensitive Data Handling**
+   - Never log passwords or tokens
+   - Be careful with PII in change logs
+   - Consider masking sensitive fields
+
+3. **Monitoring**
+   - Regular review of audit logs
+   - Alert on suspicious patterns
+   - Monitor failed authorization attempts
+
+4. **Backup**
+   - Regular backups of audit logs
+   - Separate from main database backups
+   - Encrypted backups for compliance
+
+### Audit Log Structure
+
+**Database Schema:**
+```typescript
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // CREATE, UPDATE, DELETE, APPROVE, REJECT
+  entity    String   // User, Booking, Event, Content, etc.
+  entityId  String
+  changes   Json?    // Detailed change tracking
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+```
+
+### Future Enhancements
+
+Potential improvements for audit logging:
+
+1. **Advanced Analytics**
+   - Dashboard with audit statistics
+   - Trend analysis
+   - Anomaly detection
+
+2. **Real-Time Alerts**
+   - Notify on suspicious activities
+   - Alert on bulk deletions
+   - Monitor privilege escalations
+
+3. **Enhanced Export**
+   - JSON export format
+   - Date range selection
+   - Custom field selection
+   - Scheduled exports
+
+4. **Search Capabilities**
+   - Full-text search in changes
+   - Advanced query builder
+   - Save search filters
+
+5. **Audit Log Integrity**
+   - Cryptographic signatures
+   - Blockchain-based immutability
+   - Tamper detection
+
+---
+
 ## Related Documentation
 
-- [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) - Phase 5.1
+- [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) - Phase 5.1 & 5.2
 - [CODE_SPLITTING_GUIDE.md](./CODE_SPLITTING_GUIDE.md) - Performance optimization
 - [NextAuth.js Documentation](https://next-auth.js.org/)
 - [Prisma Authorization Patterns](https://www.prisma.io/docs/guides/security)
