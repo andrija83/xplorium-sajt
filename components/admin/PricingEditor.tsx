@@ -84,7 +84,7 @@ export function PricingEditor({ packageId, initialData, isEditing = false }: Pri
                 router.push("/admin/pricing")
                 router.refresh()
             } else {
-                toast.error(result.error || "Something went wrong")
+                toast.error('error' in result ? result.error : "Something went wrong")
             }
         } catch (error) {
             console.error('Submit error:', error)

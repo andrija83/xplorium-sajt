@@ -52,7 +52,7 @@ export async function getPricingPackageById(id: string) {
   })
 
   if (!package_) {
-    return { error: 'Pricing package not found' }
+    return { success: false, error: 'Pricing package not found' }
   }
 
   return { success: true, package: package_ }
@@ -183,7 +183,7 @@ export async function updatePricingPackage(id: string, data: UpdatePricingInput)
     const session = await auth()
 
     if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
+      return { success: false, error: 'Unauthorized' }
     }
 
     // Validate input
@@ -238,7 +238,7 @@ export async function deletePricingPackage(id: string) {
     const session = await auth()
 
     if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
+      return { success: false, error: 'Unauthorized' }
     }
 
     await prisma.pricingPackage.delete({
@@ -277,7 +277,7 @@ export async function reorderPricingPackages(packageIds: string[]) {
     const session = await auth()
 
     if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
+      return { success: false, error: 'Unauthorized' }
     }
 
     // Update each package's order

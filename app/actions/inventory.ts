@@ -101,13 +101,13 @@ export async function createInventoryItem(data: CreateInventoryInput) {
     })
 
     // Audit log
-    await logAudit(
-      session.user.id,
-      "CREATE",
-      "InventoryItem",
-      item.id,
-      { created: item }
-    )
+    await logAudit({
+      userId: session.user.id,
+      action: "CREATE",
+      entity: "InventoryItem",
+      entityId: item.id,
+      changes: { created: item }
+    })
 
     revalidatePath("/admin/inventory")
     return { success: true, item }
@@ -142,13 +142,13 @@ export async function updateInventoryItem(id: string, data: UpdateInventoryInput
     })
 
     // Audit log
-    await logAudit(
-      session.user.id,
-      "UPDATE",
-      "InventoryItem",
-      item.id,
-      { before: oldItem, after: item }
-    )
+    await logAudit({
+      userId: session.user.id,
+      action: "UPDATE",
+      entity: "InventoryItem",
+      entityId: item.id,
+      changes: { before: oldItem, after: item }
+    })
 
     revalidatePath("/admin/inventory")
     revalidatePath(`/admin/inventory/${id}`)
@@ -177,13 +177,13 @@ export async function deleteInventoryItem(id: string) {
     })
 
     // Audit log
-    await logAudit(
-      session.user.id,
-      "DELETE",
-      "InventoryItem",
-      id,
-      { deleted: item }
-    )
+    await logAudit({
+      userId: session.user.id,
+      action: "DELETE",
+      entity: "InventoryItem",
+      entityId: id,
+      changes: { deleted: item }
+    })
 
     revalidatePath("/admin/inventory")
     return { success: true }
@@ -231,19 +231,19 @@ export async function adjustStock(id: string, adjustment: AdjustStockInput) {
     })
 
     // Audit log
-    await logAudit(
-      session.user.id,
-      "UPDATE",
-      "InventoryItem",
-      item.id,
-      {
+    await logAudit({
+      userId: session.user.id,
+      action: "UPDATE",
+      entity: "InventoryItem",
+      entityId: item.id,
+      changes: {
         action: "stock_adjustment",
         adjustment: validated.quantity,
         oldQuantity: currentItem.quantity,
         newQuantity: item.quantity,
         reason: validated.reason
       }
-    )
+    })
 
     revalidatePath("/admin/inventory")
     revalidatePath(`/admin/inventory/${id}`)

@@ -110,13 +110,13 @@ export async function createMaintenanceLog(data: CreateMaintenanceInput) {
     })
 
     // Audit log
-    await logAudit(
-      session.user.id,
-      "CREATE",
-      "MaintenanceLog",
-      log.id,
-      { created: log }
-    )
+    await logAudit({
+      userId: session.user.id,
+      action: "CREATE",
+      entity: "MaintenanceLog",
+      entityId: log.id,
+      changes: { created: log }
+    })
 
     revalidatePath("/admin/maintenance")
     return { success: true, log }
@@ -151,13 +151,13 @@ export async function updateMaintenanceLog(id: string, data: UpdateMaintenanceIn
     })
 
     // Audit log
-    await logAudit(
-      session.user.id,
-      "UPDATE",
-      "MaintenanceLog",
-      log.id,
-      { before: oldLog, after: log }
-    )
+    await logAudit({
+      userId: session.user.id,
+      action: "UPDATE",
+      entity: "MaintenanceLog",
+      entityId: log.id,
+      changes: { before: oldLog, after: log }
+    })
 
     revalidatePath("/admin/maintenance")
     revalidatePath(`/admin/maintenance/${id}`)
@@ -186,13 +186,13 @@ export async function deleteMaintenanceLog(id: string) {
     })
 
     // Audit log
-    await logAudit(
-      session.user.id,
-      "DELETE",
-      "MaintenanceLog",
-      id,
-      { deleted: log }
-    )
+    await logAudit({
+      userId: session.user.id,
+      action: "DELETE",
+      entity: "MaintenanceLog",
+      entityId: id,
+      changes: { deleted: log }
+    })
 
     revalidatePath("/admin/maintenance")
     return { success: true }
@@ -229,13 +229,13 @@ export async function completeMaintenanceLog(id: string, completedData?: {
     })
 
     // Audit log
-    await logAudit(
-      session.user.id,
-      "UPDATE",
-      "MaintenanceLog",
-      log.id,
-      { action: "completed", data: log }
-    )
+    await logAudit({
+      userId: session.user.id,
+      action: "UPDATE",
+      entity: "MaintenanceLog",
+      entityId: log.id,
+      changes: { action: "completed", data: log }
+    })
 
     revalidatePath("/admin/maintenance")
     revalidatePath(`/admin/maintenance/${id}`)

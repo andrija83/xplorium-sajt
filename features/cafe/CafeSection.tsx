@@ -523,7 +523,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                               {pkg.price}
                             </motion.p>
                             <ul className="space-y-3 mb-6">
-                              {pkg.features.map((feature, i) => (
+                              {pkg.features.map((feature: string, i: number) => (
                                 <motion.li
                                   key={i}
                                   className="text-white/80 text-sm flex items-start"
@@ -636,7 +636,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                               {pkg.price}
                             </motion.p>
                             <ul className="space-y-3 mb-6">
-                              {pkg.features.map((feature, i) => (
+                              {pkg.features.map((feature: string, i: number) => (
                                 <motion.li
                                   key={i}
                                   className="text-white/80 text-sm flex items-start"
@@ -749,7 +749,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                               {pkg.price}
                             </motion.p>
                             <ul className="space-y-3 mb-6">
-                              {pkg.features.map((feature, i) => (
+                              {pkg.features.map((feature: string, i: number) => (
                                 <motion.li
                                   key={i}
                                   className="text-white/80 text-sm flex items-start"
@@ -862,7 +862,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                               {pkg.price}
                             </motion.p>
                             <ul className="space-y-3 mb-6">
-                              {pkg.features.map((feature, i) => (
+                              {pkg.features.map((feature: string, i: number) => (
                                 <motion.li
                                   key={i}
                                   className="text-white/80 text-sm flex items-start"
