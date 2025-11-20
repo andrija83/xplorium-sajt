@@ -30,9 +30,10 @@ interface SignInModalProps {
   isOpen: boolean
   onClose: () => void
   onSwitchToSignUp?: () => void
+  onForgotPassword?: () => void
 }
 
-export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalProps) {
+export function SignInModal({ isOpen, onClose, onSwitchToSignUp, onForgotPassword }: SignInModalProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -323,6 +324,10 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
                 <div className="flex justify-end">
                   <button
                     type="button"
+                    onClick={() => {
+                      handleClose()
+                      onForgotPassword?.()
+                    }}
                     className="text-sm text-cyan-400/70 hover:text-cyan-400 transition-colors
                                hover:underline"
                   >

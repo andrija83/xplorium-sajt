@@ -25,6 +25,7 @@ const IgraonicaSection = lazy(() => import("@/features/igraonica/IgraonicaSectio
 const SensorySection = lazy(() => import("@/features/sensory/SensorySection").then(m => ({ default: m.SensorySection })))
 const CafeSection = lazy(() => import("@/features/cafe/CafeSection").then(m => ({ default: m.CafeSection })))
 const ProfileSection = lazy(() => import("@/components/profile/ProfileSection").then(m => ({ default: m.ProfileSection })))
+const ForgotPasswordModal = lazy(() => import("@/components/auth/ForgotPasswordModal").then(m => ({ default: m.ForgotPasswordModal })))
 
 /**
  * XPLORIUM LANDING PAGE
@@ -104,6 +105,7 @@ export default function Landing() {
    */
   const [isSignInOpen, setIsSignInOpen] = useState(false)
   const [isSignUpOpen, setIsSignUpOpen] = useState(false)
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false)
 
   // ========== PERFORMANCE & ACCESSIBILITY HOOKS ==========
 
@@ -241,6 +243,12 @@ export default function Landing() {
   const handleSwitchToSignIn = useCallback(() => {
     setIsSignUpOpen(false)
     setIsSignInOpen(true)
+    setIsForgotPasswordOpen(false)
+  }, [])
+
+  const handleSwitchToForgotPassword = useCallback(() => {
+    setIsSignInOpen(false)
+    setIsForgotPasswordOpen(true)
   }, [])
 
   /**
@@ -805,11 +813,17 @@ export default function Landing() {
           isOpen={isSignInOpen}
           onClose={() => setIsSignInOpen(false)}
           onSwitchToSignUp={handleSwitchToSignUp}
+          onForgotPassword={handleSwitchToForgotPassword}
         />
         <SignUpModal
           isOpen={isSignUpOpen}
           onClose={() => setIsSignUpOpen(false)}
           onSwitchToSignIn={handleSwitchToSignIn}
+        />
+        <ForgotPasswordModal
+          isOpen={isForgotPasswordOpen}
+          onClose={() => setIsForgotPasswordOpen(false)}
+          onBackToSignIn={handleSwitchToSignIn}
         />
       </Suspense>
     </div>

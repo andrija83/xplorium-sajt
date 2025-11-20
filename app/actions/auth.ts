@@ -121,3 +121,28 @@ export async function signInAction(email: string, password: string) {
     }
   }
 }
+
+/**
+ * Reset password (Mock implementation)
+ * @param email - User email
+ * @returns Success status
+ */
+export async function resetPassword(email: string) {
+  try {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // TODO: Integrate Resend here
+    // See TODO_RESEND_MIGRATION.md
+
+    return {
+      success: true,
+      message: 'Reset link sent successfully',
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to send reset link',
+    }
+  }
+}
