@@ -104,6 +104,31 @@ model Event {
 }
 
 // ============================================
+// PRICING PACKAGES
+// ============================================
+
+model PricingPackage {
+  id          String        @id @default(cuid())
+  name        String        // Package name (e.g., "1 Sat Igre")
+  price       String        // Price with currency (e.g., "500 RSD")
+  category    PricingCategory // PLAYGROUND, SENSORY_ROOM, CAFE, PARTY
+  popular     Boolean       @default(false) // Highlight as popular
+  features    Json          // Array of features/benefits
+  description String?       @db.Text
+
+  // Display settings
+  status      PricingStatus @default(PUBLISHED)
+  order       Int           @default(0) // For drag-and-drop ordering
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([category])
+  @@index([status])
+  @@index([order])
+}
+
+// ============================================
 // CONTENT MANAGEMENT
 // ============================================
 
@@ -172,6 +197,19 @@ enum BookingType {
 }
 
 enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PricingCategory {
+  PLAYGROUND
+  SENSORY_ROOM
+  CAFE
+  PARTY
+}
+
+enum PricingStatus {
   DRAFT
   PUBLISHED
   ARCHIVED

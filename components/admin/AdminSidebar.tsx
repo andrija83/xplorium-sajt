@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  BookOpen
+  BookOpen,
+  DollarSign
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -69,6 +70,11 @@ export const AdminSidebar = memo(function AdminSidebar({
       label: "Events",
       href: "/admin/events",
       icon: BookOpen
+    },
+    {
+      label: "Pricing",
+      href: "/admin/pricing",
+      icon: DollarSign
     },
     {
       label: "Users",

@@ -13,6 +13,11 @@ interface BookingFormProps {
   existingEvents?: CalendarEvent[]
   initialDate?: Date | null
   isLoading?: boolean
+  initialPackage?: {
+    name: string
+    price: string
+    category: string
+  } | null
 }
 
 /**
@@ -23,7 +28,7 @@ interface BookingFormProps {
  * Prevents double-booking by checking existing events
  * Can accept an initial date from calendar click
  */
-export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDate = null, isLoading = false }: BookingFormProps) => {
+export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDate = null, isLoading = false, initialPackage = null }: BookingFormProps) => {
   // Helper to format date without timezone issues
   const formatDateForInput = (date: Date | null) => {
     if (!date) return ''
@@ -33,15 +38,26 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
     return `${year}-${month}-${day}`
   }
 
+  // Map category to booking type
+  const getTypeFromCategory = (category: string): 'CAFE' | 'SENSORY_ROOM' | 'PLAYGROUND' | 'PARTY' | 'EVENT' => {
+    switch (category) {
+      case 'CAFE': return 'CAFE'
+      case 'SENSORY_ROOM': return 'SENSORY_ROOM'
+      case 'PLAYGROUND': return 'PLAYGROUND'
+      case 'PARTY': return 'PARTY'
+      default: return 'PARTY'
+    }
+  }
+
   const [formData, setFormData] = useState({
-    title: '',
+    title: initialPackage ? `${initialPackage.name} - Rezervacija` : '',
     email: '',
     phone: '',
     date: formatDateForInput(initialDate),
     time: '',
     guestCount: '',
-    type: 'PARTY' as 'CAFE' | 'SENSORY_ROOM' | 'PLAYGROUND' | 'PARTY' | 'EVENT',
-    notes: ''
+    type: (initialPackage ? getTypeFromCategory(initialPackage.category) : 'PARTY') as 'CAFE' | 'SENSORY_ROOM' | 'PLAYGROUND' | 'PARTY' | 'EVENT',
+    notes: initialPackage ? `Paket: ${initialPackage.name} (${initialPackage.price})` : ''
   })
 
   const [showDatePicker, setShowDatePicker] = useState(false)

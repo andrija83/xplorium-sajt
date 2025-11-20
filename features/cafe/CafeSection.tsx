@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { EventCalendar, BookingForm, type CalendarEvent } from '@/components/common'
 import { getApprovedBookings, createBooking } from '@/app/actions/bookings'
 import { getPublishedEvents } from '@/app/actions/events'
+import { getPublishedPricingPackages } from '@/app/actions/pricing'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { format } from 'date-fns'
@@ -44,10 +45,25 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
   const [isLoading, setIsLoading] = useState(false)
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedPackage, setSelectedPackage] = useState<{ name: string, price: string, category: string } | null>(null)
 
   // Published events state (for Dogadjaji section)
   const [publishedEvents, setPublishedEvents] = useState<any[]>([])
   const [eventsLoading, setEventsLoading] = useState(false)
+
+  // Pricing packages state (for Pricing section)
+  const [pricingPackages, setPricingPackages] = useState<{
+    playground: any[]
+    sensory: any[]
+    cafe: any[]
+    party: any[]
+  }>({
+    playground: [],
+    sensory: [],
+    cafe: [],
+    party: [],
+  })
+  const [pricingLoading, setPricingLoading] = useState(false)
 
   // Fetch approved bookings from database
   const fetchBookings = useCallback(async () => {
@@ -99,12 +115,52 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
     }
   }, [cafeSubView, fetchBookings])
 
+  // Fetch pricing packages from database
+  const fetchPricingPackages = useCallback(async () => {
+    console.log('🔍 Fetching pricing packages...')
+    setPricingLoading(true)
+    try {
+      // Fetch all categories in parallel
+      const [playgroundRes, sensoryRes, cafeRes, partyRes] = await Promise.all([
+        getPublishedPricingPackages('PLAYGROUND'),
+        getPublishedPricingPackages('SENSORY_ROOM'),
+        getPublishedPricingPackages('CAFE'),
+        getPublishedPricingPackages('PARTY'),
+      ])
+
+      console.log('📦 Playground packages:', playgroundRes.packages)
+      console.log('📦 Sensory packages:', sensoryRes.packages)
+      console.log('📦 Cafe packages:', cafeRes.packages)
+      console.log('📦 Party packages:', partyRes.packages)
+
+      setPricingPackages({
+        playground: playgroundRes.packages || [],
+        sensory: sensoryRes.packages || [],
+        cafe: cafeRes.packages || [],
+        party: partyRes.packages || [],
+      })
+
+      console.log('✅ Pricing packages loaded successfully')
+    } catch (error) {
+      console.error('❌ Failed to fetch pricing packages:', error)
+    } finally {
+      setPricingLoading(false)
+    }
+  }, [])
+
   // Load published events when "dogadjaji" view is opened
   useEffect(() => {
     if (cafeSubView === 'dogadjaji') {
       fetchPublishedEvents()
     }
   }, [cafeSubView, fetchPublishedEvents])
+
+  // Load pricing packages when "pricing" view is opened
+  useEffect(() => {
+    if (cafeSubView === 'pricing') {
+      fetchPricingPackages()
+    }
+  }, [cafeSubView, fetchPricingPackages])
 
   // Handle new booking submission (memoized)
   const handleBookingSubmit = useCallback(async (newEvent: Omit<CalendarEvent, 'id'> & { specialRequests?: string }) => {
@@ -414,26 +470,13 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                         Igraonica Paketi
                       </motion.h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                          {
-                            name: "1 Sat Igre",
-                            price: "500 RSD",
-                            popular: false,
-                            features: ["1 sat igranja", "Pristup svim aktivnostima", "Roditeljski nadzor"],
-                          },
-                          {
-                            name: "3 Sata Igre",
-                            price: "1200 RSD",
-                            popular: true,
-                            features: ["3 sata igranja", "Sve aktivnosti", "Besplatan napitak", "10% popust"],
-                          },
-                          {
-                            name: "Rođendanski Paket",
-                            price: "8000 RSD",
-                            popular: false,
-                            features: ["4 sata ekskluzivno", "Dekoracija prostora", "Torta i piće", "Animator", "Do 15 dece"],
-                          },
-                        ].map((pkg, index) => (
+                        {pricingLoading ? (
+                          <div className="col-span-3 text-center py-12">
+                            <div className="inline-block w-8 h-8 border-4 border-pink-400 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-white/60 text-sm mt-4">Učitavanje paketa...</p>
+                          </div>
+                        ) : pricingPackages.playground.length > 0 ? (
+                          pricingPackages.playground.map((pkg, index) => (
                           <motion.div
                             key={index}
                             className={`relative bg-gradient-to-br ${pkg.popular ? "from-pink-400/10 to-pink-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-pink-400/60" : "border-pink-400/20"} rounded-xl p-6 backdrop-blur-sm`}
@@ -495,8 +538,11 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                               ))}
                             </ul>
                             <motion.button
-                              onClick={() => setCafeSubView("zakup")}
-                              aria-label="Book this event now"
+                              onClick={() => {
+                                setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'PLAYGROUND' })
+                                setCafeSubView("zakup")
+                              }}
+                              aria-label="Book this playground package"
                               className="w-full py-3 bg-pink-400/20 border-2 border-pink-400/50 rounded-lg text-pink-400 text-sm font-medium hover:bg-pink-400/30 transition-all"
                               style={{ boxShadow: "0 0 15px rgba(236, 72, 153, 0.2)" }}
                               whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(236, 72, 153, 0.4)" }}
@@ -509,7 +555,12 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                               Rezerviši Sada
                             </motion.button>
                           </motion.div>
-                        ))}
+                        ))
+                        ) : (
+                          <div className="col-span-3 text-center py-12">
+                            <p className="text-white/60">Trenutno nema dostupnih paketa</p>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
 
@@ -532,26 +583,13 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                         Sensory Soba Paketi
                       </motion.h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                          {
-                            name: "Sesija 30 min",
-                            price: "600 RSD",
-                            popular: false,
-                            features: ["30 minuta", "Vođena sesija", "Individualni pristup"],
-                          },
-                          {
-                            name: "Sesija 1 sat",
-                            price: "1000 RSD",
-                            popular: true,
-                            features: ["1 sat terapije", "Personalizovana sesija", "Stručni terapeut", "Besplatan čaj"],
-                          },
-                          {
-                            name: "Mesečni Paket",
-                            price: "7000 RSD",
-                            popular: false,
-                            features: ["8 sesija (1 sat)", "Fleksibilno zakazivanje", "Praćenje napretka", "20% ušteda"],
-                          },
-                        ].map((pkg, index) => (
+                        {pricingLoading ? (
+                          <div className="col-span-3 text-center py-12">
+                            <div className="inline-block w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-white/60 text-sm mt-4">Učitavanje paketa...</p>
+                          </div>
+                        ) : pricingPackages.sensory.length > 0 ? (
+                          pricingPackages.sensory.map((pkg, index) => (
                           <motion.div
                             key={index}
                             className={`relative bg-gradient-to-br ${pkg.popular ? "from-purple-400/10 to-purple-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-purple-400/60" : "border-purple-400/20"} rounded-xl p-6 backdrop-blur-sm`}
@@ -613,8 +651,11 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                               ))}
                             </ul>
                             <motion.button
-                              onClick={() => setCafeSubView("zakup")}
-                              aria-label="Book party package now"
+                              onClick={() => {
+                                setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'SENSORY_ROOM' })
+                                setCafeSubView("zakup")
+                              }}
+                              aria-label="Book sensory room package"
                               className="w-full py-3 bg-purple-400/20 border-2 border-purple-400/50 rounded-lg text-purple-400 text-sm font-medium hover:bg-purple-400/30 transition-all"
                               style={{ boxShadow: "0 0 15px rgba(168, 85, 247, 0.2)" }}
                               whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(168, 85, 247, 0.4)" }}
@@ -627,105 +668,239 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                               Rezerviši Sada
                             </motion.button>
                           </motion.div>
-                        ))}
+                        ))
+                        ) : (
+                          <div className="col-span-3 text-center py-12">
+                            <p className="text-white/60">Trenutno nema dostupnih paketa</p>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
 
                     {/* Cafe Pricing */}
-                    <div className="mb-10">
-                      <h3 className="text-cyan-400 font-['Great_Vibes'] text-3xl mb-6">
+                    <motion.div
+                      className="mb-10"
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: false, amount: 0.2 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <motion.h3
+                        className="text-cyan-400 font-['Great_Vibes'] text-4xl mb-6 text-center"
+                        style={{ textShadow: "0 0 20px rgba(34, 211, 238, 0.5)" }}
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: false, amount: 0.5 }}
+                        transition={{ duration: 0.6 }}
+                      >
                         Cafe Paketi
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {[
-                          {
-                            name: "Individualni Gost",
-                            price: "Od 200 RSD",
-                            popular: false,
-                            features: ["À la carte meni", "Sve pije i hrana", "WiFi pristup", "Udoban prostor"],
-                          },
-                          {
-                            name: "Porodični Paket",
-                            price: "1500 RSD",
-                            popular: true,
-                            features: ["2 odraslih + 2 dece", "Napici i zalogaji", "1 sat igraonica", "15% popust"],
-                          },
-                          {
-                            name: "Grupni Događaj",
-                            price: "Od 5000 RSD",
-                            popular: false,
-                            features: ["Ekskluzivan prostor", "Prilagođen meni", "Catering usluga", "Do 30 osoba"],
-                          },
-                        ].map((pkg, index) => (
+                      </motion.h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {pricingLoading ? (
+                          <div className="col-span-3 text-center py-12">
+                            <div className="inline-block w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-white/60 text-sm mt-4">Učitavanje paketa...</p>
+                          </div>
+                        ) : pricingPackages.cafe.length > 0 ? (
+                          pricingPackages.cafe.map((pkg, index) => (
                           <motion.div
                             key={index}
-                            className={`relative bg-white/5 border ${pkg.popular ? "border-cyan-400/50" : "border-cyan-400/20"} rounded-lg p-4`}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4, delay: 1.1 + index * 0.1 }}
+                            className={`relative bg-gradient-to-br ${pkg.popular ? "from-cyan-400/10 to-cyan-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-cyan-400/60" : "border-cyan-400/20"} rounded-xl p-6 backdrop-blur-sm`}
+                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                            viewport={{ once: false, amount: 0.3 }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
                             whileHover={{
-                              borderColor: pkg.popular ? "rgba(34, 211, 238, 0.8)" : "rgba(34, 211, 238, 0.5)",
-                              scale: 1.02,
+                              borderColor: "rgba(34, 211, 238, 0.8)",
+                              scale: pkg.popular ? 1.05 : 1.03,
+                              y: -10,
                             }}
-                            style={pkg.popular ? { boxShadow: "0 0 20px rgba(34, 211, 238, 0.2)" } : {}}
+                            style={pkg.popular ? { boxShadow: "0 0 30px rgba(34, 211, 238, 0.3)" } : {}}
                           >
                             {pkg.popular && (
-                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-500 text-white text-xs px-3 py-1 rounded-full font-medium"
-                                style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.8)" }}>
-                                Najpopularnije
-                              </div>
+                              <motion.div
+                                className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
+                                style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.8)", boxShadow: "0 0 20px rgba(34, 211, 238, 0.5)" }}
+                                initial={{ scale: 0 }}
+                                whileInView={{ scale: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                              >
+                                ⭐ Najpopularnije
+                              </motion.div>
                             )}
-                            <h4 className="text-white font-['Great_Vibes'] text-2xl mb-2">{pkg.name}</h4>
-                            <p className="text-cyan-400 text-2xl font-bold mb-4">{pkg.price}</p>
-                            <ul className="space-y-2 mb-4">
+                            <motion.h4
+                              className="text-white font-['Great_Vibes'] text-3xl mb-3"
+                              initial={{ opacity: 0 }}
+                              whileInView={{ opacity: 1 }}
+                              viewport={{ once: false }}
+                              transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                            >
+                              {pkg.name}
+                            </motion.h4>
+                            <motion.p
+                              className="text-cyan-400 text-3xl font-bold mb-6"
+                              style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.5)" }}
+                              initial={{ scale: 0 }}
+                              whileInView={{ scale: 1 }}
+                              viewport={{ once: false }}
+                              transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
+                            >
+                              {pkg.price}
+                            </motion.p>
+                            <ul className="space-y-3 mb-6">
                               {pkg.features.map((feature, i) => (
-                                <li key={i} className="text-white/70 text-xs flex items-start">
-                                  <span className="text-cyan-400 mr-2">✓</span>
+                                <motion.li
+                                  key={i}
+                                  className="text-white/80 text-sm flex items-start"
+                                  initial={{ opacity: 0, x: -20 }}
+                                  whileInView={{ opacity: 1, x: 0 }}
+                                  viewport={{ once: false }}
+                                  transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                                >
+                                  <span className="text-cyan-400 mr-2 text-lg">✓</span>
                                   {feature}
-                                </li>
+                                </motion.li>
                               ))}
                             </ul>
                             <motion.button
-                              onClick={() => setCafeSubView("zakup")}
-                              aria-label="Book this menu package"
-                              className="w-full py-2 bg-cyan-400/20 border border-cyan-400/40 rounded-lg text-cyan-400 text-sm hover:bg-cyan-400/30 transition-all"
-                              whileHover={{ scale: 1.05 }}
+                              onClick={() => {
+                                setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'CAFE' })
+                                setCafeSubView("zakup")
+                              }}
+                              aria-label="Book cafe package"
+                              className="w-full py-3 bg-cyan-400/20 border-2 border-cyan-400/50 rounded-lg text-cyan-400 text-sm font-medium hover:bg-cyan-400/30 transition-all"
+                              style={{ boxShadow: "0 0 15px rgba(34, 211, 238, 0.2)" }}
+                              whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(34, 211, 238, 0.4)" }}
                               whileTap={{ scale: 0.95 }}
+                              initial={{ opacity: 0 }}
+                              whileInView={{ opacity: 1 }}
+                              viewport={{ once: false }}
+                              transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
                             >
-                              Rezerviši
+                              Rezerviši Sada
                             </motion.button>
                           </motion.div>
-                        ))}
+                        ))
+                        ) : (
+                          <div className="col-span-3 text-center py-12">
+                            <p className="text-white/60">Trenutno nema dostupnih cafe paketa</p>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </motion.div>
 
-                    {/* Group Discount Info */}
+                    {/* Party/Birthday Pricing */}
                     <motion.div
-                      className="bg-gradient-to-r from-emerald-400/10 via-cyan-400/10 to-purple-400/10 border border-emerald-400/30 rounded-lg p-6 mt-8"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.6, delay: 1.5 }}
+                      className="mb-10"
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: false, amount: 0.2 }}
+                      transition={{ duration: 0.6 }}
                     >
-                      <h4 className="text-emerald-400 font-['Great_Vibes'] text-2xl mb-3">
-                        Grupni Popusti
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-white/80 text-xs">
-                        <div className="text-center">
-                          <p className="text-emerald-400 text-xl font-bold mb-1">10%</p>
-                          <p>Grupe 10-20 osoba</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-cyan-400 text-xl font-bold mb-1">15%</p>
-                          <p>Grupe 20-30 osoba</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-purple-400 text-xl font-bold mb-1">20%</p>
-                          <p>Grupe 30+ osoba</p>
-                        </div>
+                      <motion.h3
+                        className="text-pink-400 font-['Great_Vibes'] text-4xl mb-6 text-center"
+                        style={{ textShadow: "0 0 20px rgba(236, 72, 153, 0.5)" }}
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: false, amount: 0.5 }}
+                        transition={{ duration: 0.6 }}
+                      >
+                        Rođendanski Paketi
+                      </motion.h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {pricingLoading ? (
+                          <div className="col-span-3 text-center py-12">
+                            <div className="inline-block w-8 h-8 border-4 border-pink-400 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-white/60 text-sm mt-4">Učitavanje paketa...</p>
+                          </div>
+                        ) : pricingPackages.party.length > 0 ? (
+                          pricingPackages.party.map((pkg, index) => (
+                          <motion.div
+                            key={index}
+                            className={`relative bg-gradient-to-br ${pkg.popular ? "from-pink-400/10 to-pink-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-pink-400/60" : "border-pink-400/20"} rounded-xl p-6 backdrop-blur-sm`}
+                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                            viewport={{ once: false, amount: 0.3 }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                            whileHover={{
+                              borderColor: "rgba(236, 72, 153, 0.8)",
+                              scale: pkg.popular ? 1.05 : 1.03,
+                              y: -10,
+                            }}
+                            style={pkg.popular ? { boxShadow: "0 0 30px rgba(236, 72, 153, 0.3)" } : {}}
+                          >
+                            {pkg.popular && (
+                              <motion.div
+                                className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-pink-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
+                                style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.8)", boxShadow: "0 0 20px rgba(236, 72, 153, 0.5)" }}
+                                initial={{ scale: 0 }}
+                                whileInView={{ scale: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                              >
+                                ⭐ Najpopularnije
+                              </motion.div>
+                            )}
+                            <motion.h4
+                              className="text-white font-['Great_Vibes'] text-3xl mb-3"
+                              initial={{ opacity: 0 }}
+                              whileInView={{ opacity: 1 }}
+                              viewport={{ once: false }}
+                              transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                            >
+                              {pkg.name}
+                            </motion.h4>
+                            <motion.p
+                              className="text-pink-400 text-3xl font-bold mb-6"
+                              style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.5)" }}
+                              initial={{ scale: 0 }}
+                              whileInView={{ scale: 1 }}
+                              viewport={{ once: false }}
+                              transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
+                            >
+                              {pkg.price}
+                            </motion.p>
+                            <ul className="space-y-3 mb-6">
+                              {pkg.features.map((feature, i) => (
+                                <motion.li
+                                  key={i}
+                                  className="text-white/80 text-sm flex items-start"
+                                  initial={{ opacity: 0, x: -20 }}
+                                  whileInView={{ opacity: 1, x: 0 }}
+                                  viewport={{ once: false }}
+                                  transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                                >
+                                  <span className="text-pink-400 mr-2 text-lg">✓</span>
+                                  {feature}
+                                </motion.li>
+                              ))}
+                            </ul>
+                            <motion.button
+                              onClick={() => {
+                                setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'PARTY' })
+                                setCafeSubView("zakup")
+                              }}
+                              aria-label="Book birthday party package"
+                              className="w-full py-3 bg-pink-400/20 border-2 border-pink-400/50 rounded-lg text-pink-400 text-sm font-medium hover:bg-pink-400/30 transition-all"
+                              style={{ boxShadow: "0 0 15px rgba(236, 72, 153, 0.2)" }}
+                              whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(236, 72, 153, 0.4)" }}
+                              whileTap={{ scale: 0.95 }}
+                              initial={{ opacity: 0 }}
+                              whileInView={{ opacity: 1 }}
+                              viewport={{ once: false }}
+                              transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                            >
+                              Rezerviši Rođendan
+                            </motion.button>
+                          </motion.div>
+                        ))
+                        ) : (
+                          <div className="col-span-3 text-center py-12">
+                            <p className="text-white/60">Trenutno nema dostupnih rođendanskih paketa</p>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-white/60 text-xs text-center mt-4">
-                        Kontaktirajte nas za prilagođene pakete za škole i organizacije
-                      </p>
                     </motion.div>
                   </motion.div>
                 )}
@@ -911,10 +1086,12 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                           onCancel={() => {
                             setShowBookingForm(false)
                             setSelectedDate(null)
+                            setSelectedPackage(null)
                           }}
                           existingEvents={events}
                           initialDate={selectedDate}
                           isLoading={isLoading}
+                          initialPackage={selectedPackage}
                         />
                       </div>
                     )}
