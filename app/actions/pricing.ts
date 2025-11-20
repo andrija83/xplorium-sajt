@@ -1,8 +1,8 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import {
@@ -17,7 +17,7 @@ import {
 // ============================================
 
 /**
- * Get all pricing packages with optional filtering
+ * Get all pricing packages with optional filtering (Admin only)
  */
 export async function getPricingPackages({
   status,
@@ -30,32 +30,50 @@ export async function getPricingPackages({
   limit?: number
   offset?: number
 } = {}) {
-  const packages = await prisma.pricingPackage.findMany({
-    where: {
-      ...(status && { status: status as any }),
-      ...(category && { category: category as any }),
-    },
-    orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-    take: limit,
-    skip: offset,
-  })
+  try {
+    await requireAdmin()
 
-  return { success: true, packages }
+    const packages = await prisma.pricingPackage.findMany({
+      where: {
+        ...(status && { status: status as any }),
+        ...(category && { category: category as any }),
+      },
+      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      take: limit,
+      skip: offset,
+    })
+
+    return { success: true, packages }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Unauthorized' }
+  }
 }
 
 /**
- * Get a single pricing package by ID
+ * Get a single pricing package by ID (Admin only)
  */
 export async function getPricingPackageById(id: string) {
-  const package_ = await prisma.pricingPackage.findUnique({
-    where: { id },
-  })
+  try {
+    await requireAdmin()
 
-  if (!package_) {
-    return { success: false, error: 'Pricing package not found' }
+    const package_ = await prisma.pricingPackage.findUnique({
+      where: { id },
+    })
+
+    if (!package_) {
+      return { success: false, error: 'Pricing package not found' }
+    }
+
+    return { success: true, package: package_ }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { success: false, error: error.message }
+    }
+    return { success: false, error: 'Unauthorized' }
   }
-
-  return { success: true, package: package_ }
 }
 
 /**
@@ -87,15 +105,8 @@ export async function createPricingPackage(data: CreatePricingInput) {
   console.log('========================================')
 
   try {
-    console.log('Getting session...')
-    const session = await auth()
-    console.log('Session result:', session ? `User: ${session.user.email}, Role: ${session.user.role}` : 'No session')
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      console.log('❌ UNAUTHORIZED - Returning error')
-      return { success: false, error: 'Unauthorized' }
-    }
-
+    console.log('Checking authorization...')
+    const session = await requireAdmin()
     console.log('✅ User authorized:', session.user.email)
 
     // Validate input
@@ -180,11 +191,7 @@ export async function createPricingPackage(data: CreatePricingInput) {
  */
 export async function updatePricingPackage(id: string, data: UpdatePricingInput) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { success: false, error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     // Validate input
     const validatedData = updatePricingSchema.parse(data)
@@ -235,11 +242,7 @@ export async function updatePricingPackage(id: string, data: UpdatePricingInput)
  */
 export async function deletePricingPackage(id: string) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { success: false, error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     await prisma.pricingPackage.delete({
       where: { id },
@@ -274,11 +277,7 @@ export async function deletePricingPackage(id: string) {
  */
 export async function reorderPricingPackages(packageIds: string[]) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { success: false, error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     // Update each package's order
     await Promise.all(

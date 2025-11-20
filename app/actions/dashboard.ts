@@ -1,20 +1,15 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth-utils'
 
 /**
  * Get dashboard statistics
  * @returns Dashboard stats
  */
 export async function getDashboardStats() {
-  const session = await auth()
-
-  if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-    return { error: 'Unauthorized' }
-  }
-
   try {
+    await requireAdmin()
     // Get counts
     const [
       totalBookings,
@@ -190,26 +185,29 @@ export async function getDashboardStats() {
  * @returns Recent activity
  */
 export async function getRecentActivity(limit = 10) {
-  const session = await auth()
+  try {
+    await requireAdmin()
 
-  if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-    return { error: 'Unauthorized' }
-  }
-
-  const activity = await prisma.auditLog.findMany({
-    take: limit,
-    orderBy: {
-      createdAt: 'desc',
-    },
-    include: {
-      user: {
-        select: {
-          name: true,
-          email: true,
+    const activity = await prisma.auditLog.findMany({
+      take: limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
         },
       },
-    },
-  })
+    })
 
-  return { success: true, activity }
+    return { success: true, activity }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message }
+    }
+    return { error: 'Unauthorized' }
+  }
 }

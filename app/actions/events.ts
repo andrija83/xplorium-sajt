@@ -1,8 +1,8 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import {
   createEventSchema,
@@ -14,7 +14,7 @@ import {
 } from '@/lib/validations'
 
 /**
- * Get all events with optional filtering
+ * Get all events with optional filtering (Admin only)
  * @param filters - Filter options
  * @returns Array of events
  */
@@ -31,45 +31,63 @@ export async function getEvents({
   limit?: number
   offset?: number
 } = {}) {
-  const where = {
-    ...(status && { status: status as any }),
-    ...(category && { category }),
-    ...(search && {
-      OR: [
-        { title: { contains: search, mode: 'insensitive' as const } },
-        { description: { contains: search, mode: 'insensitive' as const } },
-      ],
-    }),
+  try {
+    await requireAdmin()
+
+    const where = {
+      ...(status && { status: status as any }),
+      ...(category && { category }),
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' as const } },
+          { description: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }),
+    }
+
+    const [events, total] = await Promise.all([
+      prisma.event.findMany({
+        where,
+        orderBy: [{ order: 'asc' }, { date: 'desc' }],
+        take: limit,
+        skip: offset,
+      }),
+      prisma.event.count({ where }),
+    ])
+
+    return { success: true, events, total }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { success: false, error: error.message, events: [], total: 0 }
+    }
+    return { success: false, error: 'Unauthorized', events: [], total: 0 }
   }
-
-  const [events, total] = await Promise.all([
-    prisma.event.findMany({
-      where,
-      orderBy: [{ order: 'asc' }, { date: 'desc' }],
-      take: limit,
-      skip: offset,
-    }),
-    prisma.event.count({ where }),
-  ])
-
-  return { success: true, events, total }
 }
 
 /**
- * Get a single event by ID
+ * Get a single event by ID (Admin only)
  * @param id - Event ID
  * @returns Event data
  */
 export async function getEventById(id: string) {
-  const event = await prisma.event.findUnique({
-    where: { id },
-  })
+  try {
+    await requireAdmin()
 
-  if (!event) {
-    return { error: 'Event not found' }
+    const event = await prisma.event.findUnique({
+      where: { id },
+    })
+
+    if (!event) {
+      return { error: 'Event not found' }
+    }
+
+    return { success: true, event }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message }
+    }
+    return { error: 'Unauthorized' }
   }
-
-  return { success: true, event }
 }
 
 /**
@@ -116,11 +134,7 @@ export async function getPublishedEvents(limit = 10) {
  */
 export async function createEvent(data: CreateEventInput) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     // Validate input
     const validatedData = createEventSchema.parse(data)
@@ -190,11 +204,7 @@ export async function createEvent(data: CreateEventInput) {
  */
 export async function updateEvent(id: string, data: UpdateEventInput) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     // Validate input
     const validatedData = updateEventSchema.parse(data)
@@ -258,11 +268,7 @@ export async function updateEvent(id: string, data: UpdateEventInput) {
  */
 export async function deleteEvent(id: string) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     await prisma.event.delete({
       where: { id },
@@ -307,11 +313,7 @@ export async function deleteEvent(id: string) {
  */
 export async function reorderEvents(data: ReorderEventsInput) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     // Validate input
     const validatedData = reorderEventsSchema.parse(data)

@@ -1,8 +1,8 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { updateContentSchema, type UpdateContentInput } from '@/lib/validations'
 import type { Prisma } from '@prisma/client'
@@ -13,15 +13,25 @@ import type { Prisma } from '@prisma/client'
  * @returns Content data
  */
 export async function getContentBySection(section: 'cafe' | 'sensory' | 'igraonica') {
-  const content = await prisma.siteContent.findUnique({
-    where: { section },
-  })
+  try {
+    // Require admin role for content management
+    await requireAdmin()
 
-  if (!content) {
-    return { error: 'Content not found' }
+    const content = await prisma.siteContent.findUnique({
+      where: { section },
+    })
+
+    if (!content) {
+      return { error: 'Content not found' }
+    }
+
+    return { success: true, content }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message }
+    }
+    return { error: 'Unauthorized' }
   }
-
-  return { success: true, content }
 }
 
 /**
@@ -31,11 +41,8 @@ export async function getContentBySection(section: 'cafe' | 'sensory' | 'igraoni
  */
 export async function updateContent(data: UpdateContentInput) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    // Require admin role for content updates
+    const session = await requireAdmin()
 
     // Validate input
     const validatedData = updateContentSchema.parse(data)
@@ -95,11 +102,21 @@ export async function updateContent(data: UpdateContentInput) {
  * @returns All content sections
  */
 export async function getAllContent() {
-  const content = await prisma.siteContent.findMany({
-    orderBy: {
-      section: 'asc',
-    },
-  })
+  try {
+    // Require admin role for content management
+    await requireAdmin()
 
-  return { success: true, content }
+    const content = await prisma.siteContent.findMany({
+      orderBy: {
+        section: 'asc',
+      },
+    })
+
+    return { success: true, content }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message }
+    }
+    return { error: 'Unauthorized' }
+  }
 }

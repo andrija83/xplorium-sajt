@@ -1,8 +1,8 @@
 'use server'
 
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { requireAdmin, requireAuth } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import {
   createBookingSchema,
@@ -31,27 +31,62 @@ export async function getBookings({
   limit?: number
   offset?: number
 } = {}) {
-  const session = await auth()
+  try {
+    await requireAdmin()
 
-  if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
+    const where = {
+      ...(status && { status: status as any }),
+      ...(type && { type: type as any }),
+      ...(search && {
+        OR: [
+          { email: { contains: search, mode: 'insensitive' as const } },
+          { title: { contains: search, mode: 'insensitive' as const } },
+          { phone: { contains: search } },
+        ],
+      }),
+    }
+
+    const [bookings, total] = await Promise.all([
+      prisma.booking.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.booking.count({ where }),
+    ])
+
+    return { success: true, bookings, total }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message }
+    }
     return { error: 'Unauthorized' }
   }
+}
 
-  const where = {
-    ...(status && { status: status as any }),
-    ...(type && { type: type as any }),
-    ...(search && {
-      OR: [
-        { email: { contains: search, mode: 'insensitive' as const } },
-        { title: { contains: search, mode: 'insensitive' as const } },
-        { phone: { contains: search } },
-      ],
-    }),
-  }
+/**
+ * Get a single booking by ID
+ * @param id - Booking ID
+ * @returns Booking data
+ */
+export async function getBookingById(id: string) {
+  try {
+    await requireAdmin()
 
-  const [bookings, total] = await Promise.all([
-    prisma.booking.findMany({
-      where,
+    const booking = await prisma.booking.findUnique({
+      where: { id },
       include: {
         user: {
           select: {
@@ -61,48 +96,19 @@ export async function getBookings({
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-      skip: offset,
-    }),
-    prisma.booking.count({ where }),
-  ])
+    })
 
-  return { success: true, bookings, total }
-}
+    if (!booking) {
+      return { error: 'Booking not found' }
+    }
 
-/**
- * Get a single booking by ID
- * @param id - Booking ID
- * @returns Booking data
- */
-export async function getBookingById(id: string) {
-  const session = await auth()
-
-  if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
+    return { success: true, booking }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message }
+    }
     return { error: 'Unauthorized' }
   }
-
-  const booking = await prisma.booking.findUnique({
-    where: { id },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-    },
-  })
-
-  if (!booking) {
-    return { error: 'Booking not found' }
-  }
-
-  return { success: true, booking }
 }
 
 /**
@@ -112,15 +118,7 @@ export async function getBookingById(id: string) {
  */
 export async function createBooking(data: CreateBookingInput) {
   try {
-    const session = await auth()
-
-    // Require authentication
-    if (!session?.user) {
-      return {
-        success: false,
-        error: 'You must be signed in to create a booking',
-      }
-    }
+    const session = await requireAuth()
 
     // Validate input
     const validatedData = createBookingSchema.parse(data)
@@ -166,11 +164,7 @@ export async function createBooking(data: CreateBookingInput) {
  */
 export async function updateBooking(id: string, data: UpdateBookingInput) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     // Validate input
     const validatedData = updateBookingSchema.parse(data)
@@ -232,11 +226,7 @@ export async function updateBooking(id: string, data: UpdateBookingInput) {
  */
 export async function approveBooking(bookingId: string, adminNotes?: string) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     // Validate input
     const validatedData = approveBookingSchema.parse({ bookingId, adminNotes })
@@ -302,11 +292,7 @@ export async function approveBooking(bookingId: string, adminNotes?: string) {
  */
 export async function rejectBooking(bookingId: string, reason: string) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     // Validate input
     const validatedData = rejectBookingSchema.parse({ bookingId, reason })
@@ -371,11 +357,7 @@ export async function rejectBooking(bookingId: string, reason: string) {
  */
 export async function deleteBooking(id: string) {
   try {
-    const session = await auth()
-
-    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
-      return { error: 'Unauthorized' }
-    }
+    const session = await requireAdmin()
 
     await prisma.booking.delete({
       where: { id },
@@ -458,15 +440,7 @@ export async function getApprovedBookings() {
  */
 export async function getUserBookings() {
   try {
-    const session = await auth()
-
-    if (!session?.user) {
-      return {
-        success: false,
-        error: 'You must be signed in to view your bookings',
-        bookings: [],
-      }
-    }
+    const session = await requireAuth()
 
     const bookings = await prisma.booking.findMany({
       where: {
