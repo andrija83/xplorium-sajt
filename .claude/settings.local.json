@@ -45,7 +45,8 @@
       "Bash(npx next lint)",
       "Bash(git restore:*)",
       "Bash(del \"docs\\PHASE_2_1_REDUCED_MOTION.md\")",
-      "Bash(npx next lint:*)"
+      "Bash(npx next lint:*)",
+      "Bash(timeout /t 15)"
     ],
     "deny": [],
     "ask": []
