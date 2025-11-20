@@ -164,6 +164,8 @@ General-purpose loading placeholder:
 Always follow this pattern:
 
 ```typescript
+"use client" // REQUIRED when using ssr: false
+
 import dynamic from "next/dynamic"
 import { LoadingSkeleton } from "@/components/loading/LoadingSkeleton"
 
@@ -179,6 +181,8 @@ const HeavyComponent = dynamic(
   }
 )
 ```
+
+**⚠️ Important:** When using `ssr: false`, the page component MUST have `"use client"` at the top. Next.js 13+ Server Components do not allow `ssr: false` - it's only available in Client Components.
 
 ### 3. **Loading States**
 

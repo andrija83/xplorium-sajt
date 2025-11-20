@@ -1,3 +1,5 @@
+"use client"
+
 import dynamic from "next/dynamic"
 import { createEvent } from "@/app/actions/events"
 import { SectionSkeleton } from "@/components/loading/SectionSkeleton"
