@@ -68,12 +68,13 @@ export const SensorySection = memo(({ sensorySubView, setSensorySubView }: Senso
     <>
       {!sensorySubView ? (
         // Planet Orb Navigation
-        <motion.div
+        <motion.nav
           className="relative w-full max-w-2xl sm:max-w-3xl md:max-w-4xl lg:max-w-5xl aspect-square flex items-center justify-center px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
+          aria-label="Sensory room navigation"
         >
           {SENSORY_PLANETS.map((planet, index) => (
             <PlanetOrb
@@ -87,7 +88,7 @@ export const SensorySection = memo(({ sensorySubView, setSensorySubView }: Senso
               image={planet.image}
             />
           ))}
-        </motion.div>
+        </motion.nav>
       ) : (
         // Subsection Gallery View
         <div className="h-[80vh] overflow-y-auto scroll-smooth snap-y snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">

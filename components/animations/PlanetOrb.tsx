@@ -69,9 +69,16 @@ export const PlanetOrb = memo(({
 
   return (
     <motion.button
-      className={`absolute ${sizeClasses[size]} rounded-full cursor-pointer group`}
+      className={`absolute ${sizeClasses[size]} rounded-full cursor-pointer group focus:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-black transition-shadow`}
       style={position}
       aria-label={`Explore ${label} sensory experience`}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{

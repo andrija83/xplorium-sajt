@@ -371,6 +371,15 @@ export default function Landing() {
     // min-h-screen: Minimum height 100vh
     // overflow-hidden: Prevents scrollbars from showing
     <div className="min-h-screen w-full bg-black overflow-hidden">
+      {/* ========== SKIP TO CONTENT LINK ========== */}
+      {/* Accessible skip link for screen reader and keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-black"
+      >
+        Skip to main content
+      </a>
+
       {/* ========== STARFIELD BACKGROUND ========== */}
       {/* Fixed layer behind all content with 100+ animated stars */}
       <Starfield activeView={activeView} />
@@ -445,15 +454,22 @@ export default function Landing() {
         {activeView && (
           <motion.button
             onClick={goBackToMenu}
-            aria-label="Go back to main menu"
-            className="fixed top-6 left-6 sm:top-8 sm:left-8 z-50 p-3 sm:p-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-full text-white transition-all duration-300 flex items-center gap-2"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                goBackToMenu()
+              }
+            }}
+            aria-label={`Go back to ${sensorySubView || cafeSubView ? 'section menu' : 'main menu'}`}
+            tabIndex={0}
+            className="fixed top-6 left-6 sm:top-8 sm:left-8 z-50 p-3 sm:p-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-full text-white transition-all duration-300 flex items-center gap-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-black"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" aria-hidden="true" />
             {/* "Back" text hidden on mobile (sm breakpoint) */}
             <span className="text-sm font-light hidden sm:inline">Back</span>
           </motion.button>
@@ -463,7 +479,7 @@ export default function Landing() {
       {/* ========== MAIN CONTENT CONTAINER ========== */}
       {/* Centers all content vertically and horizontally */}
       <div className="min-h-screen w-full flex items-center justify-center relative">
-        <div className="relative z-10 flex flex-col items-center justify-center px-4 w-full">
+        <div id="main-content" className="relative z-10 flex flex-col items-center justify-center px-4 w-full" role="main">
           {/* AnimatePresence mode="wait": Waits for exit animation before showing next */}
           <AnimatePresence mode="wait">
             {/* ========== INITIAL X LOGO STATE ========== */}
@@ -472,11 +488,18 @@ export default function Landing() {
               <motion.button
                 key="x-button"
                 onClick={handleXClick}
-                className="cursor-pointer focus:outline-none group relative"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleXClick()
+                  }
+                }}
+                className="cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-400 focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-3xl group relative transition-shadow"
                 whileHover={!isAnimating ? { scale: 1.05 } : {}}
                 whileTap={!isAnimating ? { scale: 0.95 } : {}}
-                aria-label="Open Xplorium main menu"
-                role="button"
+                aria-label="Click to open Xplorium main menu"
+                aria-pressed={isAnimating}
+                tabIndex={0}
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{
                   opacity: 1,
@@ -732,39 +755,48 @@ export default function Landing() {
                 {/* ========== NAVIGATION MENU WITH NEON EFFECTS ========== */}
                 {/* Three navigation items positioned around the brand */}
                 {/* Each with unique neon color: Cafe(cyan), Sensory(purple), Igraonica(pink) */}
-                {tabs.map((tab, index) => {
-                  // Neon color definitions for each section
-                  const neonColors = {
-                    cafe: { main: "#22d3ee", glow: "0 0 10px #22d3ee, 0 0 20px #22d3ee, 0 0 30px #22d3ee, 0 0 40px #06b6d4" },
-                    discover: { main: "#a855f7", glow: "0 0 10px #a855f7, 0 0 20px #a855f7, 0 0 30px #a855f7, 0 0 40px #7c3aed" },
-                    igraonica: { main: "#ec4899", glow: "0 0 10px #ec4899, 0 0 20px #ec4899, 0 0 30px #ec4899, 0 0 40px #db2777" },
-                  }
-                  const color = neonColors[tab.section as keyof typeof neonColors]
+                <nav aria-label="Main navigation">
+                  {tabs.map((tab, index) => {
+                    // Neon color definitions for each section
+                    const neonColors = {
+                      cafe: { main: "#22d3ee", glow: "0 0 10px #22d3ee, 0 0 20px #22d3ee, 0 0 30px #22d3ee, 0 0 40px #06b6d4", focusRing: "focus-visible:ring-cyan-400" },
+                      discover: { main: "#a855f7", glow: "0 0 10px #a855f7, 0 0 20px #a855f7, 0 0 30px #a855f7, 0 0 40px #7c3aed", focusRing: "focus-visible:ring-purple-400" },
+                      igraonica: { main: "#ec4899", glow: "0 0 10px #ec4899, 0 0 20px #ec4899, 0 0 30px #ec4899, 0 0 40px #db2777", focusRing: "focus-visible:ring-pink-400" },
+                    }
+                    const color = neonColors[tab.section as keyof typeof neonColors]
 
-                  return (
-                    <motion.button
-                      key={tab.section}
-                      aria-label={`Navigate to ${tab.label} section`}
-                      className="absolute text-4xl sm:text-5xl md:text-6xl lg:text-7xl cursor-pointer z-10 px-6 py-6 leading-relaxed font-['Great_Vibes']"
-                      style={{
-                        ...tab.position, // Positioned around brand (left/right/bottom)
-                        color: color.main, // Neon text color
-                        textShadow: color.glow, // Multi-layer glow effect
-                      }}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, delay: 0.8 + index * 0.15 }} // Staggered appearance
-                      whileHover={{
-                        // Intensifies glow on hover (doubles blur distances)
-                        textShadow: color.glow.replace(/40px/g, "80px").replace(/30px/g, "60px").replace(/20px/g, "40px").replace(/10px/g, "20px"),
-                      }}
-                      onClick={() => navigateToSection(tab.section)}
-                    >
-                      {/* PenStrokeReveal: Handwriting animation for each character */}
-                      <PenStrokeReveal text={tab.label} delay={0.8 + index * 0.15} />
-                    </motion.button>
-                  )
-                })}
+                    return (
+                      <motion.button
+                        key={tab.section}
+                        aria-label={`Navigate to ${tab.label} section`}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            navigateToSection(tab.section)
+                          }
+                        }}
+                        className={`absolute text-4xl sm:text-5xl md:text-6xl lg:text-7xl cursor-pointer z-10 px-6 py-6 leading-relaxed font-['Great_Vibes'] focus:outline-none focus-visible:ring-4 ${color.focusRing} focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-lg transition-shadow`}
+                        style={{
+                          ...tab.position, // Positioned around brand (left/right/bottom)
+                          color: color.main, // Neon text color
+                          textShadow: color.glow, // Multi-layer glow effect
+                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.8 + index * 0.15 }} // Staggered appearance
+                        whileHover={{
+                          // Intensifies glow on hover (doubles blur distances)
+                          textShadow: color.glow.replace(/40px/g, "80px").replace(/30px/g, "60px").replace(/20px/g, "40px").replace(/10px/g, "20px"),
+                        }}
+                        onClick={() => navigateToSection(tab.section)}
+                      >
+                        {/* PenStrokeReveal: Handwriting animation for each character */}
+                        <PenStrokeReveal text={tab.label} delay={0.8 + index * 0.15} />
+                      </motion.button>
+                    )
+                  })}
+                </nav>
               </motion.div>
             ) : (
               <motion.div
@@ -774,6 +806,8 @@ export default function Landing() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                role="region"
+                aria-label={`${activeView === 'discover' ? 'Sensory' : activeView === 'igraonica' ? 'Igraonica' : activeView === 'cafe' ? 'Cafe' : activeView} section`}
               >
                 {/* ========== CAFE SECTION ========== */}
                 {/* Glass frame menu with neon-glowing submenu items */}

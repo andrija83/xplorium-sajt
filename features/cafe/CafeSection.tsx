@@ -296,13 +296,20 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
             ))}
 
             {/* Menu items */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 sm:gap-4 md:gap-6 px-8">
+            <nav className="absolute inset-0 flex flex-col items-center justify-center gap-3 sm:gap-4 md:gap-6 px-8" aria-label="Cafe submenu">
               {MENU_ITEMS.map((item, index) => (
                 <motion.button
                   key={item.section}
                   onClick={() => setCafeSubView(item.section)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setCafeSubView(item.section)
+                    }
+                  }}
                   aria-label={`View ${item.label} information`}
-                  className={`text-${item.color}-400 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-['Great_Vibes'] cursor-pointer transition-all duration-300 hover:scale-110`}
+                  tabIndex={0}
+                  className={`text-${item.color}-400 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-['Great_Vibes'] cursor-pointer transition-all duration-300 hover:scale-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-${item.color}-400 focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-lg px-4 py-2`}
                   style={{
                     textShadow: item.shadow,
                   }}
@@ -319,7 +326,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                   {item.label}
                 </motion.button>
               ))}
-            </div>
+            </nav>
           </motion.div>
         </motion.div>
       ) : (

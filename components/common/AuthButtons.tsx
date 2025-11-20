@@ -100,9 +100,22 @@ export const AuthButtons = memo(function AuthButtons({
         <div className={`relative ${className}`}>
           <motion.button
             onClick={() => setShowDropdown(!showDropdown)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setShowDropdown(!showDropdown)
+              } else if (e.key === 'Escape') {
+                setShowDropdown(false)
+              }
+            }}
+            aria-label="User menu"
+            aria-expanded={showDropdown}
+            aria-haspopup="true"
+            tabIndex={0}
             className="group relative flex items-center gap-3 px-4 py-2 sm:px-5 sm:py-2.5
                        rounded-lg backdrop-blur-sm bg-black/20 border border-cyan-400/30
-                       overflow-hidden transition-colors duration-300"
+                       overflow-hidden transition-colors duration-300
+                       focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-400 focus-visible:ring-offset-4 focus-visible:ring-offset-black"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{
@@ -130,6 +143,7 @@ export const AuthButtons = memo(function AuthButtons({
               style={{
                 filter: "drop-shadow(0 0 8px rgba(34, 211, 238, 0.6))"
               }}
+              aria-hidden="true"
             />
 
             {/* User name */}
@@ -144,7 +158,7 @@ export const AuthButtons = memo(function AuthButtons({
             </span>
 
             {isAdmin && (
-              <Shield className="w-4 h-4 text-purple-400 relative z-10" />
+              <Shield className="w-4 h-4 text-purple-400 relative z-10" aria-label="Admin" />
             )}
 
             {/* Hover glow effect */}
@@ -171,9 +185,11 @@ export const AuthButtons = memo(function AuthButtons({
                 style={{
                   boxShadow: colors.neonCyanGlow
                 }}
+                role="menu"
+                aria-label="User menu dropdown"
               >
                 {/* User info */}
-                <div className="px-4 py-3 border-b border-cyan-400/20">
+                <div className="px-4 py-3 border-b border-cyan-400/20" role="presentation">
                   <p className="text-sm text-cyan-100/80 truncate">
                     {session.user.email}
                   </p>
@@ -183,14 +199,23 @@ export const AuthButtons = memo(function AuthButtons({
                 </div>
 
                 {/* Menu items */}
-                <div className="py-2">
+                <div className="py-2" role="group">
                   {isAdmin && (
                     <button
                       onClick={handleAdminDashboard}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleAdminDashboard()
+                        }
+                      }}
+                      role="menuitem"
+                      tabIndex={0}
                       className="w-full px-4 py-2 flex items-center gap-3 text-cyan-300
-                                 hover:bg-cyan-400/10 transition-colors text-left"
+                                 hover:bg-cyan-400/10 transition-colors text-left
+                                 focus:outline-none focus-visible:bg-cyan-400/20"
                     >
-                      <Shield className="w-4 h-4" />
+                      <Shield className="w-4 h-4" aria-hidden="true" />
                       <span className="text-sm">Admin Dashboard</span>
                     </button>
                   )}
@@ -198,20 +223,38 @@ export const AuthButtons = memo(function AuthButtons({
                   {!isAdmin && (
                     <button
                       onClick={handleProfile}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleProfile()
+                        }
+                      }}
+                      role="menuitem"
+                      tabIndex={0}
                       className="w-full px-4 py-2 flex items-center gap-3 text-cyan-300
-                                 hover:bg-cyan-400/10 transition-colors text-left"
+                                 hover:bg-cyan-400/10 transition-colors text-left
+                                 focus:outline-none focus-visible:bg-cyan-400/20"
                     >
-                      <User className="w-4 h-4" />
+                      <User className="w-4 h-4" aria-hidden="true" />
                       <span className="text-sm">My Profile</span>
                     </button>
                   )}
 
                   <button
                     onClick={handleSignOut}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSignOut()
+                      }
+                    }}
+                    role="menuitem"
+                    tabIndex={0}
                     className="w-full px-4 py-2 flex items-center gap-3 text-red-400
-                               hover:bg-red-400/10 transition-colors text-left"
+                               hover:bg-red-400/10 transition-colors text-left
+                               focus:outline-none focus-visible:bg-red-400/20"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-4 h-4" aria-hidden="true" />
                     <span className="text-sm">Sign Out</span>
                   </button>
                 </div>
@@ -235,9 +278,18 @@ export const AuthButtons = memo(function AuthButtons({
         {/* Sign In Button */}
         <motion.button
           onClick={onSignIn}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onSignIn?.()
+            }
+          }}
+          aria-label="Sign in to your account"
+          tabIndex={0}
           className="group relative flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5
                      rounded-lg backdrop-blur-sm bg-black/20 border border-cyan-400/30
-                     overflow-hidden transition-colors duration-300"
+                     overflow-hidden transition-colors duration-300
+                     focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-400 focus-visible:ring-offset-4 focus-visible:ring-offset-black"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{
@@ -266,6 +318,7 @@ export const AuthButtons = memo(function AuthButtons({
             style={{
               filter: "drop-shadow(0 0 8px rgba(34, 211, 238, 0.6))"
             }}
+            aria-hidden="true"
           />
 
           {/* Text */}
@@ -293,8 +346,17 @@ export const AuthButtons = memo(function AuthButtons({
         {/* Sign Up Button - Rainbow border */}
         <motion.button
           onClick={onSignUp}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onSignUp?.()
+            }
+          }}
+          aria-label="Create a new account"
+          tabIndex={0}
           className="group relative flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-2.5
-                     rounded-lg backdrop-blur-sm bg-black/40 overflow-hidden transition-all duration-300"
+                     rounded-lg backdrop-blur-sm bg-black/40 overflow-hidden transition-all duration-300
+                     focus:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-black"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{
@@ -349,6 +411,7 @@ export const AuthButtons = memo(function AuthButtons({
             style={{
               filter: "drop-shadow(0 0 10px rgba(255, 255, 255, 0.8))"
             }}
+            aria-hidden="true"
           />
 
           {/* Text */}
