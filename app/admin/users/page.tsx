@@ -1,11 +1,22 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Search, Shield, User as UserIcon, Lock, Unlock, Trash2, MoreHorizontal, Mail } from "lucide-react"
-import { DataTable, type Column } from "@/components/admin/DataTable"
+import type { Column } from "@/components/admin/DataTable"
 import { getUsers, deleteUser, toggleUserBlock } from "@/app/actions/users"
+import { DataTableSkeleton } from "@/components/loading/DataTableSkeleton"
+
+// Dynamic import for DataTable (code-splitting)
+const DataTable = dynamic(
+  () => import("@/components/admin/DataTable").then(m => ({ default: m.DataTable })),
+  {
+    loading: () => <DataTableSkeleton />,
+    ssr: false
+  }
+)
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"

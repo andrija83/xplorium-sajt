@@ -1,13 +1,31 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Calendar, Users, FileText, Clock } from "lucide-react"
 import { StatsCard } from "@/components/admin/StatsCard"
 import { RecentActivity } from "@/components/admin/RecentActivity"
 import { getDashboardStats, getRecentActivity } from "@/app/actions/dashboard"
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { ChartSkeleton } from "@/components/loading/ChartSkeleton"
+
+// Dynamic imports for heavy chart libraries (code-splitting)
+const BookingsLineChart = dynamic(
+  () => import("@/components/admin/charts/BookingsLineChart").then(m => ({ default: m.BookingsLineChart })),
+  {
+    loading: () => <ChartSkeleton />,
+    ssr: false
+  }
+)
+
+const BookingsPieChart = dynamic(
+  () => import("@/components/admin/charts/BookingsPieChart").then(m => ({ default: m.BookingsPieChart })),
+  {
+    loading: () => <ChartSkeleton />,
+    ssr: false
+  }
+)
 
 /**
  * Admin Dashboard Page
@@ -173,40 +191,7 @@ export default function AdminDashboard() {
           <h3 className="text-lg font-semibold text-cyan-300 mb-4">
             Bookings Over Time (Last 30 Days)
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={dashboardData.bookingsOverTime || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 211, 238, 0.1)" />
-              <XAxis
-                dataKey="date"
-                stroke="rgba(34, 211, 238, 0.6)"
-                tick={{ fill: 'rgba(34, 211, 238, 0.6)', fontSize: 12 }}
-              />
-              <YAxis
-                stroke="rgba(34, 211, 238, 0.6)"
-                tick={{ fill: 'rgba(34, 211, 238, 0.6)', fontSize: 12 }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                  border: '1px solid rgba(34, 211, 238, 0.3)',
-                  borderRadius: '8px',
-                  color: '#22d3ee'
-                }}
-              />
-              <Legend
-                wrapperStyle={{ color: 'rgba(34, 211, 238, 0.8)' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="#22d3ee"
-                strokeWidth={2}
-                dot={{ fill: '#22d3ee', r: 4 }}
-                activeDot={{ r: 6, fill: '#22d3ee' }}
-                name="Bookings"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <BookingsLineChart data={dashboardData.bookingsOverTime || []} />
         </motion.div>
 
         {/* Bookings by type */}
@@ -222,32 +207,10 @@ export default function AdminDashboard() {
           <h3 className="text-lg font-semibold text-cyan-300 mb-4">
             Bookings by Type
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={dashboardData.bookingsByType || []}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ type, percent }) => `${type}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="count"
-              >
-                {(dashboardData.bookingsByType || []).map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[entry.type as keyof typeof COLORS] || '#22d3ee'} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                  border: '1px solid rgba(34, 211, 238, 0.3)',
-                  borderRadius: '8px',
-                  color: '#22d3ee'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <BookingsPieChart
+            data={dashboardData.bookingsByType || []}
+            colors={COLORS}
+          />
         </motion.div>
       </div>
 
