@@ -116,7 +116,10 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
         handleClose()
 
         // Refresh the page to update all components
-        router.refresh()
+        // Wait for exit animation (500ms)
+        setTimeout(() => {
+          router.refresh()
+        }, 500)
       } else {
         toast.error(result.error || 'Failed to sign in')
         setIsLoading(false)
@@ -166,14 +169,13 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
             }}
             exit={{
               opacity: 0,
-              y: -100,
-              x: 50,
-              rotate: 10,
-              scale: 0.8,
+              x: "120%",
+              scale: 0.95,
+              transition: { duration: 0.4, ease: "easeIn" }
             }}
             transition={{
               duration: 0.6,
-              ease: [0.34, 1.56, 0.64, 1], // Bouncy easing
+              ease: [0.34, 1.56, 0.64, 1], // Bouncy easing for entry
             }}
           >
             {/* Glowing background effect */}
@@ -187,7 +189,7 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
 
             {/* Rotating gradient border container */}
             <div className="absolute inset-0 rounded-2xl overflow-hidden">
-              <motion.div 
+              <motion.div
                 className="absolute w-[200%] h-[200%] top-1/2 left-1/2"
                 style={{
                   background: "conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #fb923c, #facc15, #22c55e, #22d3ee)",
@@ -195,10 +197,10 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp }: SignInModalPr
                   y: "-50%",
                 }}
                 animate={{ rotate: 360 }}
-                transition={{ 
-                  duration: 4, 
-                  repeat: Number.POSITIVE_INFINITY, 
-                  ease: "linear" 
+                transition={{
+                  duration: 4,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "linear"
                 }}
               />
             </div>

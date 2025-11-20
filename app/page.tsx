@@ -787,20 +787,16 @@ export default function Landing() {
       {/* ========== AUTH MODALS ========== */}
       {/* Following Mobiscroll pattern for popup management */}
       <Suspense fallback={null}>
-        {isSignInOpen && (
-          <SignInModal
-            isOpen={isSignInOpen}
-            onClose={() => setIsSignInOpen(false)}
-            onSwitchToSignUp={handleSwitchToSignUp}
-          />
-        )}
-        {isSignUpOpen && (
-          <SignUpModal
-            isOpen={isSignUpOpen}
-            onClose={() => setIsSignUpOpen(false)}
-            onSwitchToSignIn={handleSwitchToSignIn}
-          />
-        )}
+        <SignInModal
+          isOpen={isSignInOpen}
+          onClose={() => setIsSignInOpen(false)}
+          onSwitchToSignUp={handleSwitchToSignUp}
+        />
+        <SignUpModal
+          isOpen={isSignUpOpen}
+          onClose={() => setIsSignUpOpen(false)}
+          onSwitchToSignIn={handleSwitchToSignIn}
+        />
       </Suspense>
     </div>
   )

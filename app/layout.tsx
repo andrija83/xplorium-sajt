@@ -84,7 +84,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable}`}>
-        <SessionProvider>
+        <SessionProvider refetchInterval={60}>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>

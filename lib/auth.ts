@@ -125,7 +125,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (now - lastActivity > inactivityTimeout) {
           // Session expired due to inactivity
-          return {} // Return empty token to invalidate session
+          return null // Return null to invalidate session
         }
       }
 

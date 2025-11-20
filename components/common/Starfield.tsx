@@ -24,6 +24,7 @@ interface StarfieldProps {
  * - All stars have random positions, sizes, and animation timings
  * - Fixed layer behind all content (z-0)
  * - Pointer events disabled (stars don't block clicks)
+ * - PERSISTENCE: Star positions are saved to sessionStorage to remain consistent across reloads
  *
  * Optimized with React.memo and willChange CSS property
  *
@@ -32,23 +33,47 @@ interface StarfieldProps {
 export const Starfield = memo(({ activeView }: StarfieldProps) => {
   /**
    * stars: Background starfield animation
-   * useMemo: Cached array to prevent regenerating on every render
-   * - 100 stars with random positions (0-100% left/top)
-   * - Random sizes (0.5-2.5px)
-   * - Random opacity (0.7-1.0)
-   * - Staggered animations (0-3s delay, 2-5s duration)
-   * Each star pulses opacity and scale in infinite loop
+   * State is used instead of useMemo to allow client-side generation and persistence
    */
-  const stars = useMemo(() => {
-    return Array.from({ length: 100 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      size: Math.random() * 2 + .5,
-      opacity: Math.random() * 0.3 + 0.7,
-      delay: Math.random() * 3,
-      duration: Math.random() * 3 + 2,
-    }))
+  const [stars, setStars] = useState<any[]>([])
+
+  useEffect(() => {
+    // Try to get stars from session storage
+    const STORAGE_KEY = 'xplorium-starfield-config'
+
+    try {
+      const savedStars = sessionStorage.getItem(STORAGE_KEY)
+
+      if (savedStars) {
+        setStars(JSON.parse(savedStars))
+      } else {
+        // Generate new stars if none exist
+        const newStars = Array.from({ length: 100 }, (_, i) => ({
+          id: i,
+          left: Math.random() * 100,
+          top: Math.random() * 100,
+          size: Math.random() * 2 + .5,
+          opacity: Math.random() * 0.3 + 0.7,
+          delay: Math.random() * 3,
+          duration: Math.random() * 3 + 2,
+        }))
+
+        setStars(newStars)
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newStars))
+      }
+    } catch (e) {
+      // Fallback if sessionStorage fails
+      const newStars = Array.from({ length: 100 }, (_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size: Math.random() * 2 + .5,
+        opacity: Math.random() * 0.3 + 0.7,
+        delay: Math.random() * 3,
+        duration: Math.random() * 3 + 2,
+      }))
+      setStars(newStars)
+    }
   }, [])
 
   /**
