@@ -69,7 +69,7 @@ export function ImageUpload({ value, onChange, disabled, onUploadInfo }: ImageUp
 
                     // capture dimensions for downstream SEO/OG usage
                     if (onUploadInfo) {
-                        const img = new Image()
+                        const img = new window.Image()
                         img.src = url
                         img.onload = () => {
                             onUploadInfo({ url, width: img.width, height: img.height })
