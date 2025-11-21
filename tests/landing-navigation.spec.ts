@@ -12,6 +12,13 @@ import { test, expect } from '@playwright/test'
  */
 
 test.describe('Landing Page Navigation', () => {
+  const revealBrand = async (page: import('@playwright/test').Page) => {
+    const xLogo = page.getByRole('button', { name: /click to explore/i })
+    await expect(xLogo).toBeVisible()
+    await xLogo.click()
+    await expect(page.getByText(/plorium/i)).toBeVisible({ timeout: 3000 })
+  }
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
   })
@@ -27,13 +34,7 @@ test.describe('Landing Page Navigation', () => {
   })
 
   test('should reveal brand after clicking X logo', async ({ page }) => {
-    // Click X logo
-    const xLogo = page.getByRole('button', { name: /click to explore/i })
-    await xLogo.click()
-
-    // Wait for brand to appear
-    const brand = page.getByText(/plorium/i)
-    await expect(brand).toBeVisible({ timeout: 3000 })
+    await revealBrand(page)
 
     // Three main navigation buttons should appear
     await expect(page.getByRole('button', { name: /cafe/i })).toBeVisible()
@@ -42,17 +43,10 @@ test.describe('Landing Page Navigation', () => {
   })
 
   test('should navigate to Cafe section and show submenu', async ({ page }) => {
-    // Click X logo to reveal brand
-    await page.getByRole('button', { name: /click to explore/i }).click()
-
-    // Wait for navigation buttons
-    await page.waitForTimeout(2000)
+    await revealBrand(page)
 
     // Click Cafe button
     await page.getByRole('button', { name: /cafe/i }).click()
-
-    // Wait for cafe submenu to appear
-    await page.waitForTimeout(1000)
 
     // Cafe submenu items should be visible
     await expect(page.getByRole('button', { name: /meni/i })).toBeVisible()
@@ -60,17 +54,10 @@ test.describe('Landing Page Navigation', () => {
   })
 
   test('should navigate to Sensory section and show planet orbs', async ({ page }) => {
-    // Click X logo to reveal brand
-    await page.getByRole('button', { name: /click to explore/i }).click()
-
-    // Wait for navigation buttons
-    await page.waitForTimeout(2000)
+    await revealBrand(page)
 
     // Click Sensory button
     await page.getByRole('button', { name: /sensory/i }).click()
-
-    // Wait for planet orbs to appear
-    await page.waitForTimeout(1000)
 
     // Planet orbs should be visible
     await expect(page.getByRole('button', { name: /floor/i })).toBeVisible()
@@ -79,17 +66,10 @@ test.describe('Landing Page Navigation', () => {
   })
 
   test('should navigate to Igraonica section', async ({ page }) => {
-    // Click X logo to reveal brand
-    await page.getByRole('button', { name: /click to explore/i }).click()
-
-    // Wait for navigation buttons
-    await page.waitForTimeout(2000)
+    await revealBrand(page)
 
     // Click Igraonica button
     await page.getByRole('button', { name: /igraonica/i }).click()
-
-    // Wait for content to appear
-    await page.waitForTimeout(1000)
 
     // Igraonica content should be visible
     const content = page.locator('text=igraonica')
@@ -98,10 +78,8 @@ test.describe('Landing Page Navigation', () => {
 
   test('should go back to main menu with Escape key', async ({ page }) => {
     // Navigate to Cafe section
-    await page.getByRole('button', { name: /click to explore/i }).click()
-    await page.waitForTimeout(2000)
+    await revealBrand(page)
     await page.getByRole('button', { name: /cafe/i }).click()
-    await page.waitForTimeout(1000)
 
     // Cafe submenu should be visible
     await expect(page.getByRole('button', { name: /meni/i })).toBeVisible()
@@ -121,10 +99,8 @@ test.describe('Landing Page Navigation', () => {
 
   test('should navigate through cafe subsection', async ({ page }) => {
     // Navigate to Cafe section
-    await page.getByRole('button', { name: /click to explore/i }).click()
-    await page.waitForTimeout(2000)
+    await revealBrand(page)
     await page.getByRole('button', { name: /cafe/i }).click()
-    await page.waitForTimeout(1000)
 
     // Click on a cafe submenu item
     await page.getByRole('button', { name: /meni/i }).click()
@@ -144,10 +120,8 @@ test.describe('Landing Page Navigation', () => {
 
   test('should navigate through sensory subsections', async ({ page }) => {
     // Navigate to Sensory section
-    await page.getByRole('button', { name: /click to explore/i }).click()
-    await page.waitForTimeout(2000)
+    await revealBrand(page)
     await page.getByRole('button', { name: /sensory/i }).click()
-    await page.waitForTimeout(1000)
 
     // Click Floor planet
     await page.getByRole('button', { name: /floor/i }).click()
@@ -167,12 +141,37 @@ test.describe('Landing Page Navigation', () => {
   })
 
   test('should show auth buttons in top-right corner', async ({ page }) => {
-    // Auth buttons should be visible
+    // Auth buttons should appear only after brand reveal
+    await expect(page.getByRole('button', { name: /sign in/i }).first()).not.toBeVisible()
+    await revealBrand(page)
     const signInButton = page.getByRole('button', { name: /sign in/i }).first()
     const signUpButton = page.getByRole('button', { name: /sign up/i }).first()
 
     await expect(signInButton).toBeVisible()
     await expect(signUpButton).toBeVisible()
+  })
+
+  test('back button appears in sections and hides after returning', async ({ page }) => {
+    await revealBrand(page)
+    await page.getByRole('button', { name: /cafe/i }).click()
+    const backButton = page.getByRole('button', { name: /back/i })
+    await expect(backButton).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(backButton).not.toBeVisible()
+  })
+
+  test('skip to main content is keyboard focusable', async ({ page }) => {
+    await page.keyboard.press('Tab')
+    const skipLink = page.getByRole('link', { name: /skip to main content/i })
+    await expect(skipLink).toBeFocused()
+  })
+
+  test('keyboard can open Café via Enter', async ({ page }) => {
+    await revealBrand(page)
+    const cafe = page.getByRole('button', { name: /cafe/i })
+    await cafe.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('button', { name: /meni/i })).toBeVisible()
   })
 
   test('should have starfield background', async ({ page }) => {

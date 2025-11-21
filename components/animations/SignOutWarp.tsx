@@ -2,8 +2,18 @@
 
 import { motion } from "framer-motion"
 import { Starfield } from "../common/Starfield"
+import { useEffect } from "react"
 
 export const SignOutWarp = () => {
+    useEffect(() => {
+        // After fade out animation completes, refresh the page to reset to X logo
+        const timer = setTimeout(() => {
+            window.location.href = '/'
+        }, 2000) // 2 seconds for fade out + rotation
+
+        return () => clearTimeout(timer)
+    }, [])
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -14,18 +24,26 @@ export const SignOutWarp = () => {
             {/* Standard Starfield Background */}
             <Starfield activeView={null} />
 
-            {/* Central text */}
+            {/* X Logo appears and slowly fades out while rotating */}
             <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: [0.5, 1.2, 0], opacity: [0, 1, 0] }}
-                transition={{ duration: 1.5, times: [0, 0.2, 1] }}
-                className="relative z-10 text-center"
+                initial={{ opacity: 1, rotate: 0 }}
+                animate={{
+                    opacity: 0,
+                    rotate: 180
+                }}
+                transition={{
+                    duration: 2,
+                    ease: [0.4, 0, 0.2, 1]
+                }}
+                className="relative z-10"
             >
-                <h2 className="text-4xl md:text-6xl font-bold text-cyan-400 tracking-wider uppercase"
-                    style={{ textShadow: "0 0 20px rgba(34, 211, 238, 0.8)" }}>
-                    Disconnecting
-                </h2>
-                <p className="text-cyan-100/70 mt-4 text-lg">See you in the next mission</p>
+                <div className="rounded-3xl overflow-hidden">
+                    <img
+                        src="/crystal-x-logo.jpg"
+                        alt="X Logo"
+                        className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48"
+                    />
+                </div>
             </motion.div>
         </motion.div>
     )
