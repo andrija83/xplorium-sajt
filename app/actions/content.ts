@@ -260,7 +260,7 @@ export async function revertContentVersion(section: 'cafe' | 'sensory' | 'igraon
         section,
         version: nextVersion,
         status: 'DRAFT',
-        content: snapshot.content,
+        content: snapshot.content as Prisma.InputJsonValue,
         createdBy: session.user.id,
         siteContentId: content.id,
       },
