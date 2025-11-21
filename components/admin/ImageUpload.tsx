@@ -11,9 +11,12 @@ interface ImageUploadProps {
     value: string
     onChange: (url: string) => void
     disabled?: boolean
+    onUploadInfo?: (info: { url: string; width: number; height: number }) => void
 }
 
-export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
+const MAX_FILE_SIZE_MB = 4
+
+export function ImageUpload({ value, onChange, disabled, onUploadInfo }: ImageUploadProps) {
     const [isDeleting, setIsDeleting] = useState(false)
 
     const handleRemove = () => {
@@ -58,7 +61,22 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
             <UploadDropzone
                 endpoint="imageUploader"
                 onClientUploadComplete={(res) => {
-                    onChange(res?.[0].url)
+                    const url = res?.[0].url
+                    if (!url) {
+                        toast.error("Upload failed: no URL returned")
+                        return
+                    }
+
+                    // capture dimensions for downstream SEO/OG usage
+                    if (onUploadInfo) {
+                        const img = new Image()
+                        img.src = url
+                        img.onload = () => {
+                            onUploadInfo({ url, width: img.width, height: img.height })
+                        }
+                    }
+
+                    onChange(url)
                     toast.success("Image uploaded successfully")
                 }}
                 onUploadError={(error: Error) => {
@@ -72,6 +90,8 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
                 }}
                 content={{
                     uploadIcon: <ImageIcon className="w-10 h-10 text-cyan-400/50 mb-2" />,
+                    label: "Drag & drop or click to upload",
+                    allowedContent: `Images only • Max ${MAX_FILE_SIZE_MB}MB`,
                 }}
             />
         </div>
