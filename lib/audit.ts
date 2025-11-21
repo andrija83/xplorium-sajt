@@ -14,7 +14,7 @@ export async function logAudit({
   changes,
 }: {
   userId: string
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT'
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'PUBLISH' | 'ROLLBACK'
   entity: 'Event' | 'Booking' | 'User' | 'Content' | 'InventoryItem' | 'MaintenanceLog' | 'PricingPackage'
   entityId: string
   changes?: Record<string, any>
