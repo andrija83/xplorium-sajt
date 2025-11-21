@@ -5,7 +5,7 @@ import { logAudit } from '@/lib/audit'
 import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { updateContentSchema, type UpdateContentInput } from '@/lib/validations'
-import type { Prisma } from '@prisma/client'
+import type { Prisma, ContentStatus } from '@prisma/client'
 
 /**
  * Get content by section
@@ -47,17 +47,40 @@ export async function updateContent(data: UpdateContentInput) {
     // Validate input
     const validatedData = updateContentSchema.parse(data)
 
+    const existing = await prisma.siteContent.findUnique({
+      where: { section: validatedData.section },
+    })
+
+    const nextStatus: ContentStatus = (validatedData.status as ContentStatus) || existing?.status || 'DRAFT'
+    const nextVersion = existing ? (existing.version || 1) + 1 : 1
+
     // Update or create content
     const content = await prisma.siteContent.upsert({
       where: { section: validatedData.section },
       update: {
         content: validatedData.content as Prisma.InputJsonValue,
         updatedBy: session.user.id,
+        status: nextStatus,
+        version: nextVersion,
       },
       create: {
         section: validatedData.section,
         content: validatedData.content as Prisma.InputJsonValue,
         updatedBy: session.user.id,
+        status: nextStatus,
+        version: nextVersion,
+      },
+    })
+
+    // Create immutable version snapshot
+    await prisma.siteContentVersion.create({
+      data: {
+        section: validatedData.section,
+        version: nextVersion,
+        status: nextStatus,
+        content: validatedData.content as Prisma.InputJsonValue,
+        createdBy: session.user.id,
+        siteContentId: content.id,
       },
     })
 
@@ -67,7 +90,11 @@ export async function updateContent(data: UpdateContentInput) {
       action: 'UPDATE',
       entity: 'Content',
       entityId: validatedData.section,
-      changes: validatedData.content,
+      changes: {
+        content: validatedData.content,
+        status: nextStatus,
+        version: nextVersion,
+      },
     })
 
     // Revalidate the public page for this section
@@ -98,6 +125,181 @@ export async function updateContent(data: UpdateContentInput) {
 }
 
 /**
+ * Get content version history for a section
+ */
+export async function getContentHistory(section: 'cafe' | 'sensory' | 'igraonica') {
+  try {
+    await requireAdmin()
+
+    const versions = await prisma.siteContentVersion.findMany({
+      where: { section },
+      orderBy: { version: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        version: true,
+        status: true,
+        createdAt: true,
+        createdBy: true,
+      },
+    })
+
+    return { success: true, versions }
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message }
+    }
+    return { error: 'Unauthorized' }
+  }
+}
+
+/**
+ * Publish current content - promote to PUBLISHED with a new version snapshot
+ */
+export async function publishContent(section: 'cafe' | 'sensory' | 'igraonica') {
+  try {
+    const session = await requireAdmin()
+
+    const current = await prisma.siteContent.findUnique({ where: { section } })
+    if (!current) {
+      return { success: false, error: 'Content not found' }
+    }
+
+    const nextVersion = (current.version || 1) + 1
+
+    const updated = await prisma.siteContent.update({
+      where: { section },
+      data: {
+        status: 'PUBLISHED',
+        version: nextVersion,
+        updatedBy: session.user.id,
+      },
+    })
+
+    await prisma.siteContentVersion.create({
+      data: {
+        section,
+        version: nextVersion,
+        status: 'PUBLISHED',
+        content: current.content,
+        createdBy: session.user.id,
+        siteContentId: current.id,
+      },
+    })
+
+    await logAudit({
+      userId: session.user.id,
+      action: 'PUBLISH',
+      entity: 'Content',
+      entityId: section,
+      changes: {
+        status: 'PUBLISHED',
+        version: nextVersion,
+      },
+    })
+
+    revalidatePath('/')
+    revalidatePath('/admin/content')
+    revalidatePath(`/admin/content/${section}`)
+
+    return { success: true, content: updated }
+  } catch (error) {
+    console.error('Publish content error:', error)
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    return {
+      success: false,
+      error: 'Failed to publish content',
+    }
+  }
+}
+
+/**
+ * Roll back content to a previous version (creates a new draft version)
+ */
+export async function revertContentVersion(section: 'cafe' | 'sensory' | 'igraonica', targetVersion: number) {
+  try {
+    const session = await requireAdmin()
+
+    const snapshot = await prisma.siteContentVersion.findUnique({
+      where: { section_version: { section, version: targetVersion } },
+    })
+
+    if (!snapshot) {
+      return { success: false, error: 'Version not found' }
+    }
+
+    const current = await prisma.siteContent.findUnique({ where: { section } })
+    const nextVersion = current ? (current.version || 1) + 1 : targetVersion + 1
+
+    const content = await prisma.siteContent.upsert({
+      where: { section },
+      update: {
+        content: snapshot.content as Prisma.InputJsonValue,
+        status: 'DRAFT',
+        version: nextVersion,
+        updatedBy: session.user.id,
+      },
+      create: {
+        section,
+        content: snapshot.content as Prisma.InputJsonValue,
+        status: 'DRAFT',
+        version: nextVersion,
+        updatedBy: session.user.id,
+      },
+    })
+
+    await prisma.siteContentVersion.create({
+      data: {
+        section,
+        version: nextVersion,
+        status: 'DRAFT',
+        content: snapshot.content,
+        createdBy: session.user.id,
+        siteContentId: content.id,
+      },
+    })
+
+    await logAudit({
+      userId: session.user.id,
+      action: 'ROLLBACK',
+      entity: 'Content',
+      entityId: section,
+      changes: {
+        revertedTo: targetVersion,
+        newVersion: nextVersion,
+      },
+    })
+
+    revalidatePath('/')
+    revalidatePath('/admin/content')
+    revalidatePath(`/admin/content/${section}`)
+
+    return { success: true, content }
+  } catch (error) {
+    console.error('Rollback content error:', error)
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    return {
+      success: false,
+      error: 'Failed to rollback content',
+    }
+  }
+}
+
+/**
  * Get all site content
  * @returns All content sections
  */
@@ -109,6 +311,14 @@ export async function getAllContent() {
     const content = await prisma.siteContent.findMany({
       orderBy: {
         section: 'asc',
+      },
+      select: {
+        id: true,
+        section: true,
+        updatedAt: true,
+        updatedBy: true,
+        status: true,
+        version: true,
       },
     })
 

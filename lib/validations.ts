@@ -105,6 +105,7 @@ export const toggleUserBlockSchema = z.object({
 export const updateContentSchema = z.object({
   section: z.enum(['cafe', 'sensory', 'igraonica']),
   content: z.record(z.unknown()), // Flexible JSON content
+  status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).optional(),
 })
 
 // ============================================

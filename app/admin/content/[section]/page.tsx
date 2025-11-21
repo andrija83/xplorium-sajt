@@ -1,7 +1,8 @@
-import { getContentBySection } from "@/app/actions/content"
+import { getContentBySection, getContentHistory } from "@/app/actions/content"
 import { JsonEditor } from "@/components/admin/JsonEditor"
 import { RichTextEditor } from "@/components/admin/RichTextEditor"
 import { SeoSettings } from "@/components/admin/SeoSettings"
+import { VersionHistory } from "@/components/admin/VersionHistory"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -28,6 +29,8 @@ export default async function ContentEditorPage({ params }: PageProps) {
 
     const result = await getContentBySection(section as any)
     const initialContent = (result.success && result.content ? result.content.content : {}) as Record<string, unknown>
+    const historyResult = await getContentHistory(section as any)
+    const versions = historyResult.success && historyResult.versions ? historyResult.versions : []
 
     return (
         <div className="space-y-6">
@@ -45,6 +48,11 @@ export default async function ContentEditorPage({ params }: PageProps) {
                     <p className="text-sm text-cyan-100/60">
                         Manage structured content for this section
                     </p>
+                    {result.success && result.content && (
+                        <p className="text-xs text-cyan-100/50">
+                            Status: {result.content.status} • Version: {result.content.version}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -60,6 +68,8 @@ export default async function ContentEditorPage({ params }: PageProps) {
                 </div>
 
                 <SeoSettings section={section} initialContent={initialContent} />
+
+                <VersionHistory section={section} versions={versions} />
 
                 <div className="p-6 rounded-xl bg-black/10 backdrop-blur-sm border border-cyan-400/10">
                     <div className="mb-3">

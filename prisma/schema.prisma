@@ -136,10 +136,29 @@ model SiteContent {
   id        String   @id @default(cuid())
   section   String   @unique // 'cafe', 'sensory', 'igraonica'
   content   Json     // Flexible JSON structure
+  status    ContentStatus @default(DRAFT)
+  version   Int      @default(1)
   updatedAt DateTime @updatedAt
   updatedBy String?  // User ID who made the change
 
+  versions  SiteContentVersion[]
+
   @@index([section])
+}
+
+model SiteContentVersion {
+  id            String         @id @default(cuid())
+  section       String
+  version       Int
+  status        ContentStatus  @default(DRAFT)
+  content       Json
+  createdAt     DateTime       @default(now())
+  createdBy     String?
+  siteContent   SiteContent    @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+  siteContentId String
+
+  @@index([section])
+  @@unique([section, version])
 }
 
 // ============================================
@@ -211,6 +230,13 @@ enum PricingCategory {
 
 enum PricingStatus {
   DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentStatus {
+  DRAFT
+  REVIEW
   PUBLISHED
   ARCHIVED
 }

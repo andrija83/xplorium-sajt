@@ -49,7 +49,10 @@
       "Bash(timeout /t 15)",
       "Bash(timeout /t 5)",
       "Bash(npx playwright test:*)",
-      "Bash(exit 0)"
+      "Bash(exit 0)",
+      "Bash(del /f /q \"node_modules\\.prisma\\client\\query_engine-windows.dll.node\" 2)",
+      "Bash(timeout /t 2)",
+      "Bash(del /f \".next\\dev\\lock\" 2)"
     ],
     "deny": [],
     "ask": []
