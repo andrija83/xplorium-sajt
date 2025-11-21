@@ -181,7 +181,7 @@ export async function publishContent(section: 'cafe' | 'sensory' | 'igraonica') 
         section,
         version: nextVersion,
         status: 'PUBLISHED',
-        content: current.content,
+        content: current.content as Prisma.InputJsonValue,
         createdBy: session.user.id,
         siteContentId: current.id,
       },
