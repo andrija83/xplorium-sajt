@@ -1,5 +1,6 @@
 import { getContentBySection } from "@/app/actions/content"
 import { JsonEditor } from "@/components/admin/JsonEditor"
+import { RichTextEditor } from "@/components/admin/RichTextEditor"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -41,13 +42,31 @@ export default async function ContentEditorPage({ params }: PageProps) {
                         Edit {SECTION_TITLES[section] || section} Content
                     </h1>
                     <p className="text-sm text-cyan-100/60">
-                        Edit the raw JSON content for this section
+                        Manage structured content for this section
                     </p>
                 </div>
             </div>
 
-            <div className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-cyan-400/20">
-                <JsonEditor section={section} initialContent={initialContent} />
+            <div className="space-y-4">
+                <div className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-cyan-400/20">
+                    <RichTextEditor
+                        section={section}
+                        initialContent={initialContent}
+                        fieldKey="richText"
+                        label="Rich Text Content"
+                        description="Use the editor for main page copy. Saved as structured JSON (TipTap)."
+                    />
+                </div>
+
+                <div className="p-6 rounded-xl bg-black/10 backdrop-blur-sm border border-cyan-400/10">
+                    <div className="mb-3">
+                        <h2 className="text-sm font-semibold text-cyan-100">Advanced: Raw JSON</h2>
+                        <p className="text-xs text-cyan-100/60">
+                            Directly edit the underlying JSON stored for this section. Useful for advanced fields or structured data.
+                        </p>
+                    </div>
+                    <JsonEditor section={section} initialContent={initialContent} />
+                </div>
             </div>
         </div>
     )

@@ -413,6 +413,73 @@ This document outlines the implementation plan to address critical performance, 
 
 ---
 
+## Phase 8: CMS Enhancements (Authoring, Media, SEO)
+
+### 8.1 Rich Text Editor
+**Issue:** JSON editor is unfriendly for authors.
+
+**Tasks:**
+- [ ] Integrate a schema-first WYSIWYG (TipTap/Lexical/Slate).
+- [ ] Define allowed nodes/marks (h1–h3, paragraph, lists, links, bold/italic) and custom blocks (CTA, quote).
+- [ ] Sanitize on save and render; store canonical structured JSON plus HTML/plain-text projections.
+- [ ] Require alt text on embeds; restrict link schemes (https/mailto/tel); add paste sanitization and toolbar limits.
+
+### 8.2 Image Upload & Media Pipeline
+**Issue:** No managed media for sections.
+
+**Tasks:**
+- [ ] Add upload endpoint backed by storage/CDN (e.g., S3/UploadThing) with type/size validation.
+- [ ] Generate responsive derivatives (WebP/AVIF), store dimensions and focal point.
+- [ ] Persist alt text and captions; return signed URLs for previews.
+- [ ] Admin UI: drag/drop, multi-upload, progress, error states.
+
+### 8.3 SEO Settings per Section
+**Issue:** No per-section SEO controls.
+
+**Tasks:**
+- [ ] Add meta title/description, keywords, OG title/description/image, canonical URL, robots flags.
+- [ ] Enforce length and required alt validations.
+- [ ] Render into `<Head>`/OpenGraph and provide SERP/OG preview.
+
+### 8.4 Preview, Drafts, Rollback
+**Issue:** No safe review flow.
+
+**Tasks:**
+- [ ] Introduce states: draft/review/published/archived.
+- [ ] Add preview tokens/links to render drafts server-side (“view as user”).
+- [ ] Show diffs between versions; one-click rollback with audit log entry.
+
+### 8.5 Content Templates
+**Issue:** Authors need starting points.
+
+**Tasks:**
+- [ ] Ship templates (menu, equipment list, pricing table, CTA block) as schema-valid snippets.
+- [ ] “Apply template” action to prefill forms without breaking validation.
+
+### 8.6 Version History
+**Issue:** Limited change tracking.
+
+**Tasks:**
+- [ ] Persist immutable versions on save/publish with who/when.
+- [ ] Surface timeline with field-level diff and restore.
+- [ ] Guard restores with confirmation and audit logging.
+
+### 8.7 Gallery Manager
+**Issue:** No gallery tooling.
+
+**Tasks:**
+- [ ] Per-section galleries with multi-upload, reorder (drag/drop), captions, alt text, and soft delete.
+- [ ] Enforce max counts/file sizes; serve optimized derivatives.
+
+### 8.8 FAQ Management
+**Issue:** FAQs are unmanaged.
+
+**Tasks:**
+- [ ] Add FAQ entries (question, answer rich text, category, order) with add/edit/delete and reorder UI.
+- [ ] Frontend: category filters, search, and schema.org FAQ markup.
+
+---
+
 ## Implementation Priority Matrix
 
 ### 🔴 Critical (Do First)
