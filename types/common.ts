@@ -66,6 +66,10 @@ export interface StarParticle {
   delay: number
   /** Animation duration in seconds */
   duration: number
+  /** Starting rotation angle in degrees (optional, for section stars) */
+  rotateStart?: number
+  /** Ending rotation angle in degrees (optional, for section stars) */
+  rotateEnd?: number
 }
 
 /**
