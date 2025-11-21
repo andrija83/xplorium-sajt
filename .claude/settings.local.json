@@ -48,7 +48,8 @@
       "Bash(npx next lint:*)",
       "Bash(timeout /t 15)",
       "Bash(timeout /t 5)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "Bash(exit 0)"
     ],
     "deny": [],
     "ask": []
