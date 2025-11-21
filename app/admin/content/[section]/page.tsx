@@ -1,6 +1,7 @@
 import { getContentBySection } from "@/app/actions/content"
 import { JsonEditor } from "@/components/admin/JsonEditor"
 import { RichTextEditor } from "@/components/admin/RichTextEditor"
+import { SeoSettings } from "@/components/admin/SeoSettings"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -57,6 +58,8 @@ export default async function ContentEditorPage({ params }: PageProps) {
                         description="Use the editor for main page copy. Saved as structured JSON (TipTap)."
                     />
                 </div>
+
+                <SeoSettings section={section} initialContent={initialContent} />
 
                 <div className="p-6 rounded-xl bg-black/10 backdrop-blur-sm border border-cyan-400/10">
                     <div className="mb-3">
