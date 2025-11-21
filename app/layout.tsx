@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { SessionProvider } from "next-auth/react"
 import { Toaster } from "sonner"
+import { SchemaMarkup } from "@/components/common/SchemaMarkup"
 import "./globals.css"
 
 // Optimized font loading with display swap and preload
@@ -43,16 +44,30 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://xplorium.com"),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Xplorium - Explore the Extraordinary",
     description: "Interactive playground, sensory room, and cafe for families",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://xplorium.com",
+    siteName: "Xplorium",
     type: "website",
     locale: "en_US",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Xplorium - Interactive playground, sensory room, and cafe",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Xplorium - Explore the Extraordinary",
     description: "Interactive playground, sensory room, and cafe for families",
+    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,
@@ -82,6 +97,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <SchemaMarkup />
       </head>
       <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable}`}>
         <SessionProvider refetchInterval={60}>
