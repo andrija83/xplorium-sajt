@@ -47,7 +47,8 @@
       "Bash(del \"docs\\PHASE_2_1_REDUCED_MOTION.md\")",
       "Bash(npx next lint:*)",
       "Bash(timeout /t 15)",
-      "Bash(timeout /t 5)"
+      "Bash(timeout /t 5)",
+      "Bash(npx playwright test:*)"
     ],
     "deny": [],
     "ask": []
