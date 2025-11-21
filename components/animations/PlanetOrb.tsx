@@ -1,8 +1,9 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import type { SizeVariant, ColorVariant } from '@/types'
+import { seededRandom, hashString } from '@/lib/seeded-random'
 
 interface PlanetOrbProps {
   label: string
@@ -67,6 +68,13 @@ export const PlanetOrb = memo(({
 
   const colors = neonColors[color]
 
+  // Use seeded random for consistent floating animation duration (hydration-safe)
+  const floatDuration = useMemo(() => {
+    const seed = hashString(label) // Use label as seed for unique but deterministic duration
+    const rng = seededRandom(seed)
+    return 3 + rng.nextFloat(0, 2) // 3-5 seconds
+  }, [label])
+
   return (
     <motion.button
       className={`absolute ${sizeClasses[size]} rounded-full cursor-pointer group focus:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-black transition-shadow`}
@@ -96,7 +104,7 @@ export const PlanetOrb = memo(({
           y: [0, -10, 0],
         }}
         transition={{
-          duration: 3 + Math.random() * 2,
+          duration: floatDuration,
           repeat: Number.POSITIVE_INFINITY,
           ease: "easeInOut",
         }}

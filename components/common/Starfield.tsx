@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { StarParticle } from '@/types'
+import { seededRandom } from '@/lib/seeded-random'
 
 interface StarfieldProps {
   /** Currently active section (null for main menu) */
@@ -47,30 +48,32 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
       if (savedStars) {
         setStars(JSON.parse(savedStars))
       } else {
-        // Generate new stars if none exist
+        // Generate new stars using seeded random for hydration safety
+        const rng = seededRandom(99999) // Fixed seed for consistent star positions
         const newStars = Array.from({ length: 100 }, (_, i) => ({
           id: i,
-          left: Math.random() * 100,
-          top: Math.random() * 100,
-          size: Math.random() * 2 + .5,
-          opacity: Math.random() * 0.3 + 0.7,
-          delay: Math.random() * 3,
-          duration: Math.random() * 3 + 2,
+          left: rng.nextFloat(0, 100),
+          top: rng.nextFloat(0, 100),
+          size: rng.nextFloat(0.5, 2.5),
+          opacity: rng.nextFloat(0.7, 1),
+          delay: rng.nextFloat(0, 3),
+          duration: rng.nextFloat(2, 5),
         }))
 
         setStars(newStars)
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newStars))
       }
     } catch (e) {
-      // Fallback if sessionStorage fails
+      // Fallback if sessionStorage fails - use same seeded random
+      const rng = seededRandom(99999) // Same seed for consistency
       const newStars = Array.from({ length: 100 }, (_, i) => ({
         id: i,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        size: Math.random() * 2 + .5,
-        opacity: Math.random() * 0.3 + 0.7,
-        delay: Math.random() * 3,
-        duration: Math.random() * 3 + 2,
+        left: rng.nextFloat(0, 100),
+        top: rng.nextFloat(0, 100),
+        size: rng.nextFloat(0.5, 2.5),
+        opacity: rng.nextFloat(0.7, 1),
+        delay: rng.nextFloat(0, 3),
+        duration: rng.nextFloat(2, 5),
       }))
       setStars(newStars)
     }
@@ -99,16 +102,19 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
       }
       const color = sectionColors[activeView as keyof typeof sectionColors] || "#ffffff"
 
-      // Generate 50 new stars with section color
+      // Generate 50 new stars with seeded random for hydration safety
+      const rng = seededRandom(88888) // Fixed seed for section stars
       const newStars = Array.from({ length: 50 }, (_, i) => ({
         id: i + 1000, // Offset ID to avoid conflicts with base stars
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.3 + 0.7,
-        delay: Math.random() * 0.5,
-        duration: Math.random() * 3 + 2,
+        left: rng.nextFloat(0, 100),
+        top: rng.nextFloat(0, 100),
+        size: rng.nextFloat(1, 3),
+        opacity: rng.nextFloat(0.7, 1),
+        delay: rng.nextFloat(0, 0.5),
+        duration: rng.nextFloat(2, 5),
         color: color,
+        rotateStart: rng.nextFloat(0, 360), // Pre-calculate rotation values
+        rotateEnd: rng.nextFloat(360, 720),
       }))
       setSectionStars(newStars)
     } else {
@@ -163,12 +169,12 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
             initial={{
               opacity: 0,
               scale: 0,
-              rotate: Math.random() * 360
+              rotate: star.rotateStart || 0
             }}
             animate={{
               opacity: [0, star.opacity, star.opacity * 0.7, star.opacity],
               scale: [0, 1.5, 1, 1.2, 1],
-              rotate: [Math.random() * 360, Math.random() * 360 + 360],
+              rotate: [star.rotateStart || 0, star.rotateEnd || 360],
             }}
             exit={{
               opacity: 0,

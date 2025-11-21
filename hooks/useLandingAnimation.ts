@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { getParticleCount, ANIMATION_TIMING, PARTICLE_COLORS } from '@/constants/animations'
+import { seededRandom } from '@/lib/seeded-random'
 
 /**
  * useLandingAnimation Hook
@@ -53,30 +54,34 @@ export function useLandingAnimation() {
     return () => clearTimeout(timer)
   }, [isAnimating])
 
-  // Memoized starburst particles
+  // Memoized starburst particles with seeded random for hydration safety
   const starburstParticles = useMemo(() => {
     if (!isAnimating) return []
 
     const count = getParticleCount(isMobile)
+    const rng = seededRandom(12345) // Consistent seed for deterministic results
+
     return Array.from({ length: count }, (_, i) => ({
       id: i,
-      angle: (i * 360) / count + Math.random() * 10,
-      distance: ANIMATION_TIMING.STARBURST_BASE_DISTANCE + Math.random() * (ANIMATION_TIMING.STARBURST_MAX_DISTANCE - ANIMATION_TIMING.STARBURST_BASE_DISTANCE),
-      size: 3 + Math.random() * 10,
+      angle: (i * 360) / count + rng.nextFloat(0, 10),
+      distance: ANIMATION_TIMING.STARBURST_BASE_DISTANCE + rng.nextFloat(0, ANIMATION_TIMING.STARBURST_MAX_DISTANCE - ANIMATION_TIMING.STARBURST_BASE_DISTANCE),
+      size: 3 + rng.nextFloat(0, 10),
       colorIndex: i % PARTICLE_COLORS.STARBURST.length,
     }))
   }, [isAnimating, isMobile])
 
-  // Memoized liquid drip particles
+  // Memoized liquid drip particles with seeded random for hydration safety
   const liquidDripConfig = useMemo(() => {
     const letterCount = "plorium".length
+    const rng = seededRandom(54321) // Different seed for variety
+
     return Array.from({ length: letterCount }, (_, letterIndex) => ({
       letterIndex,
       drips: Array.from({ length: ANIMATION_TIMING.LIQUID_MORPH_DRIP_COUNT }, (_, dripIndex) => ({
         id: dripIndex,
-        xOffset: (Math.random() - 0.5) * 40,
-        width: 4 + Math.random() * 6,
-        height: 8 + Math.random() * 80,
+        xOffset: (rng.next() - 0.5) * 40,
+        width: 4 + rng.nextFloat(0, 6),
+        height: 8 + rng.nextFloat(0, 80),
         colorIndex: dripIndex % PARTICLE_COLORS.LIQUID_DRIP.length,
       }))
     }))
