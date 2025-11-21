@@ -69,7 +69,7 @@ const sanitizeDoc = (value: JSONContent): JSONContent => {
   } as JSONContent
 
   // If nothing valid remains, return a single paragraph with placeholder text
-  if (!cleaned.content.length) {
+  if (!cleaned.content || cleaned.content.length === 0) {
     return {
       type: "doc",
       content: [
