@@ -26,7 +26,7 @@ export default async function ContentEditorPage({ params }: PageProps) {
     }
 
     const result = await getContentBySection(section as any)
-    const initialContent = result.success && result.content ? result.content.content : {}
+    const initialContent = (result.success && result.content ? result.content.content : {}) as Record<string, unknown>
 
     return (
         <div className="space-y-6">
