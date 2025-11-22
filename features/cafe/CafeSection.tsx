@@ -484,85 +484,85 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                           </div>
                         ) : pricingPackages.playground.length > 0 ? (
                           pricingPackages.playground.map((pkg, index) => (
-                          <motion.div
-                            key={index}
-                            className={`relative bg-gradient-to-br ${pkg.popular ? "from-pink-400/10 to-pink-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-pink-400/60" : "border-pink-400/20"} rounded-xl p-6 backdrop-blur-sm`}
-                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                            viewport={{ once: false, amount: 0.3 }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                            whileHover={{
-                              borderColor: "rgba(236, 72, 153, 0.8)",
-                              scale: pkg.popular ? 1.05 : 1.03,
-                              y: -10,
-                            }}
-                            style={pkg.popular ? { boxShadow: "0 0 30px rgba(236, 72, 153, 0.3)" } : {}}
-                          >
-                            {pkg.popular && (
-                              <motion.div
-                                className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-pink-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
-                                style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.8)", boxShadow: "0 0 20px rgba(236, 72, 153, 0.5)" }}
+                            <motion.div
+                              key={index}
+                              className={`relative bg-gradient-to-br ${pkg.popular ? "from-pink-400/10 to-pink-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-pink-400/60" : "border-pink-400/20"} rounded-xl p-6 backdrop-blur-sm`}
+                              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                              viewport={{ once: false, amount: 0.3 }}
+                              transition={{ duration: 0.5, delay: index * 0.1 }}
+                              whileHover={{
+                                borderColor: "rgba(236, 72, 153, 0.8)",
+                                scale: pkg.popular ? 1.05 : 1.03,
+                                y: -10,
+                              }}
+                              style={pkg.popular ? { boxShadow: "0 0 30px rgba(236, 72, 153, 0.3)" } : {}}
+                            >
+                              {pkg.popular && (
+                                <motion.div
+                                  className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-pink-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
+                                  style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.8)", boxShadow: "0 0 20px rgba(236, 72, 153, 0.5)" }}
+                                  initial={{ scale: 0 }}
+                                  whileInView={{ scale: 1 }}
+                                  viewport={{ once: false }}
+                                  transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                                >
+                                  ⭐ Najpopularnije
+                                </motion.div>
+                              )}
+                              <motion.h4
+                                className="text-white font-['Great_Vibes'] text-3xl mb-3"
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                              >
+                                {pkg.name}
+                              </motion.h4>
+                              <motion.p
+                                className="text-pink-400 text-3xl font-bold mb-6"
+                                style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.5)" }}
                                 initial={{ scale: 0 }}
                                 whileInView={{ scale: 1 }}
                                 viewport={{ once: false }}
-                                transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                                transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
                               >
-                                ⭐ Najpopularnije
-                              </motion.div>
-                            )}
-                            <motion.h4
-                              className="text-white font-['Great_Vibes'] text-3xl mb-3"
-                              initial={{ opacity: 0 }}
-                              whileInView={{ opacity: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                            >
-                              {pkg.name}
-                            </motion.h4>
-                            <motion.p
-                              className="text-pink-400 text-3xl font-bold mb-6"
-                              style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.5)" }}
-                              initial={{ scale: 0 }}
-                              whileInView={{ scale: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
-                            >
-                              {pkg.price}
-                            </motion.p>
-                            <ul className="space-y-3 mb-6">
-                              {pkg.features.map((feature: string, i: number) => (
-                                <motion.li
-                                  key={i}
-                                  className="text-white/80 text-sm flex items-start"
-                                  initial={{ opacity: 0, x: -20 }}
-                                  whileInView={{ opacity: 1, x: 0 }}
-                                  viewport={{ once: false }}
-                                  transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
-                                >
-                                  <span className="text-pink-400 mr-2 text-lg">✓</span>
-                                  {feature}
-                                </motion.li>
-                              ))}
-                            </ul>
-                            <motion.button
-                              onClick={() => {
-                                setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'PLAYGROUND' })
-                                setCafeSubView("zakup")
-                              }}
-                              aria-label="Book this playground package"
-                              className="w-full py-3 bg-pink-400/20 border-2 border-pink-400/50 rounded-lg text-pink-400 text-sm font-medium hover:bg-pink-400/30 transition-all"
-                              style={{ boxShadow: "0 0 15px rgba(236, 72, 153, 0.2)" }}
-                              whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(236, 72, 153, 0.4)" }}
-                              whileTap={{ scale: 0.95 }}
-                              initial={{ opacity: 0 }}
-                              whileInView={{ opacity: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                            >
-                              Rezerviši Sada
-                            </motion.button>
-                          </motion.div>
-                        ))
+                                {pkg.price}
+                              </motion.p>
+                              <ul className="space-y-3 mb-6">
+                                {pkg.features.map((feature: string, i: number) => (
+                                  <motion.li
+                                    key={i}
+                                    className="text-white/80 text-sm flex items-start"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: false }}
+                                    transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                                  >
+                                    <span className="text-pink-400 mr-2 text-lg">✓</span>
+                                    {feature}
+                                  </motion.li>
+                                ))}
+                              </ul>
+                              <motion.button
+                                onClick={() => {
+                                  setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'PLAYGROUND' })
+                                  setCafeSubView("zakup")
+                                }}
+                                aria-label="Book this playground package"
+                                className="w-full py-3 bg-pink-400/20 border-2 border-pink-400/50 rounded-lg text-pink-400 text-sm font-medium hover:bg-pink-400/30 transition-all"
+                                style={{ boxShadow: "0 0 15px rgba(236, 72, 153, 0.2)" }}
+                                whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(236, 72, 153, 0.4)" }}
+                                whileTap={{ scale: 0.95 }}
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                              >
+                                Rezerviši Sada
+                              </motion.button>
+                            </motion.div>
+                          ))
                         ) : (
                           <div className="col-span-3 text-center py-12">
                             <p className="text-white/60">Trenutno nema dostupnih paketa</p>
@@ -597,85 +597,85 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                           </div>
                         ) : pricingPackages.sensory.length > 0 ? (
                           pricingPackages.sensory.map((pkg, index) => (
-                          <motion.div
-                            key={index}
-                            className={`relative bg-gradient-to-br ${pkg.popular ? "from-purple-400/10 to-purple-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-purple-400/60" : "border-purple-400/20"} rounded-xl p-6 backdrop-blur-sm`}
-                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                            viewport={{ once: false, amount: 0.3 }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                            whileHover={{
-                              borderColor: "rgba(168, 85, 247, 0.8)",
-                              scale: pkg.popular ? 1.05 : 1.03,
-                              y: -10,
-                            }}
-                            style={pkg.popular ? { boxShadow: "0 0 30px rgba(168, 85, 247, 0.3)" } : {}}
-                          >
-                            {pkg.popular && (
-                              <motion.div
-                                className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
-                                style={{ textShadow: "0 0 10px rgba(168, 85, 247, 0.8)", boxShadow: "0 0 20px rgba(168, 85, 247, 0.5)" }}
+                            <motion.div
+                              key={index}
+                              className={`relative bg-gradient-to-br ${pkg.popular ? "from-purple-400/10 to-purple-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-purple-400/60" : "border-purple-400/20"} rounded-xl p-6 backdrop-blur-sm`}
+                              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                              viewport={{ once: false, amount: 0.3 }}
+                              transition={{ duration: 0.5, delay: index * 0.1 }}
+                              whileHover={{
+                                borderColor: "rgba(168, 85, 247, 0.8)",
+                                scale: pkg.popular ? 1.05 : 1.03,
+                                y: -10,
+                              }}
+                              style={pkg.popular ? { boxShadow: "0 0 30px rgba(168, 85, 247, 0.3)" } : {}}
+                            >
+                              {pkg.popular && (
+                                <motion.div
+                                  className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
+                                  style={{ textShadow: "0 0 10px rgba(168, 85, 247, 0.8)", boxShadow: "0 0 20px rgba(168, 85, 247, 0.5)" }}
+                                  initial={{ scale: 0 }}
+                                  whileInView={{ scale: 1 }}
+                                  viewport={{ once: false }}
+                                  transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                                >
+                                  ⭐ Najpopularnije
+                                </motion.div>
+                              )}
+                              <motion.h4
+                                className="text-white font-['Great_Vibes'] text-3xl mb-3"
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                              >
+                                {pkg.name}
+                              </motion.h4>
+                              <motion.p
+                                className="text-purple-400 text-3xl font-bold mb-6"
+                                style={{ textShadow: "0 0 10px rgba(168, 85, 247, 0.5)" }}
                                 initial={{ scale: 0 }}
                                 whileInView={{ scale: 1 }}
                                 viewport={{ once: false }}
-                                transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                                transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
                               >
-                                ⭐ Najpopularnije
-                              </motion.div>
-                            )}
-                            <motion.h4
-                              className="text-white font-['Great_Vibes'] text-3xl mb-3"
-                              initial={{ opacity: 0 }}
-                              whileInView={{ opacity: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                            >
-                              {pkg.name}
-                            </motion.h4>
-                            <motion.p
-                              className="text-purple-400 text-3xl font-bold mb-6"
-                              style={{ textShadow: "0 0 10px rgba(168, 85, 247, 0.5)" }}
-                              initial={{ scale: 0 }}
-                              whileInView={{ scale: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
-                            >
-                              {pkg.price}
-                            </motion.p>
-                            <ul className="space-y-3 mb-6">
-                              {pkg.features.map((feature: string, i: number) => (
-                                <motion.li
-                                  key={i}
-                                  className="text-white/80 text-sm flex items-start"
-                                  initial={{ opacity: 0, x: -20 }}
-                                  whileInView={{ opacity: 1, x: 0 }}
-                                  viewport={{ once: false }}
-                                  transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
-                                >
-                                  <span className="text-purple-400 mr-2 text-lg">✓</span>
-                                  {feature}
-                                </motion.li>
-                              ))}
-                            </ul>
-                            <motion.button
-                              onClick={() => {
-                                setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'SENSORY_ROOM' })
-                                setCafeSubView("zakup")
-                              }}
-                              aria-label="Book sensory room package"
-                              className="w-full py-3 bg-purple-400/20 border-2 border-purple-400/50 rounded-lg text-purple-400 text-sm font-medium hover:bg-purple-400/30 transition-all"
-                              style={{ boxShadow: "0 0 15px rgba(168, 85, 247, 0.2)" }}
-                              whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(168, 85, 247, 0.4)" }}
-                              whileTap={{ scale: 0.95 }}
-                              initial={{ opacity: 0 }}
-                              whileInView={{ opacity: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                            >
-                              Rezerviši Sada
-                            </motion.button>
-                          </motion.div>
-                        ))
+                                {pkg.price}
+                              </motion.p>
+                              <ul className="space-y-3 mb-6">
+                                {pkg.features.map((feature: string, i: number) => (
+                                  <motion.li
+                                    key={i}
+                                    className="text-white/80 text-sm flex items-start"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: false }}
+                                    transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                                  >
+                                    <span className="text-purple-400 mr-2 text-lg">✓</span>
+                                    {feature}
+                                  </motion.li>
+                                ))}
+                              </ul>
+                              <motion.button
+                                onClick={() => {
+                                  setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'SENSORY_ROOM' })
+                                  setCafeSubView("zakup")
+                                }}
+                                aria-label="Book sensory room package"
+                                className="w-full py-3 bg-purple-400/20 border-2 border-purple-400/50 rounded-lg text-purple-400 text-sm font-medium hover:bg-purple-400/30 transition-all"
+                                style={{ boxShadow: "0 0 15px rgba(168, 85, 247, 0.2)" }}
+                                whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(168, 85, 247, 0.4)" }}
+                                whileTap={{ scale: 0.95 }}
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                              >
+                                Rezerviši Sada
+                              </motion.button>
+                            </motion.div>
+                          ))
                         ) : (
                           <div className="col-span-3 text-center py-12">
                             <p className="text-white/60">Trenutno nema dostupnih paketa</p>
@@ -710,85 +710,85 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                           </div>
                         ) : pricingPackages.cafe.length > 0 ? (
                           pricingPackages.cafe.map((pkg, index) => (
-                          <motion.div
-                            key={index}
-                            className={`relative bg-gradient-to-br ${pkg.popular ? "from-cyan-400/10 to-cyan-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-cyan-400/60" : "border-cyan-400/20"} rounded-xl p-6 backdrop-blur-sm`}
-                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                            viewport={{ once: false, amount: 0.3 }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                            whileHover={{
-                              borderColor: "rgba(34, 211, 238, 0.8)",
-                              scale: pkg.popular ? 1.05 : 1.03,
-                              y: -10,
-                            }}
-                            style={pkg.popular ? { boxShadow: "0 0 30px rgba(34, 211, 238, 0.3)" } : {}}
-                          >
-                            {pkg.popular && (
-                              <motion.div
-                                className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
-                                style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.8)", boxShadow: "0 0 20px rgba(34, 211, 238, 0.5)" }}
+                            <motion.div
+                              key={index}
+                              className={`relative bg-gradient-to-br ${pkg.popular ? "from-cyan-400/10 to-cyan-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-cyan-400/60" : "border-cyan-400/20"} rounded-xl p-6 backdrop-blur-sm`}
+                              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                              viewport={{ once: false, amount: 0.3 }}
+                              transition={{ duration: 0.5, delay: index * 0.1 }}
+                              whileHover={{
+                                borderColor: "rgba(34, 211, 238, 0.8)",
+                                scale: pkg.popular ? 1.05 : 1.03,
+                                y: -10,
+                              }}
+                              style={pkg.popular ? { boxShadow: "0 0 30px rgba(34, 211, 238, 0.3)" } : {}}
+                            >
+                              {pkg.popular && (
+                                <motion.div
+                                  className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
+                                  style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.8)", boxShadow: "0 0 20px rgba(34, 211, 238, 0.5)" }}
+                                  initial={{ scale: 0 }}
+                                  whileInView={{ scale: 1 }}
+                                  viewport={{ once: false }}
+                                  transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                                >
+                                  ⭐ Najpopularnije
+                                </motion.div>
+                              )}
+                              <motion.h4
+                                className="text-white font-['Great_Vibes'] text-3xl mb-3"
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                              >
+                                {pkg.name}
+                              </motion.h4>
+                              <motion.p
+                                className="text-cyan-400 text-3xl font-bold mb-6"
+                                style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.5)" }}
                                 initial={{ scale: 0 }}
                                 whileInView={{ scale: 1 }}
                                 viewport={{ once: false }}
-                                transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                                transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
                               >
-                                ⭐ Najpopularnije
-                              </motion.div>
-                            )}
-                            <motion.h4
-                              className="text-white font-['Great_Vibes'] text-3xl mb-3"
-                              initial={{ opacity: 0 }}
-                              whileInView={{ opacity: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                            >
-                              {pkg.name}
-                            </motion.h4>
-                            <motion.p
-                              className="text-cyan-400 text-3xl font-bold mb-6"
-                              style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.5)" }}
-                              initial={{ scale: 0 }}
-                              whileInView={{ scale: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
-                            >
-                              {pkg.price}
-                            </motion.p>
-                            <ul className="space-y-3 mb-6">
-                              {pkg.features.map((feature: string, i: number) => (
-                                <motion.li
-                                  key={i}
-                                  className="text-white/80 text-sm flex items-start"
-                                  initial={{ opacity: 0, x: -20 }}
-                                  whileInView={{ opacity: 1, x: 0 }}
-                                  viewport={{ once: false }}
-                                  transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
-                                >
-                                  <span className="text-cyan-400 mr-2 text-lg">✓</span>
-                                  {feature}
-                                </motion.li>
-                              ))}
-                            </ul>
-                            <motion.button
-                              onClick={() => {
-                                setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'CAFE' })
-                                setCafeSubView("zakup")
-                              }}
-                              aria-label="Book cafe package"
-                              className="w-full py-3 bg-cyan-400/20 border-2 border-cyan-400/50 rounded-lg text-cyan-400 text-sm font-medium hover:bg-cyan-400/30 transition-all"
-                              style={{ boxShadow: "0 0 15px rgba(34, 211, 238, 0.2)" }}
-                              whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(34, 211, 238, 0.4)" }}
-                              whileTap={{ scale: 0.95 }}
-                              initial={{ opacity: 0 }}
-                              whileInView={{ opacity: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                            >
-                              Rezerviši Sada
-                            </motion.button>
-                          </motion.div>
-                        ))
+                                {pkg.price}
+                              </motion.p>
+                              <ul className="space-y-3 mb-6">
+                                {pkg.features.map((feature: string, i: number) => (
+                                  <motion.li
+                                    key={i}
+                                    className="text-white/80 text-sm flex items-start"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: false }}
+                                    transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                                  >
+                                    <span className="text-cyan-400 mr-2 text-lg">✓</span>
+                                    {feature}
+                                  </motion.li>
+                                ))}
+                              </ul>
+                              <motion.button
+                                onClick={() => {
+                                  setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'CAFE' })
+                                  setCafeSubView("zakup")
+                                }}
+                                aria-label="Book cafe package"
+                                className="w-full py-3 bg-cyan-400/20 border-2 border-cyan-400/50 rounded-lg text-cyan-400 text-sm font-medium hover:bg-cyan-400/30 transition-all"
+                                style={{ boxShadow: "0 0 15px rgba(34, 211, 238, 0.2)" }}
+                                whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(34, 211, 238, 0.4)" }}
+                                whileTap={{ scale: 0.95 }}
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                              >
+                                Rezerviši Sada
+                              </motion.button>
+                            </motion.div>
+                          ))
                         ) : (
                           <div className="col-span-3 text-center py-12">
                             <p className="text-white/60">Trenutno nema dostupnih cafe paketa</p>
@@ -823,85 +823,85 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                           </div>
                         ) : pricingPackages.party.length > 0 ? (
                           pricingPackages.party.map((pkg, index) => (
-                          <motion.div
-                            key={index}
-                            className={`relative bg-gradient-to-br ${pkg.popular ? "from-pink-400/10 to-pink-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-pink-400/60" : "border-pink-400/20"} rounded-xl p-6 backdrop-blur-sm`}
-                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                            viewport={{ once: false, amount: 0.3 }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                            whileHover={{
-                              borderColor: "rgba(236, 72, 153, 0.8)",
-                              scale: pkg.popular ? 1.05 : 1.03,
-                              y: -10,
-                            }}
-                            style={pkg.popular ? { boxShadow: "0 0 30px rgba(236, 72, 153, 0.3)" } : {}}
-                          >
-                            {pkg.popular && (
-                              <motion.div
-                                className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-pink-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
-                                style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.8)", boxShadow: "0 0 20px rgba(236, 72, 153, 0.5)" }}
+                            <motion.div
+                              key={index}
+                              className={`relative bg-gradient-to-br ${pkg.popular ? "from-pink-400/10 to-pink-600/5" : "from-white/5 to-white/0"} border-2 ${pkg.popular ? "border-pink-400/60" : "border-pink-400/20"} rounded-xl p-6 backdrop-blur-sm`}
+                              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                              viewport={{ once: false, amount: 0.3 }}
+                              transition={{ duration: 0.5, delay: index * 0.1 }}
+                              whileHover={{
+                                borderColor: "rgba(236, 72, 153, 0.8)",
+                                scale: pkg.popular ? 1.05 : 1.03,
+                                y: -10,
+                              }}
+                              style={pkg.popular ? { boxShadow: "0 0 30px rgba(236, 72, 153, 0.3)" } : {}}
+                            >
+                              {pkg.popular && (
+                                <motion.div
+                                  className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-pink-600 text-white text-xs px-4 py-1.5 rounded-full font-medium"
+                                  style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.8)", boxShadow: "0 0 20px rgba(236, 72, 153, 0.5)" }}
+                                  initial={{ scale: 0 }}
+                                  whileInView={{ scale: 1 }}
+                                  viewport={{ once: false }}
+                                  transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                                >
+                                  ⭐ Najpopularnije
+                                </motion.div>
+                              )}
+                              <motion.h4
+                                className="text-white font-['Great_Vibes'] text-3xl mb-3"
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                              >
+                                {pkg.name}
+                              </motion.h4>
+                              <motion.p
+                                className="text-pink-400 text-3xl font-bold mb-6"
+                                style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.5)" }}
                                 initial={{ scale: 0 }}
                                 whileInView={{ scale: 1 }}
                                 viewport={{ once: false }}
-                                transition={{ duration: 0.5, delay: 0.3, type: "spring", bounce: 0.5 }}
+                                transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
                               >
-                                ⭐ Najpopularnije
-                              </motion.div>
-                            )}
-                            <motion.h4
-                              className="text-white font-['Great_Vibes'] text-3xl mb-3"
-                              initial={{ opacity: 0 }}
-                              whileInView={{ opacity: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                            >
-                              {pkg.name}
-                            </motion.h4>
-                            <motion.p
-                              className="text-pink-400 text-3xl font-bold mb-6"
-                              style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.5)" }}
-                              initial={{ scale: 0 }}
-                              whileInView={{ scale: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: "spring" }}
-                            >
-                              {pkg.price}
-                            </motion.p>
-                            <ul className="space-y-3 mb-6">
-                              {pkg.features.map((feature: string, i: number) => (
-                                <motion.li
-                                  key={i}
-                                  className="text-white/80 text-sm flex items-start"
-                                  initial={{ opacity: 0, x: -20 }}
-                                  whileInView={{ opacity: 1, x: 0 }}
-                                  viewport={{ once: false }}
-                                  transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
-                                >
-                                  <span className="text-pink-400 mr-2 text-lg">✓</span>
-                                  {feature}
-                                </motion.li>
-                              ))}
-                            </ul>
-                            <motion.button
-                              onClick={() => {
-                                setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'PARTY' })
-                                setCafeSubView("zakup")
-                              }}
-                              aria-label="Book birthday party package"
-                              className="w-full py-3 bg-pink-400/20 border-2 border-pink-400/50 rounded-lg text-pink-400 text-sm font-medium hover:bg-pink-400/30 transition-all"
-                              style={{ boxShadow: "0 0 15px rgba(236, 72, 153, 0.2)" }}
-                              whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(236, 72, 153, 0.4)" }}
-                              whileTap={{ scale: 0.95 }}
-                              initial={{ opacity: 0 }}
-                              whileInView={{ opacity: 1 }}
-                              viewport={{ once: false }}
-                              transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                            >
-                              Rezerviši Rođendan
-                            </motion.button>
-                          </motion.div>
-                        ))
+                                {pkg.price}
+                              </motion.p>
+                              <ul className="space-y-3 mb-6">
+                                {pkg.features.map((feature: string, i: number) => (
+                                  <motion.li
+                                    key={i}
+                                    className="text-white/80 text-sm flex items-start"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: false }}
+                                    transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                                  >
+                                    <span className="text-pink-400 mr-2 text-lg">✓</span>
+                                    {feature}
+                                  </motion.li>
+                                ))}
+                              </ul>
+                              <motion.button
+                                onClick={() => {
+                                  setSelectedPackage({ name: pkg.name, price: pkg.price, category: 'PARTY' })
+                                  setCafeSubView("zakup")
+                                }}
+                                aria-label="Book birthday party package"
+                                className="w-full py-3 bg-pink-400/20 border-2 border-pink-400/50 rounded-lg text-pink-400 text-sm font-medium hover:bg-pink-400/30 transition-all"
+                                style={{ boxShadow: "0 0 15px rgba(236, 72, 153, 0.2)" }}
+                                whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(236, 72, 153, 0.4)" }}
+                                whileTap={{ scale: 0.95 }}
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: false }}
+                                transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                              >
+                                Rezerviši Rođendan
+                              </motion.button>
+                            </motion.div>
+                          ))
                         ) : (
                           <div className="col-span-3 text-center py-12">
                             <p className="text-white/60">Trenutno nema dostupnih rođendanskih paketa</p>

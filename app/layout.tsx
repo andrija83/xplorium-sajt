@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono, Great_Vibes } from "next/font/google"
+import { Geist, Geist_Mono, Great_Vibes, Monoton } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { SessionProvider } from "next-auth/react"
@@ -29,6 +29,14 @@ const _greatVibes = Great_Vibes({
   display: "swap",
   preload: true, // Used heavily in navigation
   variable: "--font-great-vibes",
+})
+
+const _monoton = Monoton({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false, // Used only in Igraonica section
+  variable: "--font-monoton",
 })
 
 export const metadata: Metadata = {
@@ -99,7 +107,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <SchemaMarkup />
       </head>
-      <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable}`}>
+      <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable} ${_monoton.variable}`}>
         <SessionProvider refetchInterval={60}>
           <ErrorBoundary>
             {children}

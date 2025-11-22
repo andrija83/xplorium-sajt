@@ -3,6 +3,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Neon Light Font */
+@font-face {
+  font-family: 'Neon Light';
+  src: url('/fonts/neon-light.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

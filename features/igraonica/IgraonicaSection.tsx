@@ -1,143 +1,250 @@
 'use client'
 
-import { memo, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
-import { TypewriterText } from '@/components/animations'
-import type { GalleryImage } from '@/types'
+import { useState, memo, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { NEON_COLORS } from '@/constants/animations'
 
 /**
  * IgraonicaSection Component
  *
- * Interactive playground section with typewriter description and scroll gallery
+ * Playground section with two main options:
+ * - Happy Birthday (cyan neon)
+ * - Play Room (pink neon)
  *
  * Features:
- * - TypewriterText animation for description
- * - Scroll indicator with animation
- * - 2x3 or 3x3 grid gallery layout
- * - WhileInView animations for scroll-triggered effects
- * - Snap scroll behavior
- *
- * Optimized with React.memo and memoized gallery images
- *
- * Layout:
- * - First screen: Title + Description + Scroll indicator
- * - Second screen: Gallery grid (6 images)
+ * - Large neon text options side by side
+ * - Hover effects with glow intensification
+ * - Click to navigate to subsections
+ * - Dark starfield background with gradient overlay
  */
 export const IgraonicaSection = memo(() => {
-  const GALLERY_IMAGES: GalleryImage[] = useMemo(() => [
-    { id: 1, query: "children playing with interactive floor projection" },
-    { id: 2, query: "kids enjoying interactive wall games" },
-    { id: 3, query: "colorful playground with projection technology" },
-    { id: 4, query: "children playing interactive motion games" },
-    { id: 5, query: "modern indoor playground with digital games" },
-    { id: 6, query: "kids having fun in interactive play area" },
-  ], [])
+  const [selectedOption, setSelectedOption] = useState<'birthday' | 'playroom' | null>(null)
+  const [hoveredOption, setHoveredOption] = useState<'birthday' | 'playroom' | null>(null)
+
+  // Neon text shadow for Happy Birthday (cyan)
+  const birthdayGlow = {
+    default: '0 0 20px #22d3ee, 0 0 40px #22d3ee, 0 0 60px #06b6d4',
+    hover: '0 0 30px #22d3ee, 0 0 60px #22d3ee, 0 0 90px #06b6d4, 0 0 120px #06b6d4'
+  }
+
+  // Neon text shadow for Play Room (pink)
+  const playroomGlow = {
+    default: '0 0 20px #ec4899, 0 0 40px #ec4899, 0 0 60px #db2777',
+    hover: '0 0 30px #ec4899, 0 0 60px #ec4899, 0 0 90px #db2777, 0 0 120px #db2777'
+  }
+
+  // Generate random stars for hover effect
+  const birthdayStars = useMemo(() =>
+    Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 50, // 0-50% from left (full left side)
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      delay: Math.random() * 0.3,
+      duration: Math.random() * 2 + 1
+    }))
+  , [])
+
+  const playroomStars = useMemo(() =>
+    Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 50 + 50, // 50-100% from left (full right side)
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      delay: Math.random() * 0.3,
+      duration: Math.random() * 2 + 1
+    }))
+  , [])
+
   return (
-    <div className="h-[80vh] overflow-y-auto scroll-smooth snap-y snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {/* Title & Description Screen */}
-      <motion.div
-        className="snap-start min-h-[80vh] flex items-center justify-center px-4 relative bg-transparent"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: false, amount: 0.5 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="text-center bg-transparent">
-          <motion.h2
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-4 sm:mb-6 tracking-tight font-['Great_Vibes']"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Igraonica
-          </motion.h2>
-          <motion.p
-            className="text-xl sm:text-2xl md:text-3xl text-white/90 leading-relaxed max-w-3xl mx-auto font-['Great_Vibes']"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <TypewriterText
-              text="Dobrodošli u interaktivnu igraonicu gde se tehnologija i zabava spajaju! Deca će uživati u igrama sa projekcijom na podu i zidovima."
-              delay={0.5}
-              speed={30}
-            />
-          </motion.p>
-        </div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 8 }}
-        >
-          <motion.p
-            className="text-white/60 text-sm font-['Great_Vibes']"
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          >
-            Scroll for Gallery
-          </motion.p>
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          >
-            <ChevronDown className="w-6 h-6 text-white/60" />
-          </motion.div>
-        </motion.div>
-      </motion.div>
-
-      {/* Gallery Screen */}
-      <motion.div
-        className="snap-start min-h-[80vh] flex flex-col items-center justify-center px-4 pb-12"
-        initial={{ opacity: 0, y: 100 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: false, amount: 0.3 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <motion.div
-          className="max-w-4xl mx-auto w-full"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.3 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <motion.p
-            className="text-white/60 text-base sm:text-lg mb-6 font-['Great_Vibes'] text-center"
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          >
-            Gallery
-          </motion.p>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-            {GALLERY_IMAGES.map((image, i) => (
+    <AnimatePresence mode="wait">
+      {!selectedOption ? (
+        // Main menu with two options
+        <>
+          {/* Hover stars - Birthday (left side, cyan) - Full viewport */}
+          <AnimatePresence mode="popLayout">
+            {hoveredOption === 'birthday' && birthdayStars.map((star) => (
               <motion.div
-                key={image.id}
-                className="aspect-square rounded-lg overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10"
-                initial={{ opacity: 0, scale: 0.8, y: 30 }}
-                whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                viewport={{ once: false, amount: 0.3 }}
-                transition={{
-                  duration: 0.6,
-                  delay: i * 0.1,
-                  ease: [0.22, 1, 0.36, 1],
+                key={`birthday-star-${star.id}`}
+                className="fixed rounded-full bg-cyan-400 pointer-events-none z-0"
+                style={{
+                  left: `${star.x}vw`,
+                  top: `${star.y}vh`,
+                  width: `${star.size}px`,
+                  height: `${star.size}px`,
+                  boxShadow: '0 0 10px #22d3ee, 0 0 20px #22d3ee'
                 }}
-                whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.3)" }}
-              >
-                <img
-                  src={`/placeholder.svg?height=400&width=400&query=${encodeURIComponent(image.query)}`}
-                  alt={`Igraonica ${image.id}`}
-                  className="w-full h-full object-cover"
-                />
-              </motion.div>
+                initial={{ opacity: 0, scale: 0, y: 0 }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  scale: [0, 1, 1, 0],
+                  y: [0, -20, -40, -60]
+                }}
+                exit={{
+                  opacity: 0,
+                  scale: 0,
+                  transition: { duration: 0.5, delay: 1 }
+                }}
+                transition={{
+                  duration: star.duration,
+                  delay: star.delay,
+                  repeat: Infinity,
+                  ease: 'easeOut'
+                }}
+              />
             ))}
+          </AnimatePresence>
+
+          {/* Hover stars - Play Room (right side, pink) - Full viewport */}
+          <AnimatePresence mode="popLayout">
+            {hoveredOption === 'playroom' && playroomStars.map((star) => (
+              <motion.div
+                key={`playroom-star-${star.id}`}
+                className="fixed rounded-full bg-pink-500 pointer-events-none z-0"
+                style={{
+                  left: `${star.x}vw`,
+                  top: `${star.y}vh`,
+                  width: `${star.size}px`,
+                  height: `${star.size}px`,
+                  boxShadow: '0 0 10px #ec4899, 0 0 20px #ec4899'
+                }}
+                initial={{ opacity: 0, scale: 0, y: 0 }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  scale: [0, 1, 1, 0],
+                  y: [0, -20, -40, -60]
+                }}
+                exit={{
+                  opacity: 0,
+                  scale: 0,
+                  transition: { duration: 0.5, delay: 1 }
+                }}
+                transition={{
+                  duration: star.duration,
+                  delay: star.delay,
+                  repeat: Infinity,
+                  ease: 'easeOut'
+                }}
+              />
+            ))}
+          </AnimatePresence>
+
+          <motion.div
+            key="menu"
+            className="w-full min-h-screen flex items-center justify-center relative"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
+              {/* Happy Birthday Option */}
+              <motion.button
+                onClick={() => setSelectedOption('birthday')}
+                onMouseEnter={() => setHoveredOption('birthday')}
+                onMouseLeave={() => setHoveredOption(null)}
+                className="group relative flex items-center justify-center py-20 md:py-32 outline-none"
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                {/* Gradient background overlay */}
+                <div
+                  className="absolute inset-0 opacity-30 transition-opacity duration-500"
+                  style={{
+                    background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.3) 0%, transparent 70%)'
+                  }}
+                />
+
+                {/* Neon text */}
+                <div className="relative z-10">
+                  <h2
+                    className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-center uppercase tracking-wider"
+                    style={{
+                      fontFamily: '"Neon Light", Monoton, sans-serif',
+                      color: '#22d3ee',
+                      textShadow: birthdayGlow.default,
+                    }}
+                  >
+                    <div>HAPPY</div>
+                    <div className="mt-2">BIRTHDAY</div>
+                  </h2>
+                </div>
+              </motion.button>
+
+              {/* Play Room Option */}
+              <motion.button
+                onClick={() => setSelectedOption('playroom')}
+                onMouseEnter={() => setHoveredOption('playroom')}
+                onMouseLeave={() => setHoveredOption(null)}
+                className="group relative flex items-center justify-center py-20 md:py-32 outline-none"
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                {/* Gradient background overlay */}
+                <div
+                  className="absolute inset-0 opacity-30 transition-opacity duration-500"
+                  style={{
+                    background: 'radial-gradient(ellipse at center, rgba(236, 72, 153, 0.3) 0%, transparent 70%)'
+                  }}
+                />
+
+                {/* Neon text */}
+                <div className="relative z-10">
+                  <h2
+                    className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-center uppercase tracking-wider"
+                    style={{
+                      fontFamily: '"Neon Light", Monoton, sans-serif',
+                      color: '#ec4899',
+                      textShadow: playroomGlow.default,
+                    }}
+                  >
+                    <div>PLAY</div>
+                    <div className="mt-2">ROOM</div>
+                  </h2>
+                </div>
+              </motion.button>
+            </div>
+          </div>
+          </motion.div>
+        </>
+      ) : (
+        // Subsection content (placeholder for now)
+        <motion.div
+          key={selectedOption}
+          className="w-full min-h-screen flex items-center justify-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="text-center">
+            <h2
+              className="text-4xl md:text-6xl font-bold mb-8"
+              style={{
+                color: selectedOption === 'birthday' ? '#22d3ee' : '#ec4899',
+                textShadow: selectedOption === 'birthday' ? birthdayGlow.default : playroomGlow.default
+              }}
+            >
+              {selectedOption === 'birthday' ? 'Happy Birthday' : 'Play Room'}
+            </h2>
+            <p className="text-white/70 text-lg">
+              Content coming soon...
+            </p>
+            <button
+              onClick={() => setSelectedOption(null)}
+              className="mt-8 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-lg text-white transition-all"
+            >
+              Back to Menu
+            </button>
           </div>
         </motion.div>
-      </motion.div>
-    </div>
+      )}
+    </AnimatePresence>
   )
 })
 

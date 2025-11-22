@@ -52,7 +52,11 @@
       "Bash(exit 0)",
       "Bash(del /f /q \"node_modules\\.prisma\\client\\query_engine-windows.dll.node\" 2)",
       "Bash(timeout /t 2)",
-      "Bash(del /f \".next\\dev\\lock\" 2)"
+      "Bash(del /f \".next\\dev\\lock\" 2)",
+      "WebFetch(domain:www.1001fonts.com)",
+      "Bash(ren:*)",
+      "Bash(move:*)",
+      "Bash(del \"C:\\Users\\Andrija\\Documents\\Xplorium sajt\\xplorium sajt\\public\\fonts\\neon-light.ttf.ttf\")"
     ],
     "deny": [],
     "ask": []
