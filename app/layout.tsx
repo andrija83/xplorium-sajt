@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Great_Vibes, Monoton } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
@@ -88,11 +88,12 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 }
 
 export default function RootLayout({
@@ -108,7 +109,7 @@ export default function RootLayout({
         <SchemaMarkup />
       </head>
       <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable} ${_monoton.variable}`}>
-        <SessionProvider refetchInterval={60}>
+        <SessionProvider>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>

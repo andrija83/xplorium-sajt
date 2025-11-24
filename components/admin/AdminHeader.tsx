@@ -35,9 +35,14 @@ export const AdminHeader = memo(function AdminHeader({
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleSignOut = async () => {
+    console.log('[AUTH] AdminHeader handleSignOut called')
     setShowUserMenu(false)
-    await signOut({ redirect: false })
-    router.push('/')
+    console.log('[AUTH] Calling signOut from AdminHeader...')
+    // Use NextAuth signOut with redirect - let it handle everything
+    await signOut({
+      callbackUrl: '/',
+      redirect: true
+    })
   }
 
   const neonCyanGlow = "0 0 10px #22d3ee, 0 0 20px #22d3ee"

@@ -59,13 +59,21 @@ export const AuthButtons = memo(function AuthButtons({
     setShowDropdown(false)
     setIsSigningOut(true)
 
-    // Wait for animation
-    setTimeout(async () => {
-      await signOut({ redirect: false })
-      // Force full page reload to reset Landing component state
+    // Wait for the warp animation to complete (2 seconds)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Sign out and redirect
+    // Note: SignOutWarp component shows the animation, this handles the actual signout
+    try {
+      await signOut({
+        callbackUrl: '/',
+        redirect: true
+      })
+    } catch (error) {
+      console.error('[AUTH] Sign out error:', error)
+      // Fallback: force redirect if signOut fails
       window.location.href = '/'
-      // No need to set isSigningOut(false) as page will reload
-    }, 2000)
+    }
   }
 
   const handleAdminDashboard = () => {

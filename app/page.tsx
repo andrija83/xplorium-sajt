@@ -144,7 +144,7 @@ export default function Landing() {
               animate={{ opacity: 1 }}
               transition={{ delay: 1, duration: 1 }}
             >
-              Click the X to begin
+              Enter the Experience
             </motion.p>
           )}
 

@@ -101,7 +101,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 7 * 24 * 60 * 60, // 7 days for regular users (will be overridden for admins)
+    maxAge: 7 * 24 * 60 * 60, // 7 days for regular users
   },
   callbacks: {
     async jwt({ token, user, trigger }) {
@@ -132,7 +132,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token) {
         session.user.id = token.id as string
         session.user.role = token.role as 'USER' | 'ADMIN' | 'SUPER_ADMIN'
       }

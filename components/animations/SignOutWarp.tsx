@@ -2,17 +2,10 @@
 
 import { motion } from "framer-motion"
 import { Starfield } from "../common/Starfield"
-import { useEffect } from "react"
 
 export const SignOutWarp = () => {
-    useEffect(() => {
-        // After fade out animation completes, refresh the page to reset to X logo
-        const timer = setTimeout(() => {
-            window.location.href = '/'
-        }, 2000) // 2 seconds for fade out + rotation
-
-        return () => clearTimeout(timer)
-    }, [])
+    // NOTE: Redirect is now handled by AuthButtons.handleSignOut
+    // This component just shows the animation
 
     return (
         <motion.div

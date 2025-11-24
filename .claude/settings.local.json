@@ -56,7 +56,8 @@
       "WebFetch(domain:www.1001fonts.com)",
       "Bash(ren:*)",
       "Bash(move:*)",
-      "Bash(del \"C:\\Users\\Andrija\\Documents\\Xplorium sajt\\xplorium sajt\\public\\fonts\\neon-light.ttf.ttf\")"
+      "Bash(del \"C:\\Users\\Andrija\\Documents\\Xplorium sajt\\xplorium sajt\\public\\fonts\\neon-light.ttf.ttf\")",
+      "Bash(del \"lib\\client-auth-utils.ts\")"
     ],
     "deny": [],
     "ask": []

@@ -43,17 +43,17 @@ export const NavigationLayer = memo(function NavigationLayer({
     {
       label: "Cafe",
       section: "cafe",
-      position: { top: "30%", left: "8%", transform: "translateY(-50%)" },
+      position: { top: "25%", left: "10%", transform: "translateY(-50%)" },
     },
     {
       label: "Sensory",
       section: "discover",
-      position: { top: "30%", right: "8%", transform: "translateY(-50%)" },
+      position: { top: "25%", right: "10%", transform: "translateY(-50%)" },
     },
     {
       label: "Igraonica",
       section: "igraonica",
-      position: { bottom: "4%", left: "50%", transform: "translateX(-50%)" },
+      position: { bottom: "15%", left: "50%", transform: "translateX(-50%)" },
     },
   ], [])
 

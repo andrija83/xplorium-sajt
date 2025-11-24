@@ -4,6 +4,30 @@ import { NextResponse } from 'next/server'
 
 const { auth } = NextAuth(authConfig)
 
+// CSP configuration - allows necessary third-party services while maintaining security
+// In development, React Server Components require 'unsafe-eval' for module loading
+// Only disable 'unsafe-eval' in production for security
+const isProduction = process.env.NODE_ENV === 'production'
+const CSP_HEADER = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' ${!isProduction ? "'unsafe-eval'" : ''} https://va.vercel-scripts.com https://vercel.live;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' blob: data: https:;
+    connect-src 'self' https://va.vercel-scripts.com https://vercel.live;
+    frame-src 'self';
+`.replace(/\s{2,}/g, ' ').trim()
+
+function addSecurityHeaders(response: NextResponse, includeCache = false) {
+    if (includeCache) {
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+        response.headers.set('Pragma', 'no-cache')
+        response.headers.set('Expires', '0')
+    }
+    response.headers.set('Content-Security-Policy', CSP_HEADER)
+    return response
+}
+
 export default auth((req) => {
     const { nextUrl } = req
     const isLoggedIn = !!req.auth
@@ -24,12 +48,8 @@ export default auth((req) => {
             return NextResponse.redirect(new URL('/', nextUrl))
         }
 
-        // Admin is authorized - add cache control headers to prevent back button access
-        const response = NextResponse.next()
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-        response.headers.set('Pragma', 'no-cache')
-        response.headers.set('Expires', '0')
-        return response
+        // Admin is authorized - add security and cache control headers
+        return addSecurityHeaders(NextResponse.next(), true)
     }
 
     // Protect profile routes - require login but any user role
@@ -39,22 +59,17 @@ export default auth((req) => {
             return NextResponse.redirect(new URL('/', nextUrl))
         }
 
-        // Logged in user is authorized
-        const response = NextResponse.next()
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-        response.headers.set('Pragma', 'no-cache')
-        response.headers.set('Expires', '0')
-        return response
+        // Logged in user is authorized - add security and cache control headers
+        return addSecurityHeaders(NextResponse.next(), true)
     }
 
-    return NextResponse.next()
+    // Add CSP headers for all other routes
+    return addSecurityHeaders(NextResponse.next())
 })
 
-// Specify which routes to run middleware on
-// Only protect admin routes and profile - public routes are left alone for static caching
+// Run middleware on all routes to apply CSP headers
 export const config = {
     matcher: [
-        '/admin/:path*',
-        '/profile/:path*',
+        '/((?!_next/static|_next/image|favicon.ico).*)',
     ],
 }

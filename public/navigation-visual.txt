@@ -1,0 +1,17 @@
+Xplorium Visual Navigation (text)
+
+- Home / Hero
+  - Brand intro + CTA to sections
+
+- Main Sections
+  - Cafe: Menu, pricing, events, contact
+  - Igraonica: Playground info, gallery, booking
+  - Sensory / Discover: Zones (floor / wall / ceiling) gallery
+
+- Support
+  - Bookings: Calendar + request form
+  - Events: Upcoming schedule & highlights
+  - Profile / Auth: Sign in / Sign up / Account
+
+- Admin
+  - Content, pricing, bookings, audit
