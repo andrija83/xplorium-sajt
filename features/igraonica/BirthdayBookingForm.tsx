@@ -34,6 +34,7 @@ interface FormData {
   numberOfGuests: string
   selectedRooms: string[]
   includeFoodBeverages: boolean
+  includeCakeBeverages: boolean
   selectedFood: string[]
   selectedBeverages: string[]
   specialRequests: string
@@ -109,6 +110,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
     numberOfGuests: '',
     selectedRooms: initialSelectedRooms,
     includeFoodBeverages: false,
+    includeCakeBeverages: false,
     selectedFood: [],
     selectedBeverages: [],
     specialRequests: ''
@@ -176,7 +178,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
     if (!formData.partyDate) newErrors.partyDate = "Date is required"
     if (!formData.partyTime) newErrors.partyTime = "Time is required"
     if (!formData.numberOfGuests) newErrors.numberOfGuests = "Number of guests is required"
-    if (formData.selectedRooms.length === 0) newErrors.selectedRooms = "Please select at least one room"
+    // selectedRooms validation removed - rooms are pre-selected from previous step
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -224,6 +226,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
         numberOfGuests: '',
         selectedRooms: [],
         includeFoodBeverages: false,
+        includeCakeBeverages: false,
         selectedFood: [],
         selectedBeverages: [],
         specialRequests: ''
@@ -459,77 +462,19 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
             </div>
           </div>
 
-          {/* Room Selection */}
-          <div className="mb-8">
-            <h3 className={`text-xl font-semibold ${theme.text} mb-2 flex items-center gap-2`}>
-              Select Rooms *
-            </h3>
-            <p className={`${theme.textDim} text-sm mb-4`}>Choose one or more rooms to create your custom package</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {AVAILABLE_ROOMS.map((room) => {
-                const isSelected = formData.selectedRooms.includes(room.id)
-                return (
-                  <motion.button
-                    key={room.id}
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        selectedRooms: isSelected
-                          ? prev.selectedRooms.filter(id => id !== room.id)
-                          : [...prev.selectedRooms, room.id]
-                      }))
-                      if (errors.selectedRooms) {
-                        setErrors(prev => {
-                          const newErrors = { ...prev }
-                          delete newErrors.selectedRooms
-                          return newErrors
-                        })
-                      }
-                    }}
-                    className={`relative p-6 border-2 rounded-lg transition-all text-left ${isSelected
-                      ? `border-${theme.primary}-400 ${theme.bgDim}`
-                      : `${errors.selectedRooms ? 'border-red-400' : theme.border} bg-black/30 ${theme.borderHover}`
-                      }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="text-3xl">{room.icon}</div>
-                      <div className="flex-1">
-                        <div className={`${theme.text} font-semibold text-lg mb-1`}>{room.name}</div>
-                        <div className={`${theme.textDim} text-sm`}>
-                          {isSelected ? 'Selected' : 'Click to select'}
-                        </div>
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <motion.div
-                        className={`absolute -top-2 -right-2 w-6 h-6 ${theme.bg} rounded-full flex items-center justify-center`}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                      >
-                        <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </motion.div>
-                    )}
-                  </motion.button>
-                )
-              })}
-            </div>
-            {errors.selectedRooms && (
-              <p className="text-red-400 text-sm mt-2">{errors.selectedRooms}</p>
-            )}
-            {formData.selectedRooms.length > 0 && (
+          {/* Selected Rooms Display (Read-only) */}
+          {formData.selectedRooms.length > 0 && (
+            <div className="mb-8">
+              <h3 className={`text-xl font-semibold ${theme.text} mb-2 flex items-center gap-2`}>
+                Selected Rooms
+              </h3>
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`mt-4 p-4 ${theme.bgDim} border ${theme.border} rounded-lg`}
+                className={`p-4 ${theme.bgDim} border ${theme.border} rounded-lg`}
               >
                 <p className={`${theme.textDim} text-sm font-semibold mb-2`}>
-                  Selected Rooms ({formData.selectedRooms.length}):
+                  Your Selection ({formData.selectedRooms.length}):
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {formData.selectedRooms.map(roomId => {
@@ -545,12 +490,13 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                   })}
                 </div>
               </motion.div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Food & Beverages */}
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row items-stretch gap-3 mb-4">
+              {/* Add Food & Beverages Button */}
               <motion.button
                 type="button"
                 onClick={() => {
@@ -561,7 +507,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                     selectedBeverages: !prev.includeFoodBeverages ? prev.selectedBeverages : []
                   }))
                 }}
-                className={`flex items-center gap-3 px-6 py-4 border-2 rounded-lg transition-all ${formData.includeFoodBeverages
+                className={`flex-1 flex items-center gap-3 px-6 py-4 border-2 rounded-lg transition-all ${formData.includeFoodBeverages
                   ? `border-${theme.primary}-400 ${theme.bgDim}`
                   : `${theme.border} bg-black/30 ${theme.borderHover}`
                   }`}
@@ -569,7 +515,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="text-3xl">🍕🥤</div>
-                <div className="text-left">
+                <div className="text-left flex-1">
                   <div className={`${theme.text} font-semibold text-lg`}>Add Food & Beverages</div>
                   <div className={`${theme.textDim} text-sm`}>
                     {formData.includeFoodBeverages ? 'Included - Click to remove' : 'Click to add food and drinks'}
@@ -577,7 +523,44 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                 </div>
                 {formData.includeFoodBeverages && (
                   <motion.div
-                    className={`ml-auto w-6 h-6 ${theme.bg} rounded-full flex items-center justify-center`}
+                    className={`w-6 h-6 ${theme.bg} rounded-full flex items-center justify-center`}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  >
+                    <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </motion.div>
+                )}
+              </motion.button>
+
+              {/* Cake + Beverages Button */}
+              <motion.button
+                type="button"
+                onClick={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    includeCakeBeverages: !prev.includeCakeBeverages
+                  }))
+                }}
+                className={`flex-1 flex items-center gap-3 px-6 py-4 border-2 rounded-lg transition-all ${formData.includeCakeBeverages
+                  ? `border-${theme.primary}-400 ${theme.bgDim}`
+                  : `${theme.border} bg-black/30 ${theme.borderHover}`
+                  }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="text-3xl">🎂🥤</div>
+                <div className="text-left flex-1">
+                  <div className={`${theme.text} font-semibold text-lg`}>Cake + Beverages</div>
+                  <div className={`${theme.textDim} text-sm`}>
+                    {formData.includeCakeBeverages ? 'Included - Click to remove' : 'Click to add cake and drinks'}
+                  </div>
+                </div>
+                {formData.includeCakeBeverages && (
+                  <motion.div
+                    className={`w-6 h-6 ${theme.bg} rounded-full flex items-center justify-center`}
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}

@@ -39,3 +39,33 @@ export {
   type AnimationDirection,
   type AsyncState,
 } from './common'
+
+// Database types (safe for client components)
+export {
+  Role,
+  BookingStatus,
+  BookingType,
+  EventStatus,
+  PricingCategory,
+  PricingStatus,
+  ContentStatus,
+  MaintenanceArea,
+  MaintenanceType,
+  MaintenanceStatus,
+  Priority,
+  InventoryCategory,
+  type User,
+  type Booking,
+  type Event,
+  type PricingPackage,
+  type SiteContent,
+  type MaintenanceLog,
+  type InventoryItem,
+  type PublicUser,
+  type BookingInput,
+  type EventInput,
+  type PricingPackageInput,
+  isBookingType,
+  isBookingStatus,
+  isPricingCategory,
+} from './database'

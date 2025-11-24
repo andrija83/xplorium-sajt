@@ -5,7 +5,8 @@ import { logAudit } from '@/lib/audit'
 import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { updateContentSchema, type UpdateContentInput } from '@/lib/validations'
-import type { Prisma, ContentStatus } from '@prisma/client'
+import { ContentStatus } from '@/types'
+import type { Prisma } from '@prisma/client'
 
 /**
  * Get content by section

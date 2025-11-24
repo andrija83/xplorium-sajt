@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import type { Role } from '@prisma/client'
+import { Role } from '@/types'
 
 /**
  * Auth Utility Functions
@@ -17,7 +17,7 @@ import type { Role } from '@prisma/client'
  * @throws Error if unauthorized
  *
  * @example
- * const session = await requireRole(['ADMIN', 'SUPER_ADMIN'])
+ * const session = await requireRole([Role.ADMIN, Role.SUPER_ADMIN])
  */
 export async function requireRole(roles: Role[]) {
   const session = await auth()
@@ -44,7 +44,7 @@ export async function requireRole(roles: Role[]) {
  * const session = await requireAdmin()
  */
 export async function requireAdmin() {
-  return requireRole(['ADMIN', 'SUPER_ADMIN'])
+  return requireRole([Role.ADMIN, Role.SUPER_ADMIN])
 }
 
 /**
@@ -58,7 +58,7 @@ export async function requireAdmin() {
  * const session = await requireSuperAdmin()
  */
 export async function requireSuperAdmin() {
-  return requireRole(['SUPER_ADMIN'])
+  return requireRole([Role.SUPER_ADMIN])
 }
 
 /**
@@ -69,7 +69,7 @@ export async function requireSuperAdmin() {
  * @returns True if user has one of the roles
  *
  * @example
- * const isAdmin = await hasRole(['ADMIN', 'SUPER_ADMIN'])
+ * const isAdmin = await hasRole([Role.ADMIN, Role.SUPER_ADMIN])
  */
 export async function hasRole(roles: Role[]): Promise<boolean> {
   try {
@@ -90,7 +90,7 @@ export async function hasRole(roles: Role[]): Promise<boolean> {
  * const isAdmin = await isAdmin()
  */
 export async function isAdmin(): Promise<boolean> {
-  return hasRole(['ADMIN', 'SUPER_ADMIN'])
+  return hasRole([Role.ADMIN, Role.SUPER_ADMIN])
 }
 
 /**
@@ -160,7 +160,7 @@ export async function requireOwnerOrAdmin(userId: string) {
   const session = await requireAuth()
 
   const isOwner = session.user.id === userId
-  const isAdminRole = ['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)
+  const isAdminRole = [Role.ADMIN, Role.SUPER_ADMIN].includes(session.user.role as Role)
 
   if (!isOwner && !isAdminRole) {
     throw new Error('Unauthorized: Must be resource owner or admin')

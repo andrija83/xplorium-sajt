@@ -50,10 +50,13 @@ export const SectionManager = memo(function SectionManager({
   setSensorySubView,
   setCafeSubView,
 }: SectionManagerProps) {
+  // Igraonica needs full viewport width, others need container constraints
+  const isFullWidth = activeView === "igraonica"
+
   return (
     <motion.div
       key={activeView}
-      className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"
+      className={`w-full ${isFullWidth ? '' : 'max-w-5xl mx-auto px-4 sm:px-6 lg:px-8'}`}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
