@@ -206,7 +206,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onBackToSignIn }: ForgotP
                                     </Button>
                                 </motion.div>
                             ) : (
-                                <form onSubmit={handleSubmit} className="space-y-6">
+                                <form onSubmit={handleSubmit} noValidate className="space-y-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="reset-email" className="text-cyan-300 text-sm font-medium">
                                             Email

@@ -209,7 +209,7 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
           >
             {/* Rotating gradient border container */}
             <div className="absolute inset-0 rounded-2xl overflow-hidden">
-              <motion.div 
+              <motion.div
                 className="absolute w-[200%] h-[200%] top-1/2 left-1/2"
                 style={{
                   background: "conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #fb923c, #facc15, #22c55e, #22d3ee)",
@@ -217,10 +217,10 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
                   y: "-50%",
                 }}
                 animate={{ rotate: 360 }}
-                transition={{ 
-                  duration: 4, 
-                  repeat: Number.POSITIVE_INFINITY, 
-                  ease: "linear" 
+                transition={{
+                  duration: 4,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "linear"
                 }}
               />
             </div>
@@ -256,7 +256,7 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} noValidate className="space-y-5">
                 {/* Full Name Field */}
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="text-cyan-300 text-sm font-medium">
@@ -448,7 +448,7 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
                 <div className="flex gap-3 pt-2">
                   <div className="flex-1 relative rounded-lg overflow-hidden">
                     {/* Rotating gradient border for Cancel */}
-                    <motion.div 
+                    <motion.div
                       className="absolute w-[300%] h-[300%] top-1/2 left-1/2"
                       style={{
                         background: "conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #fb923c, #facc15, #22c55e, #22d3ee)",
@@ -456,10 +456,10 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
                         y: "-50%",
                       }}
                       animate={{ rotate: 360 }}
-                      transition={{ 
-                        duration: 3, 
-                        repeat: Number.POSITIVE_INFINITY, 
-                        ease: "linear" 
+                      transition={{
+                        duration: 3,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "linear"
                       }}
                     />
                     <Button
@@ -475,7 +475,7 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
                   </div>
                   <div className="flex-1 relative rounded-lg overflow-hidden">
                     {/* Rotating gradient border */}
-                    <motion.div 
+                    <motion.div
                       className="absolute w-[300%] h-[300%] top-1/2 left-1/2"
                       style={{
                         background: "conic-gradient(from 0deg, #22d3ee, #a855f7, #ec4899, #fb923c, #facc15, #22c55e, #22d3ee)",
@@ -483,10 +483,10 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
                         y: "-50%",
                       }}
                       animate={{ rotate: 360 }}
-                      transition={{ 
-                        duration: 3, 
-                        repeat: Number.POSITIVE_INFINITY, 
-                        ease: "linear" 
+                      transition={{
+                        duration: 3,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "linear"
                       }}
                     />
                     <Button

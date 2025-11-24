@@ -237,7 +237,7 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp, onForgotPasswor
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} noValidate className="space-y-6">
                 {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-cyan-300 text-sm font-medium">

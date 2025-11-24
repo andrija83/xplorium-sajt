@@ -3,6 +3,8 @@
 import { useState, memo, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NEON_COLORS } from '@/constants/animations'
+import { BirthdayBookingForm } from './BirthdayBookingForm'
+import { PlayRoomBookingForm } from './PlayRoomBookingForm'
 
 /**
  * IgraonicaSection Component
@@ -307,37 +309,12 @@ export const IgraonicaSection = memo(() => {
             </div>
           </motion.div>
         </>
+      ) : selectedOption === 'birthday' ? (
+        // Birthday Booking Form
+        <BirthdayBookingForm onBack={() => setSelectedOption(null)} />
       ) : (
-        // Subsection content (placeholder for now)
-        <motion.div
-          key={selectedOption}
-          className="w-full min-h-screen flex items-center justify-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="text-center">
-            <h2
-              className="text-4xl md:text-6xl font-bold mb-8"
-              style={{
-                color: selectedOption === 'birthday' ? '#22d3ee' : '#ec4899',
-                textShadow: selectedOption === 'birthday' ? birthdayGlow.default : playroomGlow.default
-              }}
-            >
-              {selectedOption === 'birthday' ? 'Happy Birthday' : 'Play Room'}
-            </h2>
-            <p className="text-white/70 text-lg">
-              Content coming soon...
-            </p>
-            <button
-              onClick={() => setSelectedOption(null)}
-              className="mt-8 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-lg text-white transition-all"
-            >
-              Back to Menu
-            </button>
-          </div>
-        </motion.div>
+        // Play Room Booking Form
+        <PlayRoomBookingForm onBack={() => setSelectedOption(null)} />
       )}
     </AnimatePresence>
   )

@@ -67,6 +67,8 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
   const datePickerRef = useRef<HTMLDivElement>(null)
   const timePickerRef = useRef<HTMLDivElement>(null)
 
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
   // Update calendar date when initialDate changes
   useEffect(() => {
     if (initialDate) {
@@ -89,89 +91,84 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
 
     // Validate title
     if (!formData.title.trim()) {
-      setConflictError('Naziv događaja je obavezan.')
-      return
-    }
-
-    if (formData.title.trim().length < 3) {
-      setConflictError('Naziv događaja mora imati najmanje 3 karaktera.')
-      return
+      newErrors.title = 'Naziv događaja je obavezan.'
+    } else if (formData.title.trim().length < 3) {
+      newErrors.title = 'Naziv događaja mora imati najmanje 3 karaktera.'
     }
 
     // Validate email
-    if (!formData.email.trim()) {
-      setConflictError('Email je obavezan.')
-      return
-    }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) {
-      setConflictError('Unesite validnu email adresu.')
-      return
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email je obavezan.'
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Unesite validnu email adresu.'
     }
 
     // Validate phone
-    if (!formData.phone.trim()) {
-      setConflictError('Telefon je obavezan.')
-      return
-    }
-
-    if (formData.phone.trim().length < 10) {
-      setConflictError('Unesite kompletan broj telefona sa pozivnim brojem.')
-      return
+    if (!formData.phone || !formData.phone.trim()) {
+      newErrors.phone = 'Telefon je obavezan.'
+    } else if (formData.phone.trim().length < 10) {
+      newErrors.phone = 'Unesite kompletan broj telefona sa pozivnim brojem.'
     }
 
     // Validate date
     if (!formData.date) {
-      setConflictError('Morate izabrati datum za rezervaciju.')
-      return
-    }
+      newErrors.date = 'Morate izabrati datum za rezervaciju.'
+    } else {
+      // Check if date is in the past
+      const selectedDate = new Date(formData.date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
 
-    // Check if date is in the past
-    const selectedDate = new Date(formData.date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    if (selectedDate < today) {
-      setConflictError('Ne možete rezervisati datum u prošlosti.')
-      return
+      if (selectedDate < today) {
+        newErrors.date = 'Ne možete rezervisati datum u prošlosti.'
+      }
     }
 
     // Validate time
     if (!formData.time) {
-      setConflictError('Morate izabrati vreme za rezervaciju.')
-      return
+      newErrors.time = 'Morate izabrati vreme za rezervaciju.'
     }
 
     // Validate guest count if provided
     if (formData.guestCount) {
       const count = parseInt(formData.guestCount)
       if (isNaN(count) || count < 1) {
-        setConflictError('Broj gostiju mora biti najmanje 1.')
-        return
-      }
-      if (count > 100) {
-        setConflictError('Maksimalan broj gostiju je 100.')
-        return
+        newErrors.guestCount = 'Broj gostiju mora biti najmanje 1.'
+      } else if (count > 100) {
+        newErrors.guestCount = 'Maksimalan broj gostiju je 100.'
       }
     }
 
     // Check for time conflicts
-    const conflict = existingEvents.find(existingEvent => {
-      const existingDate = new Date(existingEvent.date)
-      return (
-        existingDate.toDateString() === selectedDate.toDateString() &&
-        existingEvent.time === formData.time
-      )
-    })
+    if (formData.date && formData.time) {
+      const selectedDate = new Date(formData.date)
+      const conflict = existingEvents.find(existingEvent => {
+        const existingDate = new Date(existingEvent.date)
+        return (
+          existingDate.toDateString() === selectedDate.toDateString() &&
+          existingEvent.time === formData.time
+        )
+      })
 
-    if (conflict) {
-      setConflictError(`Već postoji rezervacija za ${formData.time} na ovaj datum. Molimo izaberite drugo vreme.`)
+      if (conflict) {
+        newErrors.time = `Već postoji rezervacija za ${formData.time}.`
+      }
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validateForm()) {
       return
     }
 
@@ -202,13 +199,23 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
       type: 'PARTY',
       notes: ''
     })
+    setErrors({})
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }))
+    // Clear error
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[name]
+        return newErrors
+      })
+    }
   }
 
   const handlePhoneChange = (value: string | undefined) => {
@@ -216,6 +223,13 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
       ...prev,
       phone: value || ''
     }))
+    if (errors.phone) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.phone
+        return newErrors
+      })
+    }
   }
 
   // Calendar helper functions
@@ -239,6 +253,13 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
     setFormData(prev => ({ ...prev, date: dateString }))
     setShowDatePicker(false)
     setConflictError('') // Clear error when date changes
+    if (errors.date) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.date
+        return newErrors
+      })
+    }
   }
 
   const handleTimeSelect = (hour: number, minute: number) => {
@@ -246,6 +267,13 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
     setFormData(prev => ({ ...prev, time: timeString }))
     setShowTimePicker(false)
     setConflictError('') // Clear error when time changes
+    if (errors.time) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.time
+        return newErrors
+      })
+    }
   }
 
   const formatDisplayDate = (dateString: string) => {
@@ -273,8 +301,8 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
   const dayNames = ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub']
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Conflict Error Message */}
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
+      {/* Conflict Error Message - Keeping for general errors if needed, though most are now field-specific */}
       <AnimatePresence>
         {conflictError && (
           <motion.div
@@ -298,10 +326,10 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
           name="title"
           value={formData.title}
           onChange={handleChange}
-          required
-          className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
+          className={`w-full px-4 py-2 bg-white/5 border ${errors.title ? 'border-red-400' : 'border-cyan-400/30'} rounded-lg text-white text-sm focus:outline-none ${errors.title ? 'focus:border-red-400' : 'focus:border-cyan-400/60'} focus:ring-1 focus:ring-cyan-400/30 transition-all`}
           placeholder="Npr. Rođendan Marka"
         />
+        {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title}</p>}
       </div>
 
       {/* Email and Phone Row */}
@@ -316,10 +344,10 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
             name="email"
             value={formData.email}
             onChange={handleChange}
-            required
-            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
+            className={`w-full px-4 py-2 bg-white/5 border ${errors.email ? 'border-red-400' : 'border-cyan-400/30'} rounded-lg text-white text-sm focus:outline-none ${errors.email ? 'focus:border-red-400' : 'focus:border-cyan-400/60'} focus:ring-1 focus:ring-cyan-400/30 transition-all`}
             placeholder="vas@email.com"
           />
+          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
         </div>
 
         {/* Phone */}
@@ -327,17 +355,19 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
           <label className="block text-cyan-400 text-sm font-['Great_Vibes'] text-lg mb-1">
             Telefon *
           </label>
-          <PhoneInput
-            international
-            defaultCountry="RS"
-            value={formData.phone}
-            onChange={handlePhoneChange}
-            className="phone-input-wrapper"
-            numberInputProps={{
-              className: "w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all",
-              required: true
-            }}
-          />
+          <div className={errors.phone ? 'border border-red-400 rounded-lg' : ''}>
+            <PhoneInput
+              international
+              defaultCountry="RS"
+              value={formData.phone}
+              onChange={handlePhoneChange}
+              className="phone-input-wrapper"
+              numberInputProps={{
+                className: `w-full px-4 py-2 bg-white/5 border ${errors.phone ? 'border-transparent' : 'border-cyan-400/30'} rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all`,
+              }}
+            />
+          </div>
+          {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
         </div>
       </div>
 
@@ -351,13 +381,14 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
           <button
             type="button"
             onClick={() => setShowDatePicker(!showDatePicker)}
-            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all flex items-center justify-between"
+            className={`w-full px-4 py-2 bg-white/5 border ${errors.date ? 'border-red-400' : 'border-cyan-400/30'} rounded-lg text-white text-sm focus:outline-none ${errors.date ? 'focus:border-red-400' : 'focus:border-cyan-400/60'} focus:ring-1 focus:ring-cyan-400/30 transition-all flex items-center justify-between`}
           >
             <span className={formData.date ? 'text-white' : 'text-white/50'}>
               {formatDisplayDate(formData.date)}
             </span>
             <Calendar className="w-4 h-4 text-cyan-400" />
           </button>
+          {errors.date && <p className="text-red-400 text-xs mt-1">{errors.date}</p>}
 
           {/* Mini Calendar Picker */}
           <AnimatePresence>
@@ -442,13 +473,14 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
           <button
             type="button"
             onClick={() => setShowTimePicker(!showTimePicker)}
-            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all flex items-center justify-between"
+            className={`w-full px-4 py-2 bg-white/5 border ${errors.time ? 'border-red-400' : 'border-cyan-400/30'} rounded-lg text-white text-sm focus:outline-none ${errors.time ? 'focus:border-red-400' : 'focus:border-cyan-400/60'} focus:ring-1 focus:ring-cyan-400/30 transition-all flex items-center justify-between`}
           >
             <span className={formData.time ? 'text-white' : 'text-white/50'}>
               {formData.time || 'Izaberite vreme'}
             </span>
             <Clock className="w-4 h-4 text-cyan-400" />
           </button>
+          {errors.time && <p className="text-red-400 text-xs mt-1">{errors.time}</p>}
 
           {/* Time Picker Dropdown */}
           <AnimatePresence>
@@ -507,7 +539,6 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
             name="type"
             value={formData.type}
             onChange={handleChange}
-            required
             className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
           >
             <option value="CAFE" className="bg-gray-900">Café</option>
@@ -529,9 +560,10 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
             value={formData.guestCount}
             onChange={handleChange}
             min="1"
-            className="w-full px-4 py-2 bg-white/5 border border-cyan-400/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 transition-all"
+            className={`w-full px-4 py-2 bg-white/5 border ${errors.guestCount ? 'border-red-400' : 'border-cyan-400/30'} rounded-lg text-white text-sm focus:outline-none ${errors.guestCount ? 'focus:border-red-400' : 'focus:border-cyan-400/60'} focus:ring-1 focus:ring-cyan-400/30 transition-all`}
             placeholder="Npr. 10"
           />
+          {errors.guestCount && <p className="text-red-400 text-xs mt-1">{errors.guestCount}</p>}
         </div>
       </div>
 

@@ -57,7 +57,20 @@
       "Bash(ren:*)",
       "Bash(move:*)",
       "Bash(del \"C:\\Users\\Andrija\\Documents\\Xplorium sajt\\xplorium sajt\\public\\fonts\\neon-light.ttf.ttf\")",
-      "Bash(del \"lib\\client-auth-utils.ts\")"
+      "Bash(del \"lib\\client-auth-utils.ts\")",
+      "mcp__MCP_DOCKER__mcp-find",
+      "mcp__MCP_DOCKER__mcp-add",
+      "mcp__MCP_DOCKER__browser_navigate",
+      "Bash(ping:*)",
+      "Bash(docker run:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker inspect:*)",
+      "mcp__MCP_DOCKER__browser_fill_form",
+      "mcp__MCP_DOCKER__browser_click",
+      "mcp__MCP_DOCKER__browser_type",
+      "Bash(docker mcp secret set:*)",
+      "mcp__MCP_DOCKER__mcp-config-set",
+      "WebFetch(domain:codepen.io)"
     ],
     "deny": [],
     "ask": []
