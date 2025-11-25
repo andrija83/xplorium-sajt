@@ -13,6 +13,7 @@ import { signInAction } from "@/app/actions/auth"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
+import { logger } from "@/lib/logger"
 
 /**
  * SignInModal Component
@@ -126,7 +127,7 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp, onForgotPasswor
         setIsLoading(false)
       }
     } catch (error) {
-      console.error('Sign in error:', error)
+      logger.error('Sign in error', error instanceof Error ? error : new Error(String(error)))
       toast.error('An unexpected error occurred')
       setIsLoading(false)
     }

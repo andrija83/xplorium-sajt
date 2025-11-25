@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { logger } from '@/lib/logger'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
@@ -37,7 +38,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error details to console (in production, send to error tracking service)
-    console.error('Error caught by ErrorBoundary:', error, errorInfo)
+    logger.error('Error caught by ErrorBoundary', error)
+    logger.debug('Error info', { componentStack: errorInfo.componentStack })
   }
 
   handleReset = () => {

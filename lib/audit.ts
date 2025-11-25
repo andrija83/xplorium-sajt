@@ -38,7 +38,8 @@ export async function logAudit({
     })
   } catch (error) {
     // Log error but don't throw - audit logging should not break the main flow
-    console.error('Failed to create audit log:', error)
+    const { logger } = await import('./logger')
+    logger.error('Failed to create audit log', error instanceof Error ? error : new Error(String(error)))
   }
 }
 

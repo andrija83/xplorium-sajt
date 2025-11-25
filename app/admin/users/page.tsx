@@ -8,6 +8,7 @@ import { Search, Shield, User as UserIcon, Lock, Unlock, Trash2, MoreHorizontal,
 import type { Column } from "@/components/admin/DataTable"
 import { getUsers, deleteUser, toggleUserBlock } from "@/app/actions/users"
 import { DataTableSkeleton } from "@/components/loading/DataTableSkeleton"
+import { logger } from "@/lib/logger"
 
 // Dynamic import for DataTable (code-splitting)
 const DataTable = dynamic(
@@ -106,7 +107,7 @@ export default function UsersPage() {
         }))
       }
     } catch (error) {
-      console.error("Failed to fetch users:", error)
+      logger.error("Failed to fetch users", error instanceof Error ? error : new Error(String(error)))
       toast.error("Failed to load users")
     } finally {
       setIsLoading(false)

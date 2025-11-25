@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { logger } from '@/lib/logger'
 import { requireAdmin, requireAuth } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import {
@@ -140,7 +141,7 @@ export async function createBooking(data: CreateBookingInput) {
       message: 'Booking created successfully',
     }
   } catch (error) {
-    console.error('Create booking error:', error)
+    logger.serverActionError('createBooking', error)
 
     if (error instanceof Error) {
       return {
@@ -202,7 +203,7 @@ export async function updateBooking(id: string, data: UpdateBookingInput) {
       message: 'Booking updated successfully',
     }
   } catch (error) {
-    console.error('Update booking error:', error)
+    logger.serverActionError('updateBooking', error)
 
     if (error instanceof Error) {
       return {
@@ -268,7 +269,7 @@ export async function approveBooking(bookingId: string, adminNotes?: string) {
       message: 'Booking approved successfully',
     }
   } catch (error) {
-    console.error('Approve booking error:', error)
+    logger.serverActionError('approveBooking', error)
 
     if (error instanceof Error) {
       return {
@@ -334,7 +335,7 @@ export async function rejectBooking(bookingId: string, reason: string) {
       message: 'Booking rejected',
     }
   } catch (error) {
-    console.error('Reject booking error:', error)
+    logger.serverActionError('rejectBooking', error)
 
     if (error instanceof Error) {
       return {
@@ -378,7 +379,7 @@ export async function deleteBooking(id: string) {
       message: 'Booking deleted successfully',
     }
   } catch (error) {
-    console.error('Delete booking error:', error)
+    logger.serverActionError('deleteBooking', error)
 
     if (error instanceof Error) {
       return {
@@ -425,7 +426,7 @@ export async function getApprovedBookings() {
       bookings,
     }
   } catch (error) {
-    console.error('Get approved bookings error:', error)
+    logger.serverActionError('getApprovedBookings', error)
     return {
       success: false,
       bookings: [],
@@ -456,7 +457,7 @@ export async function getUserBookings() {
       bookings,
     }
   } catch (error) {
-    console.error('Get user bookings error:', error)
+    logger.serverActionError('getUserBookings', error)
     return {
       success: false,
       error: 'Failed to load bookings',

@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
+import { logger } from "@/lib/logger"
 import { revalidatePath } from "next/cache"
 import { createMaintenanceSchema, updateMaintenanceSchema } from "@/lib/validations/maintenance"
 import type { CreateMaintenanceInput, UpdateMaintenanceInput } from "@/lib/validations/maintenance"
@@ -66,7 +67,7 @@ export async function getMaintenanceLogs(filters?: {
 
     return { success: true, logs, total }
   } catch (error) {
-    console.error("Error fetching maintenance logs:", error)
+    logger.serverActionError("getMaintenanceLogs", error)
     return { success: false, error: "Failed to fetch maintenance logs" }
   }
 }
@@ -91,7 +92,7 @@ export async function getMaintenanceLogById(id: string) {
 
     return { success: true, log }
   } catch (error) {
-    console.error("Error fetching maintenance log:", error)
+    logger.serverActionError("getMaintenanceLogById", error)
     return { success: false, error: "Failed to fetch maintenance log" }
   }
 }
@@ -124,7 +125,7 @@ export async function createMaintenanceLog(data: CreateMaintenanceInput) {
     revalidatePath("/admin/maintenance")
     return { success: true, log }
   } catch (error: any) {
-    console.error("Error creating maintenance log:", error)
+    logger.serverActionError("createMaintenanceLog", error)
     return {
       success: false,
       error: error.message || "Failed to create maintenance log"
@@ -166,7 +167,7 @@ export async function updateMaintenanceLog(id: string, data: UpdateMaintenanceIn
     revalidatePath(`/admin/maintenance/${id}`)
     return { success: true, log }
   } catch (error: any) {
-    console.error("Error updating maintenance log:", error)
+    logger.serverActionError("updateMaintenanceLog", error)
     return {
       success: false,
       error: error.message || "Failed to update maintenance log"
@@ -200,7 +201,7 @@ export async function deleteMaintenanceLog(id: string) {
     revalidatePath("/admin/maintenance")
     return { success: true }
   } catch (error: any) {
-    console.error("Error deleting maintenance log:", error)
+    logger.serverActionError("deleteMaintenanceLog", error)
     return {
       success: false,
       error: error.message || "Failed to delete maintenance log"
@@ -244,7 +245,7 @@ export async function completeMaintenanceLog(id: string, completedData?: {
     revalidatePath(`/admin/maintenance/${id}`)
     return { success: true, log }
   } catch (error: any) {
-    console.error("Error completing maintenance log:", error)
+    logger.serverActionError("completeMaintenanceLog", error)
     return {
       success: false,
       error: error.message || "Failed to complete maintenance log"
@@ -283,7 +284,7 @@ export async function getUpcomingMaintenance() {
 
     return { success: true, logs }
   } catch (error) {
-    console.error("Error fetching upcoming maintenance:", error)
+    logger.serverActionError("getUpcomingMaintenance", error)
     return { success: false, error: "Failed to fetch upcoming maintenance" }
   }
 }

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 /**
  * Inventory Management Page
@@ -93,7 +94,7 @@ function InventoryContent() {
         }))
       }
     } catch (error) {
-      console.error("Failed to fetch inventory items:", error)
+      logger.error("Failed to fetch inventory items", error instanceof Error ? error : new Error(String(error)))
       toast.error("Failed to load inventory items")
     } finally {
       setIsLoading(false)

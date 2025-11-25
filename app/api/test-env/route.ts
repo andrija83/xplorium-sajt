@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 /**
  * Test environment variables endpoint
@@ -17,7 +18,7 @@ export async function GET() {
     VERCEL_ENV: process.env.VERCEL_ENV,
   }
 
-  console.log('[TEST-ENV] Environment variables:', envVars)
+  logger.debug('Environment variables check', envVars)
 
   return NextResponse.json({
     message: 'Environment variables check',

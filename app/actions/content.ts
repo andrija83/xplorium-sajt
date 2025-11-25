@@ -2,10 +2,11 @@
 
 import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { updateContentSchema, type UpdateContentInput } from '@/lib/validations'
-import { ContentStatus } from '@/types'
+import { type ContentStatus } from '@/types'
 import type { Prisma } from '@prisma/client'
 
 /**
@@ -109,7 +110,7 @@ export async function updateContent(data: UpdateContentInput) {
       message: 'Content updated successfully',
     }
   } catch (error) {
-    console.error('Update content error:', error)
+    logger.serverActionError('updateContent', error)
 
     if (error instanceof Error) {
       return {
@@ -205,7 +206,7 @@ export async function publishContent(section: 'cafe' | 'sensory' | 'igraonica') 
 
     return { success: true, content: updated }
   } catch (error) {
-    console.error('Publish content error:', error)
+    logger.serverActionError('publishContent', error)
 
     if (error instanceof Error) {
       return {
@@ -284,7 +285,7 @@ export async function revertContentVersion(section: 'cafe' | 'sensory' | 'igraon
 
     return { success: true, content }
   } catch (error) {
-    console.error('Rollback content error:', error)
+    logger.serverActionError('rollbackContent', error)
 
     if (error instanceof Error) {
       return {

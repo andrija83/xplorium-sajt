@@ -9,6 +9,7 @@ import { StatsCard } from "@/components/admin/StatsCard"
 import { RecentActivity } from "@/components/admin/RecentActivity"
 import { getDashboardStats, getRecentActivity } from "@/app/actions/dashboard"
 import { ChartSkeleton } from "@/components/loading/ChartSkeleton"
+import { logger } from "@/lib/logger"
 
 // Dynamic imports for heavy chart libraries (code-splitting)
 const BookingsLineChart = dynamic(
@@ -21,6 +22,30 @@ const BookingsLineChart = dynamic(
 
 const BookingsPieChart = dynamic(
   () => import("@/components/admin/charts/BookingsPieChart").then(m => ({ default: m.BookingsPieChart })),
+  {
+    loading: () => <ChartSkeleton />,
+    ssr: false
+  }
+)
+
+const BookingsStatusChart = dynamic(
+  () => import("@/components/admin/charts/BookingsStatusChart").then(m => ({ default: m.BookingsStatusChart })),
+  {
+    loading: () => <ChartSkeleton />,
+    ssr: false
+  }
+)
+
+const PeakTimesChart = dynamic(
+  () => import("@/components/admin/charts/PeakTimesChart").then(m => ({ default: m.PeakTimesChart })),
+  {
+    loading: () => <ChartSkeleton />,
+    ssr: false
+  }
+)
+
+const PeakDaysChart = dynamic(
+  () => import("@/components/admin/charts/PeakDaysChart").then(m => ({ default: m.PeakDaysChart })),
   {
     loading: () => <ChartSkeleton />,
     ssr: false
@@ -43,10 +68,13 @@ interface DashboardStats {
   totalUsers: number
   upcomingEvents: number
   pendingBookings: number
+  approvedBookings: number
+  rejectedBookings: number
   todayBookings: number
   weekBookings: number
   monthBookings: number
   bookingsTrend: number
+  monthTrend: number
 }
 
 interface DashboardData {
@@ -54,7 +82,10 @@ interface DashboardData {
   recentBookings: any[]
   recentEvents: any[]
   bookingsByType: Array<{ type: string; count: number }>
+  bookingsByStatus: Array<{ status: string; count: number }>
   bookingsOverTime: Array<{ date: any; count: number }>
+  peakDays: Array<{ day: string; count: number }>
+  peakTimes: Array<{ time: string; count: number }>
 }
 
 const COLORS = {
@@ -90,7 +121,7 @@ export default function AdminDashboard() {
           setActivities(activityResult.activity)
         }
       } catch (error) {
-        console.error('Failed to fetch dashboard data:', error)
+        logger.error('Failed to fetch dashboard data', error instanceof Error ? error : new Error(String(error)))
       } finally {
         setIsLoading(false)
       }
@@ -177,6 +208,46 @@ export default function AdminDashboard() {
         />
       </div>
 
+      {/* Additional Stats - This Month */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <StatsCard
+          title="This Month"
+          value={stats.monthBookings}
+          icon={Calendar}
+          trend={stats.monthTrend}
+          trendLabel="vs last month"
+          iconColor="text-emerald-400"
+          iconBgColor="bg-emerald-400/20"
+        />
+        <StatsCard
+          title="This Week"
+          value={stats.weekBookings}
+          icon={Calendar}
+          iconColor="text-blue-400"
+          iconBgColor="bg-blue-400/20"
+        />
+        <Link href="/admin/bookings?status=APPROVED" className="block">
+          <StatsCard
+            title="Approved"
+            value={stats.approvedBookings}
+            icon={Calendar}
+            iconColor="text-green-400"
+            iconBgColor="bg-green-400/20"
+            className="cursor-pointer hover:bg-black/30 transition-colors"
+          />
+        </Link>
+        <Link href="/admin/bookings?status=REJECTED" className="block">
+          <StatsCard
+            title="Rejected"
+            value={stats.rejectedBookings}
+            icon={Calendar}
+            iconColor="text-red-400"
+            iconBgColor="bg-red-400/20"
+            className="cursor-pointer hover:bg-black/30 transition-colors"
+          />
+        </Link>
+      </div>
+
       {/* Charts section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bookings over time */}
@@ -211,6 +282,57 @@ export default function AdminDashboard() {
             data={dashboardData.bookingsByType || []}
             colors={COLORS}
           />
+        </motion.div>
+      </div>
+
+      {/* Analytics section - Status & Peak Times */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Booking Status Breakdown */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-purple-400/20"
+          style={{
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)"
+          }}
+        >
+          <h3 className="text-lg font-semibold text-purple-300 mb-4">
+            Booking Status Breakdown
+          </h3>
+          <BookingsStatusChart data={dashboardData.bookingsByStatus || []} />
+        </motion.div>
+
+        {/* Peak Booking Times */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-pink-400/20"
+          style={{
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)"
+          }}
+        >
+          <h3 className="text-lg font-semibold text-pink-300 mb-4">
+            Peak Booking Times
+          </h3>
+          <PeakTimesChart data={dashboardData.peakTimes || []} />
+        </motion.div>
+
+        {/* Peak Booking Days */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-yellow-400/20"
+          style={{
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)"
+          }}
+        >
+          <h3 className="text-lg font-semibold text-yellow-300 mb-4">
+            Peak Booking Days
+          </h3>
+          <PeakDaysChart data={dashboardData.peakDays || []} />
         </motion.div>
       </div>
 

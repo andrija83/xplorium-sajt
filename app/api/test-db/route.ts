@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { logger } from '@/lib/logger'
 
 /**
  * Test database connection endpoint
@@ -10,15 +11,15 @@ import { prisma } from '@/lib/db'
  */
 export async function GET() {
   try {
-    console.log('[TEST-DB] Testing database connection...')
+    logger.debug('Testing database connection...')
 
     // Test 1: Simple query to check connection
     const result = await prisma.$queryRaw`SELECT NOW() as current_time`
-    console.log('[TEST-DB] Database connected! Current time:', result)
+    logger.debug('Database connected! Current time', { result })
 
     // Test 2: Count users
     const userCount = await prisma.user.count()
-    console.log('[TEST-DB] Total users in database:', userCount)
+    logger.debug('Total users in database', { userCount })
 
     // Test 3: Find admin user
     const adminUser = await prisma.user.findUnique({
@@ -31,7 +32,7 @@ export async function GET() {
         createdAt: true,
       }
     })
-    console.log('[TEST-DB] Admin user found:', adminUser)
+    logger.debug('Admin user lookup result', { adminExists: !!adminUser })
 
     return NextResponse.json({
       success: true,
@@ -44,7 +45,7 @@ export async function GET() {
       }
     })
   } catch (error) {
-    console.error('[TEST-DB] Database connection failed:', error)
+    logger.error('Database connection test failed', error instanceof Error ? error : new Error(String(error)))
 
     return NextResponse.json({
       success: false,

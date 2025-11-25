@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 /**
  * Maintenance Log Management Page
@@ -113,7 +114,7 @@ function MaintenanceContent() {
         }))
       }
     } catch (error) {
-      console.error("Failed to fetch maintenance logs:", error)
+      logger.error("Failed to fetch maintenance logs", error instanceof Error ? error : new Error(String(error)))
       toast.error("Failed to load maintenance logs")
     } finally {
       setIsLoading(false)

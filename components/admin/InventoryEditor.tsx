@@ -14,6 +14,7 @@ import { Loader2, Save, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 interface InventoryEditorProps {
     itemId?: string
@@ -56,7 +57,7 @@ export function InventoryEditor({ itemId, initialData, isEditing = false }: Inve
                 toast.error(result.error || "Something went wrong")
             }
         } catch (error) {
-            console.error('Submit error:', error)
+            logger.error('Inventory submit error', error instanceof Error ? error : new Error(String(error)))
             toast.error("An error occurred")
         } finally {
             setIsSubmitting(false)

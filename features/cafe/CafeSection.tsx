@@ -6,6 +6,7 @@ import { EventCalendar, BookingForm, type CalendarEvent } from '@/components/com
 import { getApprovedBookings, createBooking } from '@/app/actions/bookings'
 import { getPublishedEvents } from '@/app/actions/events'
 import { getPublishedPricingPackages } from '@/app/actions/pricing'
+import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { format } from 'date-fns'
@@ -102,7 +103,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
         setPublishedEvents(futureEvents)
       }
     } catch (error) {
-      console.error('Failed to fetch events:', error)
+      logger.error('Failed to fetch events', error instanceof Error ? error : new Error(String(error)))
     } finally {
       setEventsLoading(false)
     }
@@ -117,7 +118,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
 
   // Fetch pricing packages from database
   const fetchPricingPackages = useCallback(async () => {
-    console.log('🔍 Fetching pricing packages...')
+    logger.debug('Fetching pricing packages')
     setPricingLoading(true)
     try {
       // Fetch all categories in parallel
@@ -128,10 +129,12 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
         getPublishedPricingPackages('PARTY'),
       ])
 
-      console.log('📦 Playground packages:', playgroundRes.packages)
-      console.log('📦 Sensory packages:', sensoryRes.packages)
-      console.log('📦 Cafe packages:', cafeRes.packages)
-      console.log('📦 Party packages:', partyRes.packages)
+      logger.debug('Pricing packages fetched', {
+        playground: playgroundRes.packages?.length,
+        sensory: sensoryRes.packages?.length,
+        cafe: cafeRes.packages?.length,
+        party: partyRes.packages?.length,
+      })
 
       setPricingPackages({
         playground: playgroundRes.packages || [],
@@ -140,9 +143,9 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
         party: partyRes.packages || [],
       })
 
-      console.log('✅ Pricing packages loaded successfully')
+      logger.info('Pricing packages loaded successfully')
     } catch (error) {
-      console.error('❌ Failed to fetch pricing packages:', error)
+      logger.error('Failed to fetch pricing packages', error instanceof Error ? error : new Error(String(error)))
     } finally {
       setPricingLoading(false)
     }
@@ -189,7 +192,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
         toast.error(result.error || 'Greška pri slanju rezervacije')
       }
     } catch (error) {
-      console.error('Booking submit error:', error)
+      logger.error('Booking submit error', error instanceof Error ? error : new Error(String(error)))
       toast.error('Došlo je do greške. Pokušajte ponovo.')
     } finally {
       setIsLoading(false)
@@ -211,37 +214,43 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
     {
       label: "Meni",
       section: "meni",
-      color: "cyan",
+      textClass: "text-cyan-400",
+      ringClass: "focus-visible:ring-cyan-400",
       shadow: "0 0 20px #22d3ee, 0 0 40px #22d3ee, 0 0 60px #22d3ee",
     },
     {
       label: "Pricing",
       section: "pricing",
-      color: "emerald",
+      textClass: "text-emerald-400",
+      ringClass: "focus-visible:ring-emerald-400",
       shadow: "0 0 20px #10b981, 0 0 40px #10b981, 0 0 60px #10b981",
     },
     {
       label: "Zakup prostora",
       section: "zakup",
-      color: "pink",
+      textClass: "text-pink-400",
+      ringClass: "focus-visible:ring-pink-400",
       shadow: "0 0 20px #ec4899, 0 0 40px #ec4899, 0 0 60px #ec4899",
     },
     {
       label: "Dogadjaji",
       section: "dogadjaji",
-      color: "purple",
+      textClass: "text-purple-400",
+      ringClass: "focus-visible:ring-purple-400",
       shadow: "0 0 20px #a855f7, 0 0 40px #a855f7, 0 0 60px #a855f7",
     },
     {
       label: "Radno vreme",
       section: "radno",
-      color: "yellow",
+      textClass: "text-yellow-400",
+      ringClass: "focus-visible:ring-yellow-400",
       shadow: "0 0 20px #fbbf24, 0 0 40px #fbbf24, 0 0 60px #fbbf24",
     },
     {
       label: "Kontakt",
       section: "kontakt",
-      color: "cyan",
+      textClass: "text-cyan-400",
+      ringClass: "focus-visible:ring-cyan-400",
       shadow: "0 0 20px #22d3ee, 0 0 40px #22d3ee, 0 0 60px #22d3ee",
     },
   ], [])
@@ -309,7 +318,7 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
                   }}
                   aria-label={`View ${item.label} information`}
                   tabIndex={0}
-                  className={`text-${item.color}-400 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-['Great_Vibes'] cursor-pointer transition-all duration-300 hover:scale-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-${item.color}-400 focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-lg px-4 py-2`}
+                  className={`${item.textClass} ${item.ringClass} text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-['Great_Vibes'] cursor-pointer transition-all duration-300 hover:scale-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-lg px-4 py-2`}
                   style={{
                     textShadow: item.shadow,
                   }}

@@ -7,6 +7,7 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar"
 import { AdminHeader } from "@/components/admin/AdminHeader"
 import { getBookings } from "@/app/actions/bookings"
 import { useActivityTracker } from "@/hooks/useActivityTracker"
+import { logger } from "@/lib/logger"
 
 /**
  * Admin Layout Component
@@ -72,7 +73,7 @@ export default function AdminLayout({
           setPendingCount(result.bookings.length)
         }
       } catch (error) {
-        console.error('Failed to fetch pending count:', error)
+        logger.error('Failed to fetch pending bookings count', error instanceof Error ? error : new Error(String(error)))
       }
     }
 

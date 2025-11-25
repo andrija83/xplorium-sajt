@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
+import { logger } from "@/lib/logger"
 import { revalidatePath } from "next/cache"
 import { createInventorySchema, updateInventorySchema, adjustStockSchema } from "@/lib/validations/inventory"
 import type { CreateInventoryInput, UpdateInventoryInput, AdjustStockInput } from "@/lib/validations/inventory"
@@ -57,7 +58,7 @@ export async function getInventoryItems(filters?: {
 
     return { success: true, items, total }
   } catch (error) {
-    console.error("Error fetching inventory items:", error)
+    logger.serverActionError("getInventoryItems", error)
     return { success: false, error: "Failed to fetch inventory items" }
   }
 }
@@ -82,7 +83,7 @@ export async function getInventoryItemById(id: string) {
 
     return { success: true, item }
   } catch (error) {
-    console.error("Error fetching inventory item:", error)
+    logger.serverActionError("getInventoryItemById", error)
     return { success: false, error: "Failed to fetch inventory item" }
   }
 }
@@ -115,7 +116,7 @@ export async function createInventoryItem(data: CreateInventoryInput) {
     revalidatePath("/admin/inventory")
     return { success: true, item }
   } catch (error: any) {
-    console.error("Error creating inventory item:", error)
+    logger.serverActionError("createInventoryItem", error)
     return {
       success: false,
       error: error.message || "Failed to create inventory item"
@@ -157,7 +158,7 @@ export async function updateInventoryItem(id: string, data: UpdateInventoryInput
     revalidatePath(`/admin/inventory/${id}`)
     return { success: true, item }
   } catch (error: any) {
-    console.error("Error updating inventory item:", error)
+    logger.serverActionError("updateInventoryItem", error)
     return {
       success: false,
       error: error.message || "Failed to update inventory item"
@@ -191,7 +192,7 @@ export async function deleteInventoryItem(id: string) {
     revalidatePath("/admin/inventory")
     return { success: true }
   } catch (error: any) {
-    console.error("Error deleting inventory item:", error)
+    logger.serverActionError("deleteInventoryItem", error)
     return {
       success: false,
       error: error.message || "Failed to delete inventory item"
@@ -252,7 +253,7 @@ export async function adjustStock(id: string, adjustment: AdjustStockInput) {
     revalidatePath(`/admin/inventory/${id}`)
     return { success: true, item }
   } catch (error: any) {
-    console.error("Error adjusting stock:", error)
+    logger.serverActionError("adjustStock", error)
     return {
       success: false,
       error: error.message || "Failed to adjust stock"
@@ -284,7 +285,7 @@ export async function getLowStockItems() {
 
     return { success: true, items, count: items.length }
   } catch (error) {
-    console.error("Error fetching low stock items:", error)
+    logger.serverActionError("getLowStockItems", error)
     return { success: false, error: "Failed to fetch low stock items" }
   }
 }
@@ -323,7 +324,7 @@ export async function getInventoryStats() {
       }
     }
   } catch (error) {
-    console.error("Error fetching inventory stats:", error)
+    logger.serverActionError("getInventoryStats", error)
     return { success: false, error: "Failed to fetch inventory stats" }
   }
 }

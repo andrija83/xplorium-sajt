@@ -16,7 +16,8 @@ import {
   BookOpen,
   DollarSign,
   Wrench,
-  Package
+  Package,
+  FileDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -97,6 +98,11 @@ export const AdminSidebar = memo(function AdminSidebar({
       label: "Content",
       href: "/admin/content",
       icon: FileText
+    },
+    {
+      label: "Reports",
+      href: "/admin/reports",
+      icon: FileDown
     },
     {
       label: "Audit Logs",

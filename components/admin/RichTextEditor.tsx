@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useEditor, EditorContent, JSONContent } from "@tiptap/react"
+import { useEditor, EditorContent, type JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Underline from "@tiptap/extension-underline"
 import Link from "@tiptap/extension-link"
@@ -12,6 +12,7 @@ import { Bold, Italic, Underline as UnderlineIcon, Link2, List, ListOrdered, Und
 import { toast } from "sonner"
 import { updateContent } from "@/app/actions/content"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 type RichTextEditorProps = {
   section: string
@@ -147,7 +148,7 @@ export function RichTextEditor({
       editor.commands.setContent(initialDoc)
       setIsDirty(false)
     } catch (err) {
-      console.error("Failed to set editor content:", err)
+      logger.error("Failed to set editor content", err instanceof Error ? err : new Error(String(err)))
       editor.commands.setContent(EMPTY_DOC)
       setIsDirty(false)
     }

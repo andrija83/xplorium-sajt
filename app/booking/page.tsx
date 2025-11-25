@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { logger } from "@/lib/logger"
 
 /**
  * Public Booking Page
@@ -118,7 +119,7 @@ export default function BookingPage() {
         toast.error(result.error || "Failed to submit booking")
       }
     } catch (error) {
-      console.error("Booking error:", error)
+      logger.error("Failed to create booking", error instanceof Error ? error : new Error(String(error)))
       toast.error("An error occurred. Please try again.")
     } finally {
       setIsSubmitting(false)

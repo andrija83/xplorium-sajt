@@ -4,16 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **Xplorium** - an interactive landing page for a family entertainment venue featuring a cafe, sensory room, and interactive playground (igraonica). The site uses advanced animations and creative UI patterns to showcase the three main sections.
+This is **Xplorium** - a comprehensive web application for a family entertainment venue featuring a cafe, sensory room, and interactive playground (igraonica). The site includes an advanced interactive landing page with creative UI patterns and a full-featured admin panel for managing all venue operations.
+
+**Project Status:** 95% Complete - Production Ready (pending email integration)
 
 **Tech Stack:**
 - Next.js 16 (App Router)
 - React 19.2
-- TypeScript
+- TypeScript 5
 - Tailwind CSS 4 (with PostCSS)
 - Framer Motion (animations)
 - shadcn/ui components (New York style)
 - Radix UI primitives
+- PostgreSQL (Neon - serverless)
+- Prisma ORM
+- NextAuth v5 (authentication)
+
+**For comprehensive project status, features, and roadmap, see:** `PROJECT_STATUS.md`
 
 ## Common Commands
 
@@ -39,6 +46,10 @@ npm run test:unit           # Run Vitest in watch mode
 npm run test:unit:ui        # Run Vitest with UI
 npm run test:unit:run       # Run Vitest once
 npm run test:unit:coverage  # Run with coverage report
+
+# Database
+npm run db:studio           # Open Prisma Studio (database GUI)
+npm run db:seed             # Seed database with admin account
 ```
 
 ## Project Architecture
@@ -89,12 +100,18 @@ Full shadcn/ui component library (50+ components) including forms, layout, feedb
   - `NEON_COLORS` - Section color schemes (Cafe: cyan, Sensory: purple, Igraonica: pink)
   - `PARTICLE_COLORS` - Starburst and particle effects
 
-- `lib/utils.ts` - Single utility: `cn()` for className merging (clsx + tailwind-merge)
+- `lib/utils.ts` - Utility functions: `cn()` for className merging (clsx + tailwind-merge)
+- `lib/logger.ts` - **Centralized logging utility** with environment-aware logging, specialized methods for auth, DB, API, and server actions
+- `lib/auth.ts` - NextAuth v5 configuration and server-side auth utilities
+- `lib/auth-utils.ts` - Client-side auth utilities and session helpers
+- `lib/audit.ts` - Audit logging for all admin actions
+- `lib/validation.ts` - Zod schemas for form validation
 
 - `types/` - TypeScript type definitions organized by domain:
   - `types/index.ts` - Main export point for all types
   - `types/common.ts` - Shared types (TextAnimationProps, etc.)
   - `types/navigation.ts` - Navigation-related types
+  - `types/database.ts` - Database-related types extracted from Prisma
 
 ### Custom Hooks
 
@@ -253,6 +270,7 @@ viewport={{ once: true }}
 - Setup file: `vitest.setup.ts`
 - Environment: jsdom
 - Existing tests:
+  - `lib/logger.test.ts` - Logger utility tests (9 tests)
   - `components/common/LoadingSpinner.test.tsx`
   - `components/ErrorBoundary.test.tsx`
   - `hooks/useReducedMotion.test.ts`
@@ -271,6 +289,36 @@ reactStrictMode: true
 poweredByHeader: false  // Remove X-Powered-By header
 ```
 
+## Code Quality Standards
+
+### Logging
+- **NEVER use console.log/error/warn** - Use `logger` from `lib/logger.ts` instead
+- Available methods: `debug()`, `info()`, `warn()`, `error()`, `serverActionError()`, `apiError()`, `auth()`, `db()`
+- Logger is environment-aware (dev/prod/test) and provides structured logging
+- Example: `logger.serverActionError('createUser', error)` or `logger.db('Fetching users', { userId })`
+
+### Linting
+- **ESLint v9** with flat config (`eslint.config.mjs`)
+- Run `npm run lint` before committing
+- Auto-fix available issues: `npm run lint -- --fix`
+- Current status: 0 errors, 148 warnings (mostly unused vars and explicit any)
+
+### Tailwind Classes
+- **NEVER use dynamic class construction** with template literals (e.g., `text-${color}-400`)
+- **ALWAYS use complete class strings** in color/variant maps
+- Example:
+```typescript
+// ❌ Bad - Won't be detected by Tailwind JIT
+className={`text-${color}-400`}
+
+// ✅ Good - Complete class strings
+const colorClasses = {
+  cyan: 'text-cyan-400',
+  purple: 'text-purple-400'
+}
+className={colorClasses[color]}
+```
+
 ## Component Development Guidelines
 
 ### When Creating New Components
@@ -281,6 +329,7 @@ poweredByHeader: false  // Remove X-Powered-By header
 4. **Use constants** - Reference `constants/animations.ts` for timing/colors
 5. **Export from index** - Add to `components/animations/index.ts` for clean imports
 6. **Types in `types/`** - Add shared types to appropriate files in types directory
+7. **Use logger** - Import and use `logger` from `lib/logger.ts` for all logging needs
 
 ### Error Handling
 - All pages wrapped in `<ErrorBoundary>` (see `components/ErrorBoundary.tsx`)

@@ -1,6 +1,7 @@
 "use server"
 
 import { getAuditLogs as getLogs } from "@/lib/audit"
+import { logger } from "@/lib/logger"
 import { auth } from "@/lib/auth"
 
 export async function getAuditLogs(params: {
@@ -20,7 +21,7 @@ export async function getAuditLogs(params: {
         const { logs, total } = await getLogs(params)
         return { success: true, logs, total }
     } catch (error) {
-        console.error("Failed to fetch audit logs:", error)
+        logger.serverActionError("getAuditLogs", error)
         return { error: "Failed to fetch audit logs" }
     }
 }

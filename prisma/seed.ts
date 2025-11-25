@@ -3,8 +3,19 @@ import { hashPassword } from '../lib/password'
 
 const prisma = new PrismaClient()
 
+// Simple console wrapper for seed scripts (runs outside normal app context)
+// Using direct console for visibility during database seeding
+const log = {
+  info: (msg: string) => console.log(msg),
+  warn: (msg: string) => console.log(msg),
+  error: (msg: string, err?: unknown) => {
+    console.error(msg)
+    if (err) console.error(err)
+  }
+}
+
 async function main() {
-  console.log('🌱 Starting database seed...')
+  log.info('🌱 Starting database seed...')
 
   // Create initial admin user
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@xplorium.com'
@@ -17,7 +28,7 @@ async function main() {
   })
 
   if (existingAdmin) {
-    console.log('⚠️  Admin user already exists. Skipping...')
+    log.warn('⚠️  Admin user already exists. Skipping...')
   } else {
     const hashedPassword = await hashPassword(adminPassword)
 
@@ -31,17 +42,17 @@ async function main() {
       },
     })
 
-    console.log('✅ Created admin user:')
-    console.log(`   Email: ${admin.email}`)
-    console.log(`   Name: ${admin.name}`)
-    console.log(`   Role: ${admin.role}`)
-    console.log(`   Password: ${adminPassword}`)
-    console.log('')
-    console.log('⚠️  IMPORTANT: Change the admin password after first login!')
+    log.info('✅ Created admin user:')
+    log.info(`   Email: ${admin.email}`)
+    log.info(`   Name: ${admin.name}`)
+    log.info(`   Role: ${admin.role}`)
+    log.info(`   Password: ${adminPassword}`)
+    log.info('')
+    log.warn('⚠️  IMPORTANT: Change the admin password after first login!')
   }
 
   // Seed initial site content
-  console.log('\n🎨 Seeding site content...')
+  log.info('\n🎨 Seeding site content...')
 
   const sections = ['cafe', 'sensory', 'igraonica']
 
@@ -61,19 +72,18 @@ async function main() {
           },
         },
       })
-      console.log(`✅ Created content for ${section} section`)
+      log.info(`✅ Created content for ${section} section`)
     } else {
-      console.log(`⚠️  Content for ${section} section already exists. Skipping...`)
+      log.warn(`⚠️  Content for ${section} section already exists. Skipping...`)
     }
   }
 
-  console.log('\n✨ Seed completed successfully!')
+  log.info('\n✨ Seed completed successfully!')
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:')
-    console.error(e)
+    log.error('❌ Seed failed:', e)
     process.exit(1)
   })
   .finally(async () => {

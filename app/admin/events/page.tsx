@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 /**
  * Events Management Page
@@ -90,7 +91,7 @@ function EventsContent() {
         }))
       }
     } catch (error) {
-      console.error("Failed to fetch events:", error)
+      logger.error("Failed to fetch events", error instanceof Error ? error : new Error(String(error)))
       toast.error("Failed to load events")
     } finally {
       setIsLoading(false)

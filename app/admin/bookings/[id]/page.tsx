@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 const STATUS_COLORS = {
   PENDING: "bg-yellow-400/20 text-yellow-400 border-yellow-400/50",
@@ -46,7 +47,7 @@ export default function BookingDetailPage() {
         router.push("/admin/bookings")
       }
     } catch (error) {
-      console.error("Failed to fetch booking:", error)
+      logger.error("Failed to fetch booking", error instanceof Error ? error : new Error(String(error)))
       toast.error("Failed to load booking")
     } finally {
       setIsLoading(false)

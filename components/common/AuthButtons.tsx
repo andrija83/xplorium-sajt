@@ -9,6 +9,7 @@ import { ANIMATION_EASING } from "@/constants/animations"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { SignOutWarp } from "@/components/animations"
+import { logger } from "@/lib/logger"
 
 /**
  * AuthButtons Component
@@ -70,7 +71,7 @@ export const AuthButtons = memo(function AuthButtons({
         redirect: true
       })
     } catch (error) {
-      console.error('[AUTH] Sign out error:', error)
+      logger.error('Sign out error', error instanceof Error ? error : new Error(String(error)))
       // Fallback: force redirect if signOut fails
       window.location.href = '/'
     }

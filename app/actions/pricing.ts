@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
@@ -99,45 +100,38 @@ export async function getPublishedPricingPackages(category?: string) {
  * Create a new pricing package
  */
 export async function createPricingPackage(data: CreatePricingInput) {
-  console.log('========================================')
-  console.log('createPricingPackage CALLED')
-  console.log('Received data:', JSON.stringify(data, null, 2))
-  console.log('========================================')
+  logger.debug('createPricingPackage called', { data })
 
   try {
-    console.log('Checking authorization...')
+    logger.debug('Checking authorization...')
     const session = await requireAdmin()
-    console.log('✅ User authorized:', session.user.email)
+    logger.debug('User authorized', { email: session.user.email })
 
     // Validate input
-    console.log('📋 Validating data with schema...')
+    logger.debug('Validating data with schema')
     const validatedData = createPricingSchema.parse(data)
-    console.log('✅ Validation passed!')
-    console.log('Validated data:', JSON.stringify(validatedData, null, 2))
+    logger.debug('Validation passed', { validatedData })
 
     // Get max order for new package
-    console.log('🔍 Getting max order for category:', validatedData.category)
+    logger.db('Getting max order for category', { category: validatedData.category })
     const maxOrder = await prisma.pricingPackage.findFirst({
       where: { category: validatedData.category },
       orderBy: { order: 'desc' },
       select: { order: true },
     })
-    console.log('Max order found:', maxOrder?.order || 0)
+    logger.db('Max order found', { order: maxOrder?.order || 0 })
 
     // Create package
-    console.log('💾 Creating package in database...')
+    logger.db('Creating package in database')
     const package_ = await prisma.pricingPackage.create({
       data: {
         ...validatedData,
         order: (maxOrder?.order || 0) + 1,
       },
     })
-    console.log('✅ Package created successfully!')
-    console.log('Package ID:', package_.id)
-    console.log('Package details:', JSON.stringify(package_, null, 2))
+    logger.info('Package created successfully', { id: package_.id, name: package_.name })
 
     // Log audit
-    console.log('📝 Logging audit...')
     await logAudit({
       userId: session.user.id,
       action: 'CREATE',
@@ -145,44 +139,29 @@ export async function createPricingPackage(data: CreatePricingInput) {
       entityId: package_.id,
       changes: validatedData,
     })
-    console.log('✅ Audit logged')
 
-    console.log('🔄 Revalidating paths...')
     revalidatePath('/admin/pricing')
     revalidatePath('/', 'page')
-    console.log('✅ Paths revalidated')
 
-    console.log('🎉 SUCCESS! Package created:', package_.name)
-    console.log('========================================')
-
-    const result = {
+    return {
       success: true,
       package: package_,
       message: 'Pricing package created successfully',
     }
-    console.log('Returning result:', JSON.stringify(result, null, 2))
-    return result
   } catch (error) {
-    console.error('❌❌❌ CREATE PRICING PACKAGE ERROR ❌❌❌')
-    console.error('Error type:', error?.constructor?.name)
-    console.error('Error message:', error instanceof Error ? error.message : String(error))
-    console.error('Full error:', error)
-
     if (error instanceof z.ZodError) {
-      console.error('🔴 Zod Validation error details:', JSON.stringify(error.errors, null, 2))
+      logger.warn('Pricing package validation failed', { errors: error.errors })
       return {
         success: false,
         error: error.errors[0].message,
       }
     }
 
-    const errorResult = {
+    logger.serverActionError('createPricingPackage', error)
+    return {
       success: false,
       error: 'Failed to create pricing package: ' + (error instanceof Error ? error.message : String(error)),
     }
-    console.error('Returning error result:', JSON.stringify(errorResult, null, 2))
-    console.log('========================================')
-    return errorResult
   }
 }
 
@@ -221,7 +200,7 @@ export async function updatePricingPackage(id: string, data: UpdatePricingInput)
       message: 'Pricing package updated successfully',
     }
   } catch (error) {
-    console.error('Update pricing package error:', error)
+    logger.serverActionError('updatePricingPackage', error)
 
     if (error instanceof z.ZodError) {
       return {
@@ -264,7 +243,7 @@ export async function deletePricingPackage(id: string) {
       message: 'Pricing package deleted successfully',
     }
   } catch (error) {
-    console.error('Delete pricing package error:', error)
+    logger.serverActionError('deletePricingPackage', error)
     return {
       success: false,
       error: 'Failed to delete pricing package',
@@ -306,7 +285,7 @@ export async function reorderPricingPackages(packageIds: string[]) {
       message: 'Pricing packages reordered successfully',
     }
   } catch (error) {
-    console.error('Reorder pricing packages error:', error)
+    logger.serverActionError('reorderPricingPackages', error)
     return {
       success: false,
       error: 'Failed to reorder pricing packages',

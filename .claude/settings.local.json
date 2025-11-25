@@ -70,7 +70,10 @@
       "mcp__MCP_DOCKER__browser_type",
       "Bash(docker mcp secret set:*)",
       "mcp__MCP_DOCKER__mcp-config-set",
-      "WebFetch(domain:codepen.io)"
+      "WebFetch(domain:codepen.io)",
+      "Bash(npm run test:unit:run:*)",
+      "Bash(npx grep:*)",
+      "Bash(timeout /t 10)"
     ],
     "deny": [],
     "ask": []

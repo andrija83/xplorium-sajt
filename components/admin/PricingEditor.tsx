@@ -28,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, Save, ArrowLeft, Plus, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { logger } from "@/lib/logger"
 
 interface PricingEditorProps {
     packageId?: string
@@ -87,7 +88,7 @@ export function PricingEditor({ packageId, initialData, isEditing = false }: Pri
                 toast.error('error' in result ? result.error : "Something went wrong")
             }
         } catch (error) {
-            console.error('Submit error:', error)
+            logger.error('Pricing submit error', error instanceof Error ? error : new Error(String(error)))
             toast.error("An error occurred: " + (error instanceof Error ? error.message : String(error)))
         } finally {
             setIsSubmitting(false)

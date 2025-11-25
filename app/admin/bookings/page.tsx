@@ -18,6 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
+import { logger } from "@/lib/logger"
+import { ExportButton } from "@/components/admin/ExportButton"
+import { exportBookings } from "@/app/actions/exports"
 
 /**
  * Bookings Management Page
@@ -101,7 +104,7 @@ function BookingsContent() {
         }))
       }
     } catch (error) {
-      console.error("Failed to fetch bookings:", error)
+      logger.error("Failed to fetch bookings", error instanceof Error ? error : new Error(String(error)))
       toast.error("Failed to load bookings")
     } finally {
       setIsLoading(false)
@@ -211,6 +214,16 @@ function BookingsContent() {
             Manage all venue bookings and reservations
           </p>
         </div>
+        <ExportButton
+          onExport={() => exportBookings({
+            status: statusFilter !== "ALL" ? statusFilter : undefined,
+            type: typeFilter !== "ALL" ? typeFilter : undefined,
+          })}
+          filename="bookings"
+          label="Export to CSV"
+          variant="outline"
+          className="border-cyan-400/30 text-cyan-400 hover:bg-cyan-400/10"
+        />
       </div>
 
       {/* Filters */}

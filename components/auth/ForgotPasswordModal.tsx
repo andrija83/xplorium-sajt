@@ -11,6 +11,7 @@ import { AUTH_COLORS } from "@/constants/animations"
 import { validateEmail, sanitizeInput } from "@/lib/validation"
 import { resetPassword } from "@/app/actions/auth"
 import { toast } from "sonner"
+import { logger } from "@/lib/logger"
 
 interface ForgotPasswordModalProps {
     isOpen: boolean
@@ -73,7 +74,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onBackToSignIn }: ForgotP
                 toast.error(result.error || 'Failed to send reset link')
             }
         } catch (error) {
-            console.error('Reset password error:', error)
+            logger.error('Reset password error', error instanceof Error ? error : new Error(String(error)))
             setError('An unexpected error occurred')
             toast.error('An unexpected error occurred')
         } finally {

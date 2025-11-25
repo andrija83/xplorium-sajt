@@ -12,6 +12,7 @@ import { AUTH_COLORS } from "@/constants/animations"
 import { validateEmail, validatePassword, validateFullName, sanitizeInput } from "@/lib/validation"
 import { signUp } from "@/app/actions/auth"
 import { toast } from "sonner"
+import { logger } from "@/lib/logger"
 
 /**
  * SignUpModal Component
@@ -153,7 +154,7 @@ export function SignUpModal({ isOpen, onClose, onSwitchToSignIn }: SignUpModalPr
         setIsLoading(false)
       }
     } catch (error) {
-      console.error('Sign up error:', error)
+      logger.error('Sign up error', error instanceof Error ? error : new Error(String(error)))
       toast.error('An unexpected error occurred')
       setIsLoading(false)
     }

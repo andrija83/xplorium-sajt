@@ -2,6 +2,7 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { authConfig } from './auth.config'
 import { signInSchema } from './validations'
+import { logger } from './logger'
 
 // Lazy imports to avoid circular dependencies and allow build to succeed
 // These will be imported when actually needed
@@ -30,7 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         try {
-          console.log('[AUTH] authorize() called with email:', credentials?.email)
+          logger.auth('authorize() called', { email: credentials?.email })
 
           // Load dependencies
           await loadDependencies()
@@ -39,14 +40,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const validatedFields = signInSchema.safeParse(credentials)
 
           if (!validatedFields.success) {
-            console.log('[AUTH] Validation failed:', validatedFields.error)
+            logger.auth('Validation failed', { error: validatedFields.error })
             return null
           }
 
           const { email, password } = validatedFields.data
 
           // Find user by email
-          console.log('[AUTH] Looking up user:', email)
+          logger.auth('Looking up user', { email })
           const user = await prisma.user.findUnique({
             where: { email },
             select: {
@@ -62,15 +63,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           // Check if user exists
           if (!user || !user.password) {
-            console.log('[AUTH] User not found or no password')
+            logger.auth('User not found or no password')
             return null
           }
 
-          console.log('[AUTH] User found:', { email: user.email, role: user.role })
+          logger.auth('User found', { email: user.email, role: user.role })
 
           // Check if user is blocked
           if (user.blocked) {
-            console.log('[AUTH] User is blocked')
+            logger.auth('User is blocked', { email })
             throw new Error('Account has been blocked. Please contact support.')
           }
 
@@ -78,11 +79,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const isValidPassword = await comparePassword(password, user.password)
 
           if (!isValidPassword) {
-            console.log('[AUTH] Invalid password')
+            logger.auth('Invalid password', { email })
             return null
           }
 
-          console.log('[AUTH] Authentication successful')
+          logger.auth('Authentication successful', { email })
 
           // Return user without password
           return {
@@ -93,7 +94,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             image: user.image,
           }
         } catch (error) {
-          console.error('[AUTH] authorize() error:', error)
+          logger.error('authorize() error', error instanceof Error ? error : new Error(String(error)))
           throw error
         }
       },

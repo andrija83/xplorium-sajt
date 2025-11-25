@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { hashPassword } from '@/lib/password'
+import { logger } from '@/lib/logger'
 import { signUpSchema, type SignUpInput } from '@/lib/validations'
 import { signIn } from '@/lib/auth'
 import { AuthError } from 'next-auth'
@@ -53,7 +54,7 @@ export async function signUp(data: SignUpInput) {
       message: 'Account created successfully',
     }
   } catch (error) {
-    console.error('Sign up error:', error)
+    logger.serverActionError('signUp', error)
 
     if (error instanceof Error) {
       return {
@@ -77,7 +78,7 @@ export async function signUp(data: SignUpInput) {
  */
 export async function signInAction(email: string, password: string) {
   try {
-    console.log('[AUTH] Attempting sign in for:', email)
+    logger.auth('Attempting sign in for:', { email })
 
     const result = await signIn('credentials', {
       email,
@@ -85,17 +86,17 @@ export async function signInAction(email: string, password: string) {
       redirect: false,
     })
 
-    console.log('[AUTH] Sign in result:', result)
+    logger.auth('Sign in result:', { result })
 
     return {
       success: true,
       message: 'Signed in successfully',
     }
   } catch (error) {
-    console.error('[AUTH] Sign in error:', error)
+    logger.serverActionError('signInAction', error)
 
     if (error instanceof AuthError) {
-      console.error('[AUTH] AuthError type:', error.type)
+      logger.auth('AuthError type:', { type: error.type })
       switch (error.type) {
         case 'CredentialsSignin':
           return {

@@ -24,7 +24,7 @@ export const validatePassword = (password: string): string | null => {
   if (!/[a-z]/.test(password)) return "Password must include at least one lowercase letter"
   if (!/[A-Z]/.test(password)) return "Password must include at least one uppercase letter"
   if (!/\d/.test(password)) return "Password must include at least one number"
-  if (!/[@$!%*?&#^()_+=\-{}\[\]:;"'<>,.?/\\|`~]/.test(password)) {
+  if (!/[@$!%*?&#^()_+=\-{}[\]:;"'<>,.?/\\|`~]/.test(password)) {
     return "Password must include at least one special character"
   }
   return null
@@ -42,7 +42,7 @@ export const validateEmail = (email: string): string | null => {
   if (!email) return "Email is required"
 
   // RFC 5322 compliant email regex
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
 
   if (!emailRegex.test(email.trim())) {
     return "Please enter a valid email address"

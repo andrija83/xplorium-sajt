@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
+import { logger } from "@/lib/logger"
 
 interface AuditLog {
   id: string
@@ -141,7 +142,7 @@ export default function AuditPage() {
 
       toast.success(`Exported ${result.logs.length} logs to CSV`)
     } catch (error) {
-      console.error("Export error:", error)
+      logger.error("Failed to export audit logs", error instanceof Error ? error : new Error(String(error)))
       toast.error("Failed to export logs")
     }
   }

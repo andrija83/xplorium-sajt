@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
+import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import {
@@ -122,7 +123,7 @@ export async function getPublishedEvents(limit = 10) {
 
     return { success: true, events }
   } catch (error) {
-    console.error('Get published events error:', error)
+    logger.serverActionError('getPublishedEvents', error)
     return { success: false, events: [] }
   }
 }
@@ -180,7 +181,7 @@ export async function createEvent(data: CreateEventInput) {
       message: 'Event created successfully',
     }
   } catch (error) {
-    console.error('Create event error:', error)
+    logger.serverActionError('createEvent', error)
 
     if (error instanceof Error) {
       return {
@@ -245,7 +246,7 @@ export async function updateEvent(id: string, data: UpdateEventInput) {
       message: 'Event updated successfully',
     }
   } catch (error) {
-    console.error('Update event error:', error)
+    logger.serverActionError('updateEvent', error)
 
     if (error instanceof Error) {
       return {
@@ -290,7 +291,7 @@ export async function deleteEvent(id: string) {
       message: 'Event deleted successfully',
     }
   } catch (error) {
-    console.error('Delete event error:', error)
+    logger.serverActionError('deleteEvent', error)
 
     if (error instanceof Error) {
       return {
@@ -344,7 +345,7 @@ export async function reorderEvents(data: ReorderEventsInput) {
       message: 'Events reordered successfully',
     }
   } catch (error) {
-    console.error('Reorder events error:', error)
+    logger.serverActionError('reorderEvents', error)
 
     if (error instanceof Error) {
       return {

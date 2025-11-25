@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion'
 
+type SpinnerColor = 'cyan' | 'purple' | 'pink' | 'emerald' | 'yellow' | 'white'
+
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg'
-  color?: string
+  color?: SpinnerColor
   text?: string
 }
 
@@ -12,15 +14,15 @@ interface LoadingSpinnerProps {
  * Animated loading spinner with optional text
  *
  * @param {string} size - Size of spinner: sm (24px), md (48px), lg (64px)
- * @param {string} color - Color of spinner (default: cyan-400)
+ * @param {SpinnerColor} color - Color of spinner (default: cyan)
  * @param {string} text - Optional loading text to display below spinner
  *
  * @example
- * <LoadingSpinner size="md" color="purple-400" text="Loading..." />
+ * <LoadingSpinner size="md" color="purple" text="Loading..." />
  */
 export const LoadingSpinner = ({
   size = 'md',
-  color = 'cyan-400',
+  color = 'cyan',
   text
 }: LoadingSpinnerProps) => {
   const sizeClasses = {
@@ -29,24 +31,39 @@ export const LoadingSpinner = ({
     lg: 'w-16 h-16 border-4'
   }
 
+  // Color maps for Tailwind JIT - all classes must be complete strings
+  const borderColorClasses = {
+    cyan: 'border-t-cyan-400 border-r-cyan-400',
+    purple: 'border-t-purple-400 border-r-purple-400',
+    pink: 'border-t-pink-400 border-r-pink-400',
+    emerald: 'border-t-emerald-400 border-r-emerald-400',
+    yellow: 'border-t-yellow-400 border-r-yellow-400',
+    white: 'border-t-white border-r-white',
+  }
+
+  const textColorClasses = {
+    cyan: 'text-cyan-400',
+    purple: 'text-purple-400',
+    pink: 'text-pink-400',
+    emerald: 'text-emerald-400',
+    yellow: 'text-yellow-400',
+    white: 'text-white',
+  }
+
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <motion.div
-        className={`${sizeClasses[size]} border-t-${color} border-r-${color} border-b-transparent border-l-transparent rounded-full`}
+        className={`${sizeClasses[size]} ${borderColorClasses[color]} border-b-transparent border-l-transparent rounded-full`}
         animate={{ rotate: 360 }}
         transition={{
           duration: 1,
           repeat: Infinity,
           ease: "linear"
         }}
-        style={{
-          borderTopColor: `var(--${color})`,
-          borderRightColor: `var(--${color})`,
-        }}
       />
       {text && (
         <motion.p
-          className={`text-${color} text-sm font-['Great_Vibes']`}
+          className={`${textColorClasses[color]} text-sm font-['Great_Vibes']`}
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{

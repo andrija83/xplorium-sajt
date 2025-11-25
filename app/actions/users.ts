@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hashPassword } from '@/lib/password'
 import { logAudit } from '@/lib/audit'
+import { logger } from '@/lib/logger'
 import { revalidatePath } from 'next/cache'
 import {
   createUserSchema,
@@ -187,7 +188,7 @@ export async function createUser(data: CreateUserInput) {
       message: 'User created successfully',
     }
   } catch (error) {
-    console.error('Create user error:', error)
+    logger.serverActionError('createUser', error)
 
     if (error instanceof Error) {
       return {
@@ -280,7 +281,7 @@ export async function updateUserRole(data: UpdateUserRoleInput) {
       message: 'User role updated successfully',
     }
   } catch (error) {
-    console.error('Update user role error:', error)
+    logger.serverActionError('updateUserRole', error)
 
     if (error instanceof Error) {
       return {
@@ -362,7 +363,7 @@ export async function toggleUserBlock(data: ToggleUserBlockInput) {
       message: user.blocked ? 'User blocked successfully' : 'User unblocked successfully',
     }
   } catch (error) {
-    console.error('Toggle user block error:', error)
+    logger.serverActionError('toggleUserBlock', error)
 
     if (error instanceof Error) {
       return {
@@ -430,7 +431,7 @@ export async function deleteUser(id: string) {
       message: 'User deleted successfully',
     }
   } catch (error) {
-    console.error('Delete user error:', error)
+    logger.serverActionError('deleteUser', error)
 
     if (error instanceof Error) {
       return {

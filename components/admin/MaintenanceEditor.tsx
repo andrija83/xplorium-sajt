@@ -35,6 +35,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 interface MaintenanceEditorProps {
     logId?: string
@@ -79,7 +80,7 @@ export function MaintenanceEditor({ logId, initialData, isEditing = false }: Mai
                 toast.error(result.error || "Something went wrong")
             }
         } catch (error) {
-            console.error('Submit error:', error)
+            logger.error('Maintenance submit error', error instanceof Error ? error : new Error(String(error)))
             toast.error("An error occurred: " + (error instanceof Error ? error.message : String(error)))
         } finally {
             setIsSubmitting(false)

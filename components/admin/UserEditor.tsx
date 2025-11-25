@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, ArrowLeft, User, Mail, Lock, Shield } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { logger } from "@/lib/logger"
 
 export function UserEditor() {
     const router = useRouter()
@@ -41,7 +42,7 @@ export function UserEditor() {
                 toast.error(result.error || "Something went wrong")
             }
         } catch (error) {
-            console.error('Submit error:', error)
+            logger.error('User creation error', error instanceof Error ? error : new Error(String(error)))
             toast.error("An error occurred")
         } finally {
             setIsSubmitting(false)

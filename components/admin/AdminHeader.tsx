@@ -6,6 +6,7 @@ import { Menu, User, LogOut, Shield, Home } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 /**
  * AdminHeader Component
@@ -35,9 +36,9 @@ export const AdminHeader = memo(function AdminHeader({
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleSignOut = async () => {
-    console.log('[AUTH] AdminHeader handleSignOut called')
+    logger.auth('AdminHeader handleSignOut called')
     setShowUserMenu(false)
-    console.log('[AUTH] Calling signOut from AdminHeader...')
+    logger.auth('Calling signOut from AdminHeader')
     // Use NextAuth signOut with redirect - let it handle everything
     await signOut({
       callbackUrl: '/',

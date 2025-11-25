@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Users, Clock, Mail, Phone, User, Cake, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 import { validateEmail } from '@/lib/validation'
 
 /**
@@ -130,6 +131,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
       textDim: 'text-cyan-100/70',
       textDimmer: 'text-cyan-100/50',
       border: 'border-cyan-400/30',
+      borderActive: 'border-cyan-400',
       borderFocus: 'focus:border-cyan-400',
       borderHover: 'hover:border-cyan-400/50',
       bg: 'bg-cyan-400',
@@ -147,6 +149,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
       textDim: 'text-pink-100/70',
       textDimmer: 'text-pink-100/50',
       border: 'border-pink-400/30',
+      borderActive: 'border-pink-400',
       borderFocus: 'focus:border-pink-400',
       borderHover: 'hover:border-pink-400/50',
       bg: 'bg-pink-500',
@@ -211,7 +214,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
       // TODO: Replace with actual API call
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      console.log('Booking submitted:', formData)
+      logger.debug('Booking submitted', { formData })
       toast.success('Booking request sent! We\'ll contact you soon.')
 
       // Reset form
@@ -233,7 +236,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
       })
       setErrors({})
     } catch (error) {
-      console.error('Booking error:', error)
+      logger.error('Booking error', error instanceof Error ? error : new Error(String(error)))
       toast.error('Failed to submit booking. Please try again.')
     } finally {
       setIsSubmitting(false)
@@ -508,7 +511,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                   }))
                 }}
                 className={`flex-1 flex items-center gap-3 px-6 py-4 border-2 rounded-lg transition-all ${formData.includeFoodBeverages
-                  ? `border-${theme.primary}-400 ${theme.bgDim}`
+                  ? `${theme.borderActive} ${theme.bgDim}`
                   : `${theme.border} bg-black/30 ${theme.borderHover}`
                   }`}
                 whileHover={{ scale: 1.02 }}
@@ -545,7 +548,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                   }))
                 }}
                 className={`flex-1 flex items-center gap-3 px-6 py-4 border-2 rounded-lg transition-all ${formData.includeCakeBeverages
-                  ? `border-${theme.primary}-400 ${theme.bgDim}`
+                  ? `${theme.borderActive} ${theme.bgDim}`
                   : `${theme.border} bg-black/30 ${theme.borderHover}`
                   }`}
                 whileHover={{ scale: 1.02 }}
@@ -612,7 +615,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                                 }
                               }}
                               className={`relative w-full p-4 border-2 rounded-lg transition-all text-left ${isSelected
-                                ? `border-${theme.primary}-400 ${theme.bgDim}`
+                                ? `${theme.borderActive} ${theme.bgDim}`
                                 : `${theme.border} bg-black/30 ${theme.borderHover}`
                                 }`}
                               whileHover={{ scale: 1.05 }}
@@ -666,7 +669,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                                             }))
                                           }}
                                           className={`w-full p-2 border rounded text-left text-xs transition-all ${isSubmenuSelected
-                                            ? `border-${theme.primary}-400 ${theme.bgDim} ${theme.text}`
+                                            ? `${theme.borderActive} ${theme.bgDim} ${theme.text}`
                                             : `${theme.border} bg-black/20 ${theme.textDim} ${theme.borderHover}`
                                             }`}
                                           whileHover={{ scale: 1.02 }}
@@ -744,7 +747,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                               }))
                             }}
                             className={`relative p-4 border-2 rounded-lg transition-all text-left ${isSelected
-                              ? `border-${theme.primary}-400 ${theme.bgDim}`
+                              ? `${theme.borderActive} ${theme.bgDim}`
                               : `${theme.border} bg-black/30 ${theme.borderHover}`
                               }`}
                             whileHover={{ scale: 1.05 }}
