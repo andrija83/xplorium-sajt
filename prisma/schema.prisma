@@ -24,6 +24,25 @@ model User {
   image         String?
   blocked       Boolean   @default(false)
 
+  // CRM & Loyalty Program
+  loyaltyPoints Int       @default(0)
+  loyaltyTier   LoyaltyTier @default(BRONZE)
+  totalSpent    Float     @default(0)
+
+  // Customer Preferences
+  phone         String?
+  preferredContactMethod PreferredContact @default(EMAIL)
+  marketingOptIn Boolean  @default(true)
+  smsOptIn      Boolean   @default(false)
+  preferredTypes Json?    // Array of preferred booking types
+  customerNotes String?   @db.Text // Admin notes about this customer
+  tags          String[]  // Customer segmentation tags
+
+  // Customer Stats (auto-calculated)
+  totalBookings Int       @default(0)
+  lastBookingDate DateTime?
+  firstBookingDate DateTime?
+
   // Relations
   bookings      Booking[]
   auditLogs     AuditLog[]
@@ -33,6 +52,8 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([loyaltyTier])
+  @@index([marketingOptIn])
 }
 
 // ============================================
@@ -42,9 +63,9 @@ model User {
 model Booking {
   id          String        @id @default(cuid())
 
-  // User relationship (optional - allow guest bookings)
-  userId      String?
-  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // User relationship (REQUIRED - no guest bookings)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Booking details
   title       String
@@ -197,6 +218,21 @@ enum Role {
   USER
   ADMIN
   SUPER_ADMIN
+}
+
+enum LoyaltyTier {
+  BRONZE   // 0-999 points
+  SILVER   // 1000-2999 points
+  GOLD     // 3000-5999 points
+  PLATINUM // 6000+ points
+  VIP      // Special tier for high-value customers
+}
+
+enum PreferredContact {
+  EMAIL
+  PHONE
+  SMS
+  ANY
 }
 
 enum BookingStatus {

@@ -17,7 +17,9 @@ import {
   DollarSign,
   Wrench,
   Package,
-  FileDown
+  FileDown,
+  UserCircle,
+  Mail
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -93,6 +95,16 @@ export const AdminSidebar = memo(function AdminSidebar({
       label: "Users",
       href: "/admin/users",
       icon: Users
+    },
+    {
+      label: "Customers",
+      href: "/admin/customers",
+      icon: UserCircle
+    },
+    {
+      label: "Marketing",
+      href: "/admin/marketing",
+      icon: Mail
     },
     {
       label: "Content",

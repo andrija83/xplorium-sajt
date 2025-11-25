@@ -29,14 +29,14 @@ This document contains feature ideas to enhance the Xplorium admin panel.
 - Loyalty program tracking
 - Email marketing lists
 
-### 4. User Roles & Permissions
+### 4. User Roles & Permissions   
 - Staff members with limited access (e.g., can only approve bookings)
 - Manager role (can manage events but not users)
 - Read-only access for accountants
 
 ---
 
-## 📅 Advanced Booking Features
+## 📅 Advanced Booking Features  (OVDE) **************************
 
 ### 5. Recurring Events
 - Weekly classes/programs (e.g., "Every Monday 10 AM - Sensory Therapy")

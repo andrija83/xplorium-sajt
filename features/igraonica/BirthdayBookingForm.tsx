@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Users, Clock, Mail, Phone, User, Cake, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
@@ -22,6 +22,10 @@ interface BirthdayBookingFormProps {
   onBack: () => void
   initialSelectedRooms?: string[]
   variant?: 'birthday' | 'playroom'
+  initialKidsCount?: number | string
+  initialKidsLabel?: string
+  initialDurationMinutes?: number | string
+  initialDurationLabel?: string
 }
 
 interface FormData {
@@ -33,6 +37,7 @@ interface FormData {
   partyDate: string
   partyTime: string
   numberOfGuests: string
+  playroomDuration: string
   selectedRooms: string[]
   includeFoodBeverages: boolean
   includeCakeBeverages: boolean
@@ -99,7 +104,16 @@ const BEVERAGE_OPTIONS = [
   { id: 'hot-chocolate', name: 'Hot Chocolate', icon: '☕', description: 'Warm hot chocolate' }
 ]
 
-export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant = 'birthday' }: BirthdayBookingFormProps) => {
+export const BirthdayBookingForm = ({
+  onBack,
+  initialSelectedRooms = [],
+  variant = 'birthday',
+  initialKidsCount,
+  initialKidsLabel,
+  initialDurationMinutes,
+  initialDurationLabel
+}: BirthdayBookingFormProps) => {
+  const [minDate, setMinDate] = useState<string>('')
   const [formData, setFormData] = useState<FormData>({
     childName: '',
     childAge: '',
@@ -108,7 +122,12 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
     phone: '',
     partyDate: '',
     partyTime: '',
-    numberOfGuests: '',
+    numberOfGuests: initialKidsCount ? String(initialKidsCount) : '',
+    playroomDuration: initialDurationLabel
+      ? String(initialDurationLabel)
+      : initialDurationMinutes
+        ? `${initialDurationMinutes} Minutes`
+        : '',
     selectedRooms: initialSelectedRooms,
     includeFoodBeverages: false,
     includeCakeBeverages: false,
@@ -116,6 +135,17 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
     selectedBeverages: [],
     specialRequests: ''
   })
+
+  const isGuestsLocked = Boolean(initialKidsCount)
+
+  // Lock date picker to today or later to avoid past selections
+  useEffect(() => {
+    const today = new Date()
+    const localISODate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split('T')[0]
+    setMinDate(localISODate)
+  }, [])
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
@@ -227,6 +257,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
         partyDate: '',
         partyTime: '',
         numberOfGuests: '',
+        playroomDuration: '',
         selectedRooms: [],
         includeFoodBeverages: false,
         includeCakeBeverages: false,
@@ -297,6 +328,26 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
+          {variant === 'playroom' && (
+            <div className={`mb-8 p-4 rounded-xl border ${theme.border} ${theme.bgDimmer}`}>
+              <p className={`${theme.textDim} text-sm mb-3`}>Selections from the previous step</p>
+              <div className="flex flex-wrap gap-3">
+                {(initialKidsLabel || formData.numberOfGuests) && (
+                  <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full ${theme.bgDim} ${theme.text}`}>
+                    <Users className="w-4 h-4" />
+                    {initialKidsLabel || `${formData.numberOfGuests} Kids`}
+                  </span>
+                )}
+                {formData.playroomDuration && (
+                  <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full ${theme.bgDim} ${theme.text}`}>
+                    <Clock className="w-4 h-4" />
+                    {formData.playroomDuration}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Child Information */}
           <div className="mb-8">
             <h3 className={`text-xl font-semibold ${theme.text} mb-4 flex items-center gap-2`}>
@@ -426,6 +477,7 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                     name="partyDate"
                     value={formData.partyDate}
                     onChange={handleChange}
+                    min={minDate}
                     className={`w-full pl-11 pr-4 py-3 bg-black/50 border ${errors.partyDate ? 'border-red-400' : theme.border} rounded-lg text-white focus:outline-none ${errors.partyDate ? 'focus:border-red-400' : theme.borderFocus} transition-colors`}
                   />
                 </div>
@@ -440,6 +492,9 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                     name="partyTime"
                     value={formData.partyTime}
                     onChange={handleChange}
+                    min="09:00"
+                    max="22:00"
+                    step={30 * 60}
                     className={`w-full pl-11 pr-4 py-3 bg-black/50 border ${errors.partyTime ? 'border-red-400' : theme.border} rounded-lg text-white focus:outline-none ${errors.partyTime ? 'focus:border-red-400' : theme.borderFocus} transition-colors`}
                   />
                 </div>
@@ -453,11 +508,13 @@ export const BirthdayBookingForm = ({ onBack, initialSelectedRooms = [], variant
                     type="number"
                     name="numberOfGuests"
                     value={formData.numberOfGuests}
-                    onChange={handleChange}
+                    onChange={isGuestsLocked ? undefined : handleChange}
                     min="5"
                     max="50"
-                    className={`w-full pl-11 pr-4 py-3 bg-black/50 border ${errors.numberOfGuests ? 'border-red-400' : theme.border} rounded-lg text-white ${theme.placeholder} focus:outline-none ${errors.numberOfGuests ? 'focus:border-red-400' : theme.borderFocus} transition-colors`}
-                    placeholder="Number of kids"
+                    disabled={isGuestsLocked}
+                    readOnly={isGuestsLocked}
+                    className={`w-full pl-11 pr-4 py-3 bg-black/50 border ${errors.numberOfGuests ? 'border-red-400' : theme.border} rounded-lg text-white ${theme.placeholder} focus:outline-none ${errors.numberOfGuests ? 'focus:border-red-400' : theme.borderFocus} transition-colors ${isGuestsLocked ? 'opacity-80 cursor-not-allowed' : ''}`}
+                    placeholder={isGuestsLocked ? undefined : "Number of kids"}
                   />
                 </div>
                 {errors.numberOfGuests && <p className="text-red-400 text-xs mt-1">{errors.numberOfGuests}</p>}

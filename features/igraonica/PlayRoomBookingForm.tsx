@@ -56,14 +56,14 @@ const ROTATING_TEXTS = [
 ]
 
 const KIDS_CAPACITY_OPTIONS = [
-    { id: 'up-to-10', label: 'Up to 10 Kids', capacity: 10, icon: '👶' },
-    { id: 'up-to-20', label: 'Up to 20 Kids', capacity: 20, icon: '👧' },
-    { id: 'up-to-30', label: 'Up to 30 Kids', capacity: 30, icon: '👦' }
+    { id: 'up-to-10', label: 'Up to 10 Kids', capacity: 10, price: 1000, icon: '👶' },
+    { id: 'up-to-20', label: 'Up to 20 Kids', capacity: 20, price: 2000, icon: '🧒' },
+    { id: 'up-to-30', label: 'Up to 30 Kids', capacity: 30, price: 3000, icon: '🎉' }
 ]
 
 const TIME_DURATION_OPTIONS = [
-    { id: '30-min', label: '30 Minutes', duration: 30, icon: '⏰' },
-    { id: '45-min', label: '45 Minutes', duration: 45, icon: '⏱️' }
+    { id: '30-min', label: '30 Minutes', duration: 30, price: 1000, icon: '⏱️' },
+    { id: '45-min', label: '45 Minutes', duration: 45, price: 1500, icon: '🕒' }
 ]
 
 export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
@@ -117,11 +117,21 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
     }
 
     const totalPrice = useMemo(() => {
-        return selectedItems.reduce((sum, id) => {
+        const base = selectedItems.reduce((sum, id) => {
             const item = PLAY_ROOM_ITEMS.find(i => i.id === id)
             return sum + (item?.price || 0)
         }, 0)
-    }, [selectedItems])
+
+        const capacityPrice = selectedCapacity
+            ? (KIDS_CAPACITY_OPTIONS.find(opt => opt.id === selectedCapacity)?.price || 0)
+            : 0
+
+        const durationPrice = selectedDuration
+            ? (TIME_DURATION_OPTIONS.find(opt => opt.id === selectedDuration)?.price || 0)
+            : 0
+
+        return base + capacityPrice + durationPrice
+    }, [selectedItems, selectedCapacity, selectedDuration])
 
     const handleContinue = () => {
         if (!selectedCapacity) {
@@ -364,6 +374,7 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
                                                     >
                                                         <span className="text-xl">{option.icon}</span>
                                                         <span className="font-bold text-sm md:text-base">{option.label}</span>
+                                                        <span className="text-xs text-pink-100/80">{option.price} RSD</span>
                                                         {isSelected && (
                                                             <motion.div
                                                                 initial={{ scale: 0 }}
@@ -401,6 +412,7 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
                                                     >
                                                         <span className="text-xl">{option.icon}</span>
                                                         <span className="font-bold text-sm md:text-base">{option.label}</span>
+                                                        <span className="text-xs text-pink-100/80">{option.price} RSD</span>
                                                         {isSelected && (
                                                             <motion.div
                                                                 initial={{ scale: 0 }}
@@ -469,6 +481,10 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
                         <BirthdayBookingForm
                             onBack={() => setStep('selection')}
                             initialSelectedRooms={selectedItems}
+                            initialKidsCount={KIDS_CAPACITY_OPTIONS.find(option => option.id === selectedCapacity)?.capacity}
+                            initialKidsLabel={KIDS_CAPACITY_OPTIONS.find(option => option.id === selectedCapacity)?.label}
+                            initialDurationMinutes={TIME_DURATION_OPTIONS.find(option => option.id === selectedDuration)?.duration}
+                            initialDurationLabel={TIME_DURATION_OPTIONS.find(option => option.id === selectedDuration)?.label}
                             variant="playroom"
                         />
                     </motion.div>

@@ -24,17 +24,15 @@ interface CafeSectionProps {
  *
  * Features:
  * - Glass frame menu with neon-glowing items
- * - 6 subsections: Meni, Pricing, Zakup, Dogadjaji, Radno vreme, Kontakt
+ * - 4 subsections: Meni, Dogadjaji, Radno vreme, Kontakt
  * - Corner screws decoration
  * - Scrollable content inside glass frame
- * - Pricing cards with animations
- * - Booking form
  * - Contact information with map
  *
  * Optimized with React.memo, useCallback, and memoized constants
  *
  * Navigation Flow:
- * 1. Shows glass frame menu with 6 options
+ * 1. Shows glass frame menu with 4 options
  * 2. Click option → Shows subsection content inside glass frame
  * 3. Each subsection has unique content and styling
  */
@@ -217,20 +215,6 @@ export const CafeSection = memo(({ cafeSubView, setCafeSubView }: CafeSectionPro
       textClass: "text-cyan-400",
       ringClass: "focus-visible:ring-cyan-400",
       shadow: "0 0 20px #22d3ee, 0 0 40px #22d3ee, 0 0 60px #22d3ee",
-    },
-    {
-      label: "Pricing",
-      section: "pricing",
-      textClass: "text-emerald-400",
-      ringClass: "focus-visible:ring-emerald-400",
-      shadow: "0 0 20px #10b981, 0 0 40px #10b981, 0 0 60px #10b981",
-    },
-    {
-      label: "Zakup prostora",
-      section: "zakup",
-      textClass: "text-pink-400",
-      ringClass: "focus-visible:ring-pink-400",
-      shadow: "0 0 20px #ec4899, 0 0 40px #ec4899, 0 0 60px #ec4899",
     },
     {
       label: "Dogadjaji",

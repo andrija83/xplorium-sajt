@@ -63,6 +63,18 @@ export async function getUsers({
         emailVerified: true,
         createdAt: true,
         updatedAt: true,
+        // CRM & Loyalty fields
+        loyaltyPoints: true,
+        loyaltyTier: true,
+        totalSpent: true,
+        phone: true,
+        preferredContactMethod: true,
+        marketingOptIn: true,
+        smsOptIn: true,
+        totalBookings: true,
+        lastBookingDate: true,
+        firstBookingDate: true,
+        tags: true,
       },
       orderBy: {
         createdAt: 'desc',
