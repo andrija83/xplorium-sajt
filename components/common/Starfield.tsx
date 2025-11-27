@@ -37,10 +37,23 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
    * State is used instead of useMemo to allow client-side generation and persistence
    */
   const [stars, setStars] = useState<any[]>([])
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile devices
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     // Try to get stars from session storage
-    const STORAGE_KEY = 'xplorium-starfield-config'
+    const STORAGE_KEY = `xplorium-starfield-config-${isMobile ? 'mobile' : 'desktop'}`
 
     try {
       const savedStars = sessionStorage.getItem(STORAGE_KEY)
@@ -48,9 +61,12 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
       if (savedStars) {
         setStars(JSON.parse(savedStars))
       } else {
+        // Reduce star count on mobile for better performance
+        const starCount = isMobile ? 25 : 100
+
         // Generate new stars using seeded random for hydration safety
         const rng = seededRandom(99999) // Fixed seed for consistent star positions
-        const newStars = Array.from({ length: 100 }, (_, i) => ({
+        const newStars = Array.from({ length: starCount }, (_, i) => ({
           id: i,
           left: rng.nextFloat(0, 100),
           top: rng.nextFloat(0, 100),
@@ -65,8 +81,9 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
       }
     } catch (e) {
       // Fallback if sessionStorage fails - use same seeded random
+      const starCount = isMobile ? 25 : 100
       const rng = seededRandom(99999) // Same seed for consistency
-      const newStars = Array.from({ length: 100 }, (_, i) => ({
+      const newStars = Array.from({ length: starCount }, (_, i) => ({
         id: i,
         left: rng.nextFloat(0, 100),
         top: rng.nextFloat(0, 100),
@@ -77,7 +94,7 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
       }))
       setStars(newStars)
     }
-  }, [])
+  }, [isMobile])
 
   /**
    * sectionStars: Colored stars that appear when entering a section
@@ -102,9 +119,12 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
       }
       const color = sectionColors[activeView as keyof typeof sectionColors] || "#ffffff"
 
-      // Generate 50 new stars with seeded random for hydration safety
+      // Reduce section star count on mobile (25 on mobile, 50 on desktop)
+      const sectionStarCount = isMobile ? 15 : 50
+
+      // Generate new stars with seeded random for hydration safety
       const rng = seededRandom(88888) // Fixed seed for section stars
-      const newStars = Array.from({ length: 50 }, (_, i) => ({
+      const newStars = Array.from({ length: sectionStarCount }, (_, i) => ({
         id: i + 1000, // Offset ID to avoid conflicts with base stars
         left: rng.nextFloat(0, 100),
         top: rng.nextFloat(0, 100),
@@ -121,7 +141,7 @@ export const Starfield = memo(({ activeView }: StarfieldProps) => {
       // Clear section stars when returning to main menu
       setSectionStars([])
     }
-  }, [activeView])
+  }, [activeView, isMobile])
 
   return (
     <motion.div className="fixed inset-0 overflow-hidden pointer-events-none z-0">

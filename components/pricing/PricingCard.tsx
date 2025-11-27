@@ -9,6 +9,7 @@
 
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 
 export type PricingCategory = 'PLAYGROUND' | 'SENSORY_ROOM' | 'CAFE' | 'PARTY'
@@ -115,7 +116,7 @@ const CATEGORY_THEMES = {
   },
 }
 
-export const PricingCard = ({ package: pkg, category, index, onBook }: PricingCardProps) => {
+export const PricingCard = memo(({ package: pkg, category, index, onBook }: PricingCardProps) => {
   const theme = CATEGORY_THEMES[category]
 
   return (
@@ -123,66 +124,51 @@ export const PricingCard = ({ package: pkg, category, index, onBook }: PricingCa
       className={`relative bg-gradient-to-br ${pkg.popular ? theme.gradient : 'from-white/5 to-white/0'} border-2 ${pkg.popular ? theme.borderActive : theme.border} rounded-xl p-6 backdrop-blur-sm`}
       initial={{ opacity: 0, y: 50, scale: 0.9 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.3 }}
+      viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{
         borderColor: theme.borderColor,
         scale: pkg.popular ? 1.05 : 1.03,
         y: -10,
       }}
-      style={pkg.popular ? { boxShadow: theme.boxShadow } : {}}
+      style={{
+        ...(pkg.popular ? { boxShadow: theme.boxShadow } : {}),
+        willChange: 'transform, opacity'
+      }}
     >
       {/* Popular Badge */}
       {pkg.popular && (
-        <motion.div
+        <div
           className={`absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r ${theme.badgeGradient} text-white text-xs px-4 py-1.5 rounded-full font-medium`}
           style={{ textShadow: theme.badgeShadow, boxShadow: theme.badgeBoxShadow }}
-          initial={{ scale: 0 }}
-          whileInView={{ scale: 1 }}
-          viewport={{ once: false }}
-          transition={{ duration: 0.5, delay: 0.3, type: 'spring', bounce: 0.5 }}
         >
           ⭐ Najpopularnije
-        </motion.div>
+        </div>
       )}
 
       {/* Package Name */}
-      <motion.h4
-        className="text-white font-['Great_Vibes'] text-3xl mb-3"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: false }}
-        transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-      >
+      <h4 className="text-white font-['Great_Vibes'] text-3xl mb-3">
         {pkg.name}
-      </motion.h4>
+      </h4>
 
       {/* Price */}
-      <motion.p
+      <p
         className={`text-${theme.primary} text-3xl font-bold mb-6`}
         style={{ textShadow: theme.textShadow }}
-        initial={{ scale: 0 }}
-        whileInView={{ scale: 1 }}
-        viewport={{ once: false }}
-        transition={{ duration: 0.5, delay: 0.3 + index * 0.1, type: 'spring' }}
       >
         {pkg.price}
-      </motion.p>
+      </p>
 
       {/* Features List */}
       <ul className="space-y-3 mb-6">
         {pkg.features.map((feature: string, i: number) => (
-          <motion.li
+          <li
             key={i}
             className="text-white/80 text-sm flex items-start"
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false }}
-            transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
           >
             <span className={`text-${theme.primary} mr-2 text-lg`}>✓</span>
             {feature}
-          </motion.li>
+          </li>
         ))}
       </ul>
 
@@ -194,13 +180,11 @@ export const PricingCard = ({ package: pkg, category, index, onBook }: PricingCa
         style={{ boxShadow: theme.buttonShadow }}
         whileHover={{ scale: 1.05, boxShadow: theme.buttonHoverShadow }}
         whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: false }}
-        transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
       >
         {category === 'PARTY' ? 'Rezerviši Rođendan' : 'Rezerviši Sada'}
       </motion.button>
     </motion.div>
   )
-}
+})
+
+PricingCard.displayName = 'PricingCard'
