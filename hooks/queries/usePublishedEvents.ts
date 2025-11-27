@@ -21,8 +21,8 @@ export function usePublishedEvents(limit: number = 10) {
     queryFn: async () => {
       const result = await getPublishedEvents(limit)
 
-      if (!result.success || !result.events) {
-        throw new Error(result.error || 'Failed to fetch events')
+      if (!result.success) {
+        throw new Error('Failed to fetch events')
       }
 
       // Filter only future events (compare by date only, not time)

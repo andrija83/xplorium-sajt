@@ -15,7 +15,7 @@ interface BookingFormProps {
   isLoading?: boolean
   initialPackage?: {
     name: string
-    price: string
+    price: string | null  // Nullable during migration to priceAmount/priceCurrency
     category: string
   } | null
 }
@@ -57,7 +57,7 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
     time: '',
     guestCount: '',
     type: (initialPackage ? getTypeFromCategory(initialPackage.category) : 'PARTY') as 'CAFE' | 'SENSORY_ROOM' | 'PLAYGROUND' | 'PARTY' | 'EVENT',
-    notes: initialPackage ? `Paket: ${initialPackage.name} (${initialPackage.price})` : ''
+    notes: initialPackage ? `Paket: ${initialPackage.name} (${initialPackage.price || 'Contact for pricing'})` : ''
   })
 
   const [showDatePicker, setShowDatePicker] = useState(false)

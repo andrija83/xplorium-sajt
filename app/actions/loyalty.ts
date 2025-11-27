@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache'
 /**
  * Calculate loyalty tier based on points
  */
-function calculateTier(points: number): string {
+function calculateTier(points: number): 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'VIP' {
   if (points >= 6000) return 'PLATINUM'
   if (points >= 3000) return 'GOLD'
   if (points >= 1000) return 'SILVER'

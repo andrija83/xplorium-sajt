@@ -163,7 +163,9 @@ export interface Event {
 export interface PricingPackage {
   id: string
   name: string
-  price: string
+  price: string | null  // Nullable during migration to priceAmount/priceCurrency
+  priceAmount?: number | null  // New structured price field
+  priceCurrency?: string | null  // Currency code (ISO 4217)
   category: PricingCategory
   popular: boolean
   features: string[] // Typed as string array instead of Json

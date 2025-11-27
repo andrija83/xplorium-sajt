@@ -112,6 +112,20 @@ export async function getUserById(id: string) {
       emailVerified: true,
       createdAt: true,
       updatedAt: true,
+      // Customer/CRM fields
+      phone: true,
+      loyaltyPoints: true,
+      loyaltyTier: true,
+      totalSpent: true,
+      totalBookings: true,
+      firstBookingDate: true,
+      lastBookingDate: true,
+      customerNotes: true,
+      tags: true,
+      preferredContactMethod: true,
+      preferredTypes: true,
+      marketingOptIn: true,
+      smsOptIn: true,
       bookings: {
         orderBy: {
           createdAt: 'desc',

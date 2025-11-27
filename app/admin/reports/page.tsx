@@ -35,7 +35,23 @@ export default function ReportsPage() {
   const [revenueYear, setRevenueYear] = useState(String(currentYear))
   const [revenueMonth, setRevenueMonth] = useState(String(currentMonth))
 
-  const reportCategories = [
+  // Define report type to include optional customControls
+  type Report = {
+    name: string
+    description: string
+    action: () => Promise<any>  // Export functions return success/data objects
+    filename: string
+    customControls?: React.ReactNode
+  }
+
+  const reportCategories: Array<{
+    title: string
+    icon: any
+    iconColor: string
+    iconBg: string
+    borderColor: string
+    reports: Report[]
+  }> = [
     {
       title: 'Bookings & Reservations',
       icon: Calendar,

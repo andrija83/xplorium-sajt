@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 interface PricingPackage {
   id: string
   name: string
-  price: string
+  price: string | null  // Nullable during migration to priceAmount/priceCurrency
   category: string
   popular: boolean
   status: string
@@ -120,7 +120,7 @@ export function PricingTable({ packages }: PricingTableProps) {
                   >
                     <td className="px-6 py-4 text-white/90">{pkg.name}</td>
                     <td className="px-6 py-4 text-white/90 font-medium">
-                      {pkg.price}
+                      {pkg.price || 'Contact for pricing'}
                     </td>
                     <td className="px-6 py-4 text-white/70">
                       {getCategoryLabel(pkg.category)}

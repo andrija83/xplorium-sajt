@@ -43,8 +43,8 @@ describe('ErrorBoundary', () => {
   })
 
   it('renders error message in development mode', () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
+    // Mock development environment
+    vi.stubEnv('NODE_ENV', 'development')
 
     render(
       <ErrorBoundary>
@@ -54,6 +54,7 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('Test error')).toBeInTheDocument()
 
-    process.env.NODE_ENV = originalEnv
+    // Restore environment
+    vi.unstubAllEnvs()
   })
 })

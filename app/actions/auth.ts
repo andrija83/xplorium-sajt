@@ -25,7 +25,7 @@ import {
  */
 export async function signUp(
   data: SignUpInput
-): Promise<StandardResponse<{ id: string; name: string; email: string; role: string }>> {
+): Promise<StandardResponse<{ id: string; name: string | null; email: string; role: string }>> {
   try {
     // Validate input (Zod errors are automatically handled)
     const validatedData = signUpSchema.parse(data)

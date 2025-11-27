@@ -21,8 +21,8 @@ export function useBookings() {
     queryFn: async () => {
       const result = await getApprovedBookings()
 
-      if (!result.success || !result.bookings) {
-        throw new Error(result.error || 'Failed to fetch bookings')
+      if (!result.success) {
+        throw new Error('Failed to fetch bookings')
       }
 
       // Transform database bookings to CalendarEvent format

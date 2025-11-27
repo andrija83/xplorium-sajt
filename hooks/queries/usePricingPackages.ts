@@ -21,7 +21,7 @@ export function usePricingPackages() {
         queryKey: ['pricing', 'PLAYGROUND'],
         queryFn: async () => {
           const result = await getPublishedPricingPackages('PLAYGROUND')
-          if (!result.success) throw new Error(result.error || 'Failed to fetch playground packages')
+          if (!result.success) throw new Error('Failed to fetch playground packages')
           return result.packages || []
         },
         staleTime: 10 * 60 * 1000, // 10 minutes
@@ -31,7 +31,7 @@ export function usePricingPackages() {
         queryKey: ['pricing', 'SENSORY_ROOM'],
         queryFn: async () => {
           const result = await getPublishedPricingPackages('SENSORY_ROOM')
-          if (!result.success) throw new Error(result.error || 'Failed to fetch sensory room packages')
+          if (!result.success) throw new Error('Failed to fetch sensory room packages')
           return result.packages || []
         },
         staleTime: 10 * 60 * 1000,
@@ -41,7 +41,7 @@ export function usePricingPackages() {
         queryKey: ['pricing', 'CAFE'],
         queryFn: async () => {
           const result = await getPublishedPricingPackages('CAFE')
-          if (!result.success) throw new Error(result.error || 'Failed to fetch cafe packages')
+          if (!result.success) throw new Error('Failed to fetch cafe packages')
           return result.packages || []
         },
         staleTime: 10 * 60 * 1000,
@@ -51,7 +51,7 @@ export function usePricingPackages() {
         queryKey: ['pricing', 'PARTY'],
         queryFn: async () => {
           const result = await getPublishedPricingPackages('PARTY')
-          if (!result.success) throw new Error(result.error || 'Failed to fetch party packages')
+          if (!result.success) throw new Error('Failed to fetch party packages')
           return result.packages || []
         },
         staleTime: 10 * 60 * 1000,

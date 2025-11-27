@@ -125,11 +125,17 @@ export async function createBooking(data: CreateBookingInput) {
     const validatedData = createBookingSchema.parse(data)
 
     // Create booking
+    // Combine date and time into scheduledAt timestamp
+    const [hours, minutes] = validatedData.time.split(':').map(Number)
+    const scheduledAt = new Date(validatedData.date)
+    scheduledAt.setHours(hours, minutes, 0, 0)
+
     const booking = await prisma.booking.create({
       data: {
         ...validatedData,
         userId: session.user.id,
         status: 'PENDING',
+        scheduledAt,
       },
     })
 

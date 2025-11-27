@@ -27,12 +27,16 @@ describe('Logger', () => {
     consoleErrorSpy.mockRestore()
 
     // Restore NODE_ENV
-    process.env.NODE_ENV = originalEnv
+    vi.unstubAllEnvs()
   })
 
   describe('in test environment', () => {
     beforeEach(() => {
-      process.env.NODE_ENV = 'test'
+      vi.stubEnv('NODE_ENV', 'test')
+    })
+
+    afterEach(() => {
+      vi.unstubAllEnvs()
     })
 
     it('should not log debug messages', () => {

@@ -17,7 +17,7 @@ export type PricingCategory = 'PLAYGROUND' | 'SENSORY_ROOM' | 'CAFE' | 'PARTY'
 export interface PricingPackage {
   id: string
   name: string
-  price: string
+  price: string | null  // Nullable during migration to priceAmount/priceCurrency
   priceAmount?: number | null
   priceCurrency?: string | null
   features: string[]
@@ -156,7 +156,7 @@ export const PricingCard = memo(({ package: pkg, category, index, onBook }: Pric
         className={`text-${theme.primary} text-3xl font-bold mb-6`}
         style={{ textShadow: theme.textShadow }}
       >
-        {pkg.price}
+        {pkg.price || (pkg.priceAmount ? `${pkg.priceAmount} ${pkg.priceCurrency || 'RSD'}` : 'Contact us')}
       </p>
 
       {/* Features List */}

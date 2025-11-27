@@ -151,15 +151,16 @@ export async function upsertCustomer(data: {
         phone: data.phone,
         marketingOptIn: data.marketingOptIn ?? true,
         smsOptIn: data.smsOptIn ?? false,
-        notes: data.notes,
+        customerNotes: data.notes,
         tags: data.tags || [],
+        password: '', // Required field, will be set if user registers
       },
       update: {
         name: data.name,
         phone: data.phone,
         marketingOptIn: data.marketingOptIn,
         smsOptIn: data.smsOptIn,
-        notes: data.notes,
+        customerNotes: data.notes,
         tags: data.tags,
       },
     })
@@ -408,7 +409,7 @@ export async function syncCustomerData() {
             totalBookings: customerData.totalBookings,
             firstBookingDate: customerData.firstBookingDate,
             lastBookingDate: customerData.lastBookingDate,
-            userId: customerData.userId,
+            password: '', // Required field, will be set if user registers
           },
         })
         created++

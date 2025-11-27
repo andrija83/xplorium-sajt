@@ -45,7 +45,7 @@ export const CafeSection = memo(() => {
   const [isLoading, setIsLoading] = useState(false)
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [selectedPackage, setSelectedPackage] = useState<{ name: string, price: string, category: string } | null>(null)
+  const [selectedPackage, setSelectedPackage] = useState<{ name: string, price: string | null, category: string } | null>(null)
 
   // Published events state (for Dogadjaji section)
   const [publishedEvents, setPublishedEvents] = useState<any[]>([])

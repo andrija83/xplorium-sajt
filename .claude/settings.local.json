@@ -92,7 +92,8 @@
       "Bash(powershell -Command \"Remove-Item -Recurse -Force ''prisma\\migrations\\20251127102641_add_scheduled_at_column''\")",
       "Bash(node scripts/apply-text-search-indexes.mjs:*)",
       "Bash(node scripts/apply-gdpr-fields.mjs:*)",
-      "Bash(node scripts/check-user-columns.mjs:*)"
+      "Bash(node scripts/check-user-columns.mjs:*)",
+      "Bash(powershell -Command \"Remove-Item -Recurse -Force ''.next''\")"
     ],
     "deny": [],
     "ask": []
