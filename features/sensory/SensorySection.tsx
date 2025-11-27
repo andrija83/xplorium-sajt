@@ -5,11 +5,7 @@ import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { PlanetOrb } from '@/components/animations'
 import type { GalleryImage, PlanetConfig } from '@/types'
-
-interface SensorySectionProps {
-  sensorySubView: string | null
-  setSensorySubView: (view: string | null) => void
-}
+import { useNavigationStore } from '@/stores/navigationStore'
 
 /**
  * SensorySection Component
@@ -23,6 +19,8 @@ interface SensorySectionProps {
  * - Subsection galleries with scroll behavior
  * - Smooth animations and transitions
  *
+ * Now uses Zustand store for navigation - NO MORE PROP DRILLING! 🎉
+ *
  * Optimized with React.memo and memoized constants
  *
  * Navigation Flow:
@@ -30,7 +28,9 @@ interface SensorySectionProps {
  * 2. Click planet → Shows subsection title + gallery
  * 3. Gallery grid with 6 images
  */
-export const SensorySection = memo(({ sensorySubView, setSensorySubView }: SensorySectionProps) => {
+export const SensorySection = memo(() => {
+  // Get navigation state directly from Zustand store - no props needed!
+  const { sensorySubView, setSensorySubView } = useNavigationStore()
   const SENSORY_PLANETS = useMemo(() => [
     {
       label: "Floor",

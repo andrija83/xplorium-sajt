@@ -69,3 +69,14 @@ export {
   isBookingStatus,
   isPricingCategory,
 } from './database'
+
+// API Response types
+export {
+  type ApiResponse,
+  type ApiSuccessResponse,
+  type ApiErrorResponse,
+  type PaginationMeta,
+  type PaginatedResponse,
+  isSuccessResponse,
+  isErrorResponse,
+} from './api'

@@ -125,15 +125,7 @@ export default function Landing() {
             )}
 
             {/* Section Manager - Feature Sections */}
-            {navigation.activeView && (
-              <SectionManager
-                activeView={navigation.activeView}
-                sensorySubView={navigation.sensorySubView}
-                cafeSubView={navigation.cafeSubView}
-                setSensorySubView={navigation.setSensorySubView}
-                setCafeSubView={navigation.setCafeSubView}
-              />
-            )}
+            {navigation.activeView && <SectionManager />}
           </AnimatePresence>
 
           {/* Helper Text */}

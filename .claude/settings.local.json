@@ -80,7 +80,19 @@
       "Bash(mv:*)",
       "Bash(del \"app\\api\\test-db\\route.ts\")",
       "Bash(del \"app\\api\\test-env\\route.ts\")",
-      "Bash(node scripts/test-rate-limit.mjs:*)"
+      "Bash(node scripts/test-rate-limit.mjs:*)",
+      "Bash(node scripts/backfill-pricing.mjs:*)",
+      "Bash(powershell -Command \"(Get-Content ''features\\cafe\\CafeSection.tsx'' | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command \"$content = Get-Content ''features\\cafe\\CafeSection.tsx'' -Raw; $content.Length\")",
+      "Bash(TASKKILL /F /PID 2200)",
+      "Bash(TASKKILL //F //PID 2200)",
+      "Bash(del /f \".next\\dev\\lock\")",
+      "Bash(timeout /t)",
+      "Bash(del \"prisma\\migrations\\20251127102641_add_scheduled_at_column\\migration.sql\")",
+      "Bash(powershell -Command \"Remove-Item -Recurse -Force ''prisma\\migrations\\20251127102641_add_scheduled_at_column''\")",
+      "Bash(node scripts/apply-text-search-indexes.mjs:*)",
+      "Bash(node scripts/apply-gdpr-fields.mjs:*)",
+      "Bash(node scripts/check-user-columns.mjs:*)"
     ],
     "deny": [],
     "ask": []

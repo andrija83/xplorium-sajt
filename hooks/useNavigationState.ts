@@ -1,51 +1,27 @@
-import { useState, useCallback } from 'react'
+import { useNavigationStore } from '@/stores/navigationStore'
 
 /**
  * useNavigationState Hook
  *
- * Manages navigation state for the Xplorium landing page
- * Handles main sections (cafe/discover/igraonica/profile) and their subsections
+ * Wrapper hook that uses Zustand store for navigation state management.
+ * Provides the same API as before, but now uses global state instead of local useState.
+ *
+ * This allows any component to access navigation without prop drilling!
  *
  * @returns Object containing navigation state and handlers
  */
 export function useNavigationState() {
-  const [activeView, setActiveView] = useState<string | null>(null)
-  const [sensorySubView, setSensorySubView] = useState<string | null>(null)
-  const [cafeSubView, setCafeSubView] = useState<string | null>(null)
-
-  /**
-   * Navigate to a main section
-   * Resets all subviews when navigating to a new section
-   */
-  const navigateToSection = useCallback((section: string) => {
-    setActiveView(section)
-    setSensorySubView(null)
-    setCafeSubView(null)
-  }, [])
-
-  /**
-   * Go back to previous view
-   * - If in subview, goes back to section menu
-   * - If in section, goes back to main menu
-   */
-  const goBackToMenu = useCallback(() => {
-    if (sensorySubView) {
-      setSensorySubView(null)
-    } else if (cafeSubView) {
-      setCafeSubView(null)
-    } else {
-      setActiveView(null)
-    }
-  }, [sensorySubView, cafeSubView])
-
-  /**
-   * Navigate to profile section
-   */
-  const handleProfileClick = useCallback(() => {
-    setActiveView("profile")
-    setSensorySubView(null)
-    setCafeSubView(null)
-  }, [])
+  // Get all navigation state and actions from Zustand store
+  const {
+    activeView,
+    sensorySubView,
+    cafeSubView,
+    setSensorySubView,
+    setCafeSubView,
+    navigateToSection,
+    goBackToMenu,
+    handleProfileClick,
+  } = useNavigationStore()
 
   return {
     // State

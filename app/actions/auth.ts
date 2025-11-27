@@ -6,17 +6,28 @@ import { logger } from '@/lib/logger'
 import { signUpSchema, type SignUpInput } from '@/lib/validations'
 import { signIn } from '@/lib/auth'
 import { AuthError } from 'next-auth'
-import { sanitizeErrorForClient } from '@/lib/sanitize'
 import { authRateLimit, checkRateLimit } from '@/lib/rate-limit'
+import {
+  ConflictError,
+  RateLimitError,
+  AuthenticationError,
+} from '@/lib/errors/api-error'
+import {
+  createSuccessResponse,
+  handleServerError,
+  type StandardResponse,
+} from '@/lib/utils/error-handler'
 
 /**
  * Sign up a new user with rate limiting
  * @param data - User registration data
- * @returns Success status and user data
+ * @returns Standardized response with user data
  */
-export async function signUp(data: SignUpInput) {
+export async function signUp(
+  data: SignUpInput
+): Promise<StandardResponse<{ id: string; name: string; email: string; role: string }>> {
   try {
-    // Validate input
+    // Validate input (Zod errors are automatically handled)
     const validatedData = signUpSchema.parse(data)
 
     // Rate limit by email to prevent spam registrations
@@ -29,12 +40,8 @@ export async function signUp(data: SignUpInput) {
         reset: new Date(rateLimitResult.reset * 1000).toISOString(),
       })
 
-      return {
-        success: false,
-        error: `Too many registration attempts. Please try again in ${Math.ceil(
-          (rateLimitResult.reset * 1000 - Date.now()) / 60000
-        )} minutes.`,
-      }
+      const retryAfterSeconds = rateLimitResult.reset - Math.floor(Date.now() / 1000)
+      throw new RateLimitError(retryAfterSeconds)
     }
 
     // Check if user already exists
@@ -43,10 +50,9 @@ export async function signUp(data: SignUpInput) {
     })
 
     if (existingUser) {
-      return {
-        success: false,
-        error: 'User with this email already exists',
-      }
+      throw new ConflictError('User with this email already exists', {
+        field: 'email',
+      })
     }
 
     // Hash password
@@ -68,18 +74,11 @@ export async function signUp(data: SignUpInput) {
       },
     })
 
-    return {
-      success: true,
-      user,
-      message: 'Account created successfully',
-    }
-  } catch (error) {
-    logger.serverActionError('signUp', error)
+    logger.info('User registered successfully', { userId: user.id, email: user.email })
 
-    return {
-      success: false,
-      error: sanitizeErrorForClient(error),
-    }
+    return createSuccessResponse(user, 'Account created successfully')
+  } catch (error) {
+    return handleServerError('signUp', error)
   }
 }
 
@@ -87,9 +86,12 @@ export async function signUp(data: SignUpInput) {
  * Sign in a user using NextAuth with rate limiting
  * @param email - User email
  * @param password - User password
- * @returns Success status and redirect URL
+ * @returns Standardized response with success message
  */
-export async function signInAction(email: string, password: string) {
+export async function signInAction(
+  email: string,
+  password: string
+): Promise<StandardResponse<{ message: string }>> {
   try {
     // Rate limit by email to prevent brute force attacks
     const rateLimitResult = await checkRateLimit(email, authRateLimit)
@@ -101,12 +103,8 @@ export async function signInAction(email: string, password: string) {
         reset: new Date(rateLimitResult.reset * 1000).toISOString(),
       })
 
-      return {
-        success: false,
-        error: `Too many sign in attempts. Please try again in ${Math.ceil(
-          (rateLimitResult.reset * 1000 - Date.now()) / 60000
-        )} minutes.`,
-      }
+      const retryAfterSeconds = rateLimitResult.reset - Math.floor(Date.now() / 1000)
+      throw new RateLimitError(retryAfterSeconds)
     }
 
     logger.auth('Attempting sign in for:', { email })
@@ -117,40 +115,25 @@ export async function signInAction(email: string, password: string) {
       redirect: false,
     })
 
-    logger.auth('Sign in result:', { result })
+    logger.auth('Sign in successful:', { email })
 
-    return {
-      success: true,
-      message: 'Signed in successfully',
-    }
+    return createSuccessResponse({ message: 'Signed in successfully' })
   } catch (error) {
-    logger.serverActionError('signInAction', error)
-
+    // Handle NextAuth specific errors
     if (error instanceof AuthError) {
       logger.auth('AuthError type:', { type: error.type })
+
       switch (error.type) {
         case 'CredentialsSignin':
-          return {
-            success: false,
-            error: 'Invalid email or password',
-          }
+          throw new AuthenticationError('Invalid email or password')
         case 'CallbackRouteError':
-          return {
-            success: false,
-            error: 'Authentication callback failed. Please check your credentials.',
-          }
+          throw new AuthenticationError('Authentication callback failed. Please check your credentials.')
         default:
-          return {
-            success: false,
-            error: `Authentication failed: ${error.type}`,
-          }
+          throw new AuthenticationError(`Authentication failed: ${error.type}`)
       }
     }
 
-    return {
-      success: false,
-      error: sanitizeErrorForClient(error),
-    }
+    return handleServerError('signInAction', error)
   }
 }
 

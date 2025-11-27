@@ -4,6 +4,7 @@ import { memo } from 'react'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { SectionSkeleton } from '@/components/loading/SectionSkeleton'
+import { useNavigationStore } from '@/stores/navigationStore'
 
 // Dynamic imports for feature sections
 const CafeSection = dynamic(() => import("@/features/cafe/CafeSection").then(m => ({ default: m.CafeSection })), {
@@ -23,14 +24,6 @@ const ProfileSection = dynamic(() => import("@/components/profile/ProfileSection
   ssr: false
 })
 
-interface SectionManagerProps {
-  activeView: string
-  sensorySubView: string | null
-  cafeSubView: string | null
-  setSensorySubView: (view: string | null) => void
-  setCafeSubView: (view: string | null) => void
-}
-
 /**
  * SectionManager Component
  *
@@ -40,16 +33,15 @@ interface SectionManagerProps {
  * - Igraonica Section (playground)
  * - Profile Section
  *
+ * Now uses Zustand store for navigation - NO MORE PROP DRILLING! 🎉
+ *
  * Uses AnimatePresence-compatible transitions
  * Optimized with React.memo to prevent unnecessary re-renders
  */
-export const SectionManager = memo(function SectionManager({
-  activeView,
-  sensorySubView,
-  cafeSubView,
-  setSensorySubView,
-  setCafeSubView,
-}: SectionManagerProps) {
+export const SectionManager = memo(function SectionManager() {
+  // Get navigation state directly from Zustand store - no props needed!
+  const activeView = useNavigationStore(state => state.activeView)
+
   // Igraonica needs full viewport width, others need container constraints
   const isFullWidth = activeView === "igraonica"
 
@@ -64,19 +56,10 @@ export const SectionManager = memo(function SectionManager({
       role="region"
       aria-label={`${activeView === 'discover' ? 'Sensory' : activeView === 'igraonica' ? 'Igraonica' : activeView === 'cafe' ? 'Cafe' : activeView} section`}
     >
-      {activeView === "cafe" && (
-        <CafeSection
-          cafeSubView={cafeSubView}
-          setCafeSubView={setCafeSubView}
-        />
-      )}
+      {/* All sections now get their state directly from Zustand - no props! */}
+      {activeView === "cafe" && <CafeSection />}
 
-      {activeView === "discover" && (
-        <SensorySection
-          sensorySubView={sensorySubView}
-          setSensorySubView={setSensorySubView}
-        />
-      )}
+      {activeView === "discover" && <SensorySection />}
 
       {activeView === "igraonica" && <IgraonicaSection />}
 

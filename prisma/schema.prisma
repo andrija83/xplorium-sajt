@@ -1,6 +1,3 @@
-// Xplorium Admin Panel Database Schema
-// This schema defines all models for the admin panel backend
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,112 +7,85 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// USER MANAGEMENT
-// ============================================
-
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  name          String?
-  password      String    // bcrypt hashed
-  role          Role      @default(USER)
-  image         String?
-  blocked       Boolean   @default(false)
-
-  // CRM & Loyalty Program
-  loyaltyPoints Int       @default(0)
-  loyaltyTier   LoyaltyTier @default(BRONZE)
-  totalSpent    Float     @default(0)
-
-  // Customer Preferences
-  phone         String?
+  id                     String           @id @default(cuid())
+  email                  String           @unique
+  emailVerified          DateTime?
+  name                   String?
+  password               String
+  role                   Role             @default(USER)
+  image                  String?
+  blocked                Boolean          @default(false)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  customerNotes          String?
+  firstBookingDate       DateTime?
+  lastBookingDate        DateTime?
+  loyaltyPoints          Int              @default(0)
+  loyaltyTier            LoyaltyTier      @default(BRONZE)
+  marketingOptIn         Boolean          @default(true)
+  phone                  String?
   preferredContactMethod PreferredContact @default(EMAIL)
-  marketingOptIn Boolean  @default(true)
-  smsOptIn      Boolean   @default(false)
-  preferredTypes Json?    // Array of preferred booking types
-  customerNotes String?   @db.Text // Admin notes about this customer
-  tags          String[]  // Customer segmentation tags
-
-  // Customer Stats (auto-calculated)
-  totalBookings Int       @default(0)
-  lastBookingDate DateTime?
-  firstBookingDate DateTime?
-
-  // Relations
-  bookings      Booking[]
-  auditLogs     AuditLog[]
-
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  preferredTypes         Json?
+  smsOptIn               Boolean          @default(false)
+  tags                   String[]
+  totalBookings          Int              @default(0)
+  totalSpent             Float            @default(0)
+  consentGivenAt         DateTime?
+  consentVersion         String?          @db.VarChar(10)
+  dataProcessingConsent  Boolean?
+  deletionReason         String?
+  deletionRequestedAt    DateTime?
+  deletionScheduledFor   DateTime?
+  marketingConsentUpdatedAt DateTime?
+  auditLogs              AuditLog[]
+  bookings               Booking[]
 
   @@index([email])
   @@index([role])
   @@index([loyaltyTier])
   @@index([marketingOptIn])
+  @@index([deletionRequestedAt])
+  @@index([deletionScheduledFor])
 }
 
-// ============================================
-// BOOKINGS
-// ============================================
-
 model Booking {
-  id          String        @id @default(cuid())
-
-  // User relationship (REQUIRED - no guest bookings)
-  userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Booking details
-  title       String
-  date        DateTime
-  time        String
-  type        BookingType
-  guestCount  Int
-
-  // Contact info (required even for logged-in users)
-  phone       String
-  email       String
-
-  // Special requests from user
-  specialRequests String?   @db.Text
-
-  // Status & notes
-  status      BookingStatus @default(PENDING)
-  adminNotes  String?       @db.Text
-
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  userId          String
+  title           String
+  date            DateTime
+  time            String
+  type            BookingType
+  guestCount      Int
+  phone           String
+  email           String
+  status          BookingStatus @default(PENDING)
+  adminNotes      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  specialRequests String?
+  scheduledAt     DateTime
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([date])
+  @@index([scheduledAt])
   @@index([email])
   @@index([userId])
+  @@index([status, scheduledAt])
 }
-
-// ============================================
-// EVENTS
-// ============================================
 
 model Event {
   id          String      @id @default(cuid())
   slug        String      @unique
   title       String
-  description String      @db.Text
-
-  // Schedule
+  description String
   date        DateTime
   time        String
-
-  // Media & categorization
   image       String?
   category    String
-
-  // Publishing
   status      EventStatus @default(DRAFT)
-  order       Int         @default(0) // For drag-and-drop reordering
-
+  order       Int         @default(0)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -124,95 +94,110 @@ model Event {
   @@index([slug])
 }
 
-// ============================================
-// PRICING PACKAGES
-// ============================================
-
 model PricingPackage {
-  id          String        @id @default(cuid())
-  name        String        // Package name (e.g., "1 Sat Igre")
-  price       String        // Price with currency (e.g., "500 RSD")
-  category    PricingCategory // PLAYGROUND, SENSORY_ROOM, CAFE, PARTY
-  popular     Boolean       @default(false) // Highlight as popular
-  features    Json          // Array of features/benefits
-  description String?       @db.Text
-
-  // Display settings
-  status      PricingStatus @default(PUBLISHED)
-  order       Int           @default(0) // For drag-and-drop ordering
-
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id            String          @id @default(cuid())
+  name          String
+  price         String?
+  category      PricingCategory
+  popular       Boolean         @default(false)
+  features      Json
+  description   String?
+  status        PricingStatus   @default(PUBLISHED)
+  order         Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  priceAmount   Decimal?        @db.Decimal(10, 2)
+  priceCurrency String?         @default("RSD") @db.VarChar(3)
 
   @@index([category])
   @@index([status])
   @@index([order])
 }
 
-// ============================================
-// CONTENT MANAGEMENT
-// ============================================
-
 model SiteContent {
-  id        String   @id @default(cuid())
-  section   String   @unique // 'cafe', 'sensory', 'igraonica'
-  content   Json     // Flexible JSON structure
-  status    ContentStatus @default(DRAFT)
-  version   Int      @default(1)
-  updatedAt DateTime @updatedAt
-  updatedBy String?  // User ID who made the change
-
+  id        String               @id @default(cuid())
+  section   String               @unique
+  content   Json
+  updatedAt DateTime             @updatedAt
+  updatedBy String?
+  status    ContentStatus        @default(DRAFT)
+  version   Int                  @default(1)
   versions  SiteContentVersion[]
 
   @@index([section])
 }
 
 model SiteContentVersion {
-  id            String         @id @default(cuid())
+  id            String        @id @default(cuid())
   section       String
   version       Int
-  status        ContentStatus  @default(DRAFT)
+  status        ContentStatus @default(DRAFT)
   content       Json
-  createdAt     DateTime       @default(now())
+  createdAt     DateTime      @default(now())
   createdBy     String?
-  siteContent   SiteContent    @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
   siteContentId String
+  siteContent   SiteContent   @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
 
-  @@index([section])
   @@unique([section, version])
+  @@index([section])
 }
-
-// ============================================
-// AUDIT LOGGING
-// ============================================
 
 model AuditLog {
   id        String   @id @default(cuid())
-
-  // Who performed the action
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // What was done
-  action    String   // 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT'
-  entity    String   // 'Event', 'Booking', 'User', 'Content'
+  action    String
+  entity    String
   entityId  String
-  changes   Json?    // Detailed change log
-
-  // Metadata
+  changes   Json?
   ipAddress String?
   userAgent String?
-
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([entity, entityId])
   @@index([createdAt])
 }
 
-// ============================================
-// ENUMS
-// ============================================
+model MaintenanceLog {
+  id            String            @id @default(cuid())
+  equipment     String
+  area          MaintenanceArea
+  description   String
+  type          MaintenanceType
+  status        MaintenanceStatus @default(SCHEDULED)
+  priority      Priority          @default(MEDIUM)
+  scheduledDate DateTime
+  completedDate DateTime?
+  cost          Float?
+  performedBy   String?
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([status])
+  @@index([area])
+  @@index([scheduledDate])
+  @@index([priority])
+}
+
+model InventoryItem {
+  id              String            @id @default(cuid())
+  name            String
+  category        InventoryCategory
+  quantity        Int               @default(0)
+  unit            String
+  reorderPoint    Int               @default(10)
+  supplierName    String?
+  supplierContact String?
+  lastRestocked   DateTime?
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([category])
+  @@index([quantity])
+}
 
 enum Role {
   USER
@@ -221,11 +206,11 @@ enum Role {
 }
 
 enum LoyaltyTier {
-  BRONZE   // 0-999 points
-  SILVER   // 1000-2999 points
-  GOLD     // 3000-5999 points
-  PLATINUM // 6000+ points
-  VIP      // Special tier for high-value customers
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  VIP
 }
 
 enum PreferredContact {
@@ -277,37 +262,6 @@ enum ContentStatus {
   ARCHIVED
 }
 
-// ============================================
-// MAINTENANCE LOG
-// ============================================
-
-model MaintenanceLog {
-  id            String            @id @default(cuid())
-  equipment     String            // Equipment or area name
-  area          MaintenanceArea
-  description   String            @db.Text
-  type          MaintenanceType
-  status        MaintenanceStatus @default(SCHEDULED)
-  priority      Priority          @default(MEDIUM)
-
-  // Scheduling
-  scheduledDate DateTime
-  completedDate DateTime?
-
-  // Tracking
-  cost          Float?
-  performedBy   String?           // Name of person who performed maintenance
-  notes         String?           @db.Text
-
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-
-  @@index([status])
-  @@index([area])
-  @@index([scheduledDate])
-  @@index([priority])
-}
-
 enum MaintenanceArea {
   CAFE
   PLAYGROUND
@@ -336,29 +290,6 @@ enum Priority {
   MEDIUM
   HIGH
   URGENT
-}
-
-// ============================================
-// INVENTORY MANAGEMENT
-// ============================================
-
-model InventoryItem {
-  id              String            @id @default(cuid())
-  name            String
-  category        InventoryCategory
-  quantity        Int               @default(0)
-  unit            String            // e.g., "pieces", "kg", "liters", "boxes"
-  reorderPoint    Int               @default(10) // Alert when quantity <= this
-  supplierName    String?
-  supplierContact String?
-  lastRestocked   DateTime?
-  notes           String?           @db.Text
-
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@index([category])
-  @@index([quantity])
 }
 
 enum InventoryCategory {
