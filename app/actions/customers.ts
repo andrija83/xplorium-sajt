@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
+import { sanitizeErrorForClient } from '@/lib/sanitize'
 
 /**
  * Get all customers with stats
@@ -43,7 +44,7 @@ export async function getCustomers(filters?: {
     }
 
     const [customers, total] = await Promise.all([
-      prisma.customer.findMany({
+      prisma.user.findMany({
         where,
         skip,
         take: limit,
@@ -51,7 +52,7 @@ export async function getCustomers(filters?: {
           lastBookingDate: 'desc',
         },
       }),
-      prisma.customer.count({ where }),
+      prisma.user.count({ where }),
     ])
 
     return {
@@ -68,7 +69,7 @@ export async function getCustomers(filters?: {
     logger.serverActionError('getCustomers', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to load customers',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -82,7 +83,7 @@ export async function getCustomerById(id: string) {
   try {
     await requireAdmin()
 
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma.user.findUnique({
       where: { id },
     })
 
@@ -120,7 +121,7 @@ export async function getCustomerById(id: string) {
     logger.serverActionError('getCustomerById', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to load customer',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -142,7 +143,7 @@ export async function upsertCustomer(data: {
   try {
     await requireAdmin()
 
-    const customer = await prisma.customer.upsert({
+    const customer = await prisma.user.upsert({
       where: { email: data.email },
       create: {
         email: data.email,
@@ -174,7 +175,7 @@ export async function upsertCustomer(data: {
     logger.serverActionError('upsertCustomer', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to save customer',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -189,7 +190,7 @@ export async function updateLoyaltyPoints(id: string, points: number) {
   try {
     await requireAdmin()
 
-    const customer = await prisma.customer.update({
+    const customer = await prisma.user.update({
       where: { id },
       data: {
         loyaltyPoints: {
@@ -211,7 +212,7 @@ export async function updateLoyaltyPoints(id: string, points: number) {
     }
 
     if (newTier !== customer.loyaltyTier) {
-      await prisma.customer.update({
+      await prisma.user.update({
         where: { id },
         data: { loyaltyTier: newTier },
       })
@@ -228,7 +229,7 @@ export async function updateLoyaltyPoints(id: string, points: number) {
     logger.serverActionError('updateLoyaltyPoints', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to update loyalty points',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -243,7 +244,7 @@ export async function addCustomerTag(id: string, tag: string) {
   try {
     await requireAdmin()
 
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma.user.findUnique({
       where: { id },
     })
 
@@ -259,7 +260,7 @@ export async function addCustomerTag(id: string, tag: string) {
       tags.push(tag)
     }
 
-    const updated = await prisma.customer.update({
+    const updated = await prisma.user.update({
       where: { id },
       data: { tags },
     })
@@ -275,7 +276,7 @@ export async function addCustomerTag(id: string, tag: string) {
     logger.serverActionError('addCustomerTag', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to add tag',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -290,7 +291,7 @@ export async function removeCustomerTag(id: string, tag: string) {
   try {
     await requireAdmin()
 
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma.user.findUnique({
       where: { id },
     })
 
@@ -303,7 +304,7 @@ export async function removeCustomerTag(id: string, tag: string) {
 
     const tags = (customer.tags || []).filter((t) => t !== tag)
 
-    const updated = await prisma.customer.update({
+    const updated = await prisma.user.update({
       where: { id },
       data: { tags },
     })
@@ -319,7 +320,7 @@ export async function removeCustomerTag(id: string, tag: string) {
     logger.serverActionError('removeCustomerTag', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to remove tag',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -382,12 +383,12 @@ export async function syncCustomerData() {
     let updated = 0
 
     for (const customerData of customerMap.values()) {
-      const existing = await prisma.customer.findUnique({
+      const existing = await prisma.user.findUnique({
         where: { email: customerData.email },
       })
 
       if (existing) {
-        await prisma.customer.update({
+        await prisma.user.update({
           where: { email: customerData.email },
           data: {
             totalBookings: customerData.totalBookings,
@@ -399,7 +400,7 @@ export async function syncCustomerData() {
         })
         updated++
       } else {
-        await prisma.customer.create({
+        await prisma.user.create({
           data: {
             email: customerData.email,
             name: customerData.name,
@@ -427,7 +428,7 @@ export async function syncCustomerData() {
     logger.serverActionError('syncCustomerData', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to sync customer data',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -464,7 +465,7 @@ export async function getMarketingList(filters?: {
       }
     }
 
-    const customers = await prisma.customer.findMany({
+    const customers = await prisma.user.findMany({
       where,
       select: {
         id: true,
@@ -490,7 +491,7 @@ export async function getMarketingList(filters?: {
     logger.serverActionError('getMarketingList', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to generate marketing list',
+      error: sanitizeErrorForClient(error),
     }
   }
 }

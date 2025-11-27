@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
 import { formatDateForCSV, formatDateTimeForCSV } from '@/lib/csv-export'
+import { sanitizeErrorForClient } from '@/lib/sanitize'
 
 /**
  * Export all bookings to CSV-ready format
@@ -87,7 +88,7 @@ export async function exportBookings(filters?: {
     logger.serverActionError('exportBookings', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to export bookings',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -155,7 +156,7 @@ export async function exportCustomers() {
     logger.serverActionError('exportCustomers', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to export customers',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -200,7 +201,7 @@ export async function exportEventAttendance(eventId?: string) {
     logger.serverActionError('exportEventAttendance', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to export event attendance',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -268,7 +269,7 @@ export async function exportMonthlyRevenue(year: number, month: number) {
     logger.serverActionError('exportMonthlyRevenue', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to export monthly revenue',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -309,7 +310,7 @@ export async function exportUsers() {
     logger.serverActionError('exportUsers', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to export users',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -353,7 +354,7 @@ export async function exportPricingPackages() {
     logger.serverActionError('exportPricingPackages', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to export pricing packages',
+      error: sanitizeErrorForClient(error),
     }
   }
 }

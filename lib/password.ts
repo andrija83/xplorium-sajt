@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 
 /**
  * Hash a password using bcrypt with 12 salt rounds
@@ -24,16 +25,22 @@ export async function comparePassword(
 }
 
 /**
- * Generate a random password
+ * Generate a cryptographically secure random password
  * @param length - Length of password (default: 16)
  * @returns Random password
  */
 export function generatePassword(length: number = 16): string {
   const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*'
+  const charsetLength = charset.length
   let password = ''
 
+  // Generate cryptographically secure random bytes
+  const randomBytes = crypto.randomBytes(length)
+
   for (let i = 0; i < length; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length))
+    // Use modulo to map random byte to charset index
+    const randomIndex = randomBytes[i] % charsetLength
+    password += charset.charAt(randomIndex)
   }
 
   return password

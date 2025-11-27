@@ -5,6 +5,7 @@
  * - Different log levels (debug, info, warn, error)
  * - Automatic environment detection (dev vs production)
  * - Structured logging with context
+ * - PII sanitization in production
  * - Disabled in production by default (except errors)
  * - Color-coded console output in development
  * - Timestamps for all logs
@@ -17,6 +18,8 @@
  * logger.warn('Deprecated API usage', { endpoint })
  * logger.error('Database error', error)
  */
+
+import { sanitizePII } from './sanitize'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
@@ -40,13 +43,16 @@ class Logger {
     let formattedMessage = `${prefix} ${message}`
 
     if (context) {
-      if (context instanceof Error) {
-        formattedMessage += `\n  Error: ${context.message}`
-        if (context.stack && this.isDevelopment) {
-          formattedMessage += `\n  Stack: ${context.stack}`
+      // Sanitize context in production to prevent PII exposure
+      const sanitizedContext = !this.isDevelopment ? sanitizePII(context) : context
+
+      if (sanitizedContext instanceof Error) {
+        formattedMessage += `\n  Error: ${sanitizedContext.message}`
+        if (sanitizedContext.stack && this.isDevelopment) {
+          formattedMessage += `\n  Stack: ${sanitizedContext.stack}`
         }
       } else {
-        const contextStr = JSON.stringify(context, null, 2)
+        const contextStr = JSON.stringify(sanitizedContext, null, 2)
         formattedMessage += `\n  Context: ${contextStr}`
       }
     }

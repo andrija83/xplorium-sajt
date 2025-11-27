@@ -76,7 +76,11 @@
       "Bash(timeout /t 10)",
       "Bash(set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=yes)",
       "Bash($env:PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes\")",
-      "Bash(export PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes\")"
+      "Bash(export PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes\")",
+      "Bash(mv:*)",
+      "Bash(del \"app\\api\\test-db\\route.ts\")",
+      "Bash(del \"app\\api\\test-env\\route.ts\")",
+      "Bash(node scripts/test-rate-limit.mjs:*)"
     ],
     "deny": [],
     "ask": []

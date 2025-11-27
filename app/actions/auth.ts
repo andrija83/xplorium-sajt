@@ -6,9 +6,11 @@ import { logger } from '@/lib/logger'
 import { signUpSchema, type SignUpInput } from '@/lib/validations'
 import { signIn } from '@/lib/auth'
 import { AuthError } from 'next-auth'
+import { sanitizeErrorForClient } from '@/lib/sanitize'
+import { authRateLimit, checkRateLimit } from '@/lib/rate-limit'
 
 /**
- * Sign up a new user
+ * Sign up a new user with rate limiting
  * @param data - User registration data
  * @returns Success status and user data
  */
@@ -16,6 +18,24 @@ export async function signUp(data: SignUpInput) {
   try {
     // Validate input
     const validatedData = signUpSchema.parse(data)
+
+    // Rate limit by email to prevent spam registrations
+    const rateLimitResult = await checkRateLimit(validatedData.email, authRateLimit)
+
+    if (!rateLimitResult.success) {
+      logger.warn('Sign up rate limit exceeded', {
+        email: validatedData.email,
+        remaining: rateLimitResult.remaining,
+        reset: new Date(rateLimitResult.reset * 1000).toISOString(),
+      })
+
+      return {
+        success: false,
+        error: `Too many registration attempts. Please try again in ${Math.ceil(
+          (rateLimitResult.reset * 1000 - Date.now()) / 60000
+        )} minutes.`,
+      }
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -56,28 +76,39 @@ export async function signUp(data: SignUpInput) {
   } catch (error) {
     logger.serverActionError('signUp', error)
 
-    if (error instanceof Error) {
-      return {
-        success: false,
-        error: error.message,
-      }
-    }
-
     return {
       success: false,
-      error: 'Failed to create account',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
 
 /**
- * Sign in a user using NextAuth
+ * Sign in a user using NextAuth with rate limiting
  * @param email - User email
  * @param password - User password
  * @returns Success status and redirect URL
  */
 export async function signInAction(email: string, password: string) {
   try {
+    // Rate limit by email to prevent brute force attacks
+    const rateLimitResult = await checkRateLimit(email, authRateLimit)
+
+    if (!rateLimitResult.success) {
+      logger.warn('Sign in rate limit exceeded', {
+        email,
+        remaining: rateLimitResult.remaining,
+        reset: new Date(rateLimitResult.reset * 1000).toISOString(),
+      })
+
+      return {
+        success: false,
+        error: `Too many sign in attempts. Please try again in ${Math.ceil(
+          (rateLimitResult.reset * 1000 - Date.now()) / 60000
+        )} minutes.`,
+      }
+    }
+
     logger.auth('Attempting sign in for:', { email })
 
     const result = await signIn('credentials', {
@@ -118,7 +149,7 @@ export async function signInAction(email: string, password: string) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to sign in',
+      error: sanitizeErrorForClient(error),
     }
   }
 }

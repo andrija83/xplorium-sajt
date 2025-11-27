@@ -22,6 +22,12 @@ This is **Xplorium** - a comprehensive web application for a family entertainmen
 
 **For comprehensive project status, features, and roadmap, see:** `PROJECT_STATUS.md`
 
+**Documentation:**
+- Active documentation is in the root and `docs/` directory
+- Completed/archived documentation is in `docs/archive/` - see `docs/archive/ARCHIVE_INDEX.md` for a full list
+- Reference `OAUTH_IMPLEMENTATION_PLAN.md` for future OAuth integration
+- Reference `TODO_RESEND_MIGRATION.md` for pending email service migration
+
 ## Common Commands
 
 ```bash

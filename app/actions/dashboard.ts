@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
+import { sanitizeErrorForClient } from '@/lib/sanitize'
 
 /**
  * Get enhanced dashboard statistics with analytics
@@ -257,17 +258,9 @@ export async function getDashboardStats() {
     }
   } catch (error) {
     logger.serverActionError('getDashboardStats', error)
-
-    if (error instanceof Error) {
-      return {
-        success: false,
-        error: error.message,
-      }
-    }
-
     return {
       success: false,
-      error: 'Failed to load dashboard stats',
+      error: sanitizeErrorForClient(error),
     }
   }
 }
@@ -363,7 +356,7 @@ export async function getPopularPricingPackages() {
     logger.serverActionError('getPopularPricingPackages', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to load pricing packages',
+      error: sanitizeErrorForClient(error),
     }
   }
 }

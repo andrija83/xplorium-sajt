@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { sanitizeErrorForClient } from '@/lib/sanitize'
 import {
   createPricingSchema,
   updatePricingSchema,
@@ -160,7 +161,7 @@ export async function createPricingPackage(data: CreatePricingInput) {
     logger.serverActionError('createPricingPackage', error)
     return {
       success: false,
-      error: 'Failed to create pricing package: ' + (error instanceof Error ? error.message : String(error)),
+      error: sanitizeErrorForClient(error),
     }
   }
 }
