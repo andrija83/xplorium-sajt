@@ -56,6 +56,14 @@ const PeakDaysChart = dynamic(
   }
 )
 
+const BookingsHeatmap = dynamic(
+  () => import("@/components/admin/charts/BookingsHeatmap").then(m => ({ default: m.BookingsHeatmap })),
+  {
+    loading: () => <ChartSkeleton />,
+    ssr: false
+  }
+)
+
 /**
  * Admin Dashboard Page
  *
@@ -111,6 +119,7 @@ interface DashboardData {
   bookingsOverTime: Array<{ date: any; count: number }>
   peakDays: Array<{ day: string; count: number }>
   peakTimes: Array<{ time: string; count: number }>
+  heatmapData: Array<{ day: string; hour: number; count: number }>
 }
 
 const COLORS = {
@@ -440,11 +449,30 @@ export default function AdminDashboard() {
         </motion.div>
       </div>
 
+      {/* Bookings Heatmap */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-emerald-400/20"
+        style={{
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)"
+        }}
+      >
+        <h3 className="text-lg font-semibold text-emerald-300 mb-4">
+          Booking Density Heatmap
+        </h3>
+        <p className="text-sm text-emerald-100/60 mb-6">
+          Visualize booking patterns by day of week and time of day (This Month)
+        </p>
+        <BookingsHeatmap data={dashboardData.heatmapData || []} />
+      </motion.div>
+
       {/* Recent activity */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.35 }}
         className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-cyan-400/20"
         style={{
           boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)"

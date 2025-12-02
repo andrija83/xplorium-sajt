@@ -290,6 +290,31 @@ export async function getDashboardStats() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10) // Top 10 time slots
 
+    // Generate heatmap data (day of week x hour of day)
+    const heatmapData: Array<{ day: string; hour: number; count: number }> = []
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const heatmapCounts: Record<string, number> = {}
+
+    allBookings.forEach((booking) => {
+      const dayOfWeek = new Date(booking.date).getDay()
+      const hour = parseInt(booking.time.split(':')[0])
+      const key = `${dayNames[dayOfWeek]}-${hour}`
+      heatmapCounts[key] = (heatmapCounts[key] || 0) + 1
+    })
+
+    // Generate all combinations (all days, hours 8-21)
+    for (let i = 1; i < 8; i++) { // Mon-Sun (skip Sun at index 0, add at end)
+      const dayIndex = i % 7
+      for (let hour = 8; hour <= 21; hour++) {
+        const key = `${dayNames[dayIndex]}-${hour}`
+        heatmapData.push({
+          day: dayNames[dayIndex],
+          hour,
+          count: heatmapCounts[key] || 0,
+        })
+      }
+    }
+
     // Calculate revenue totals
     const todayRevenue = todayBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
     const yesterdayRevenue = yesterdayBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
@@ -367,6 +392,7 @@ export async function getDashboardStats() {
       bookingsByStatus,
       peakDays,
       peakTimes,
+      heatmapData,
       bookingsOverTime: bookingsOverTime.map((item) => ({
         date: item.date,
         count: item._count.id,
