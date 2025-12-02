@@ -279,7 +279,7 @@ export const BirthdayBookingForm = ({
       // Create booking via server action
       const result = await createBooking({
         title: bookingTitle,
-        date: formData.partyDate,
+        date: formData.partyDate as any,
         time: formData.partyTime,
         type: variant === 'birthday' ? 'PARTY' : 'PLAYGROUND',
         guestCount: parseInt(formData.numberOfGuests),

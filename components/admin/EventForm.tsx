@@ -106,7 +106,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         currency: formData.currency,
         location: formData.location || null,
         image: formData.image || null,
-        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        tags: formData.tags ? formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
         isRecurring: formData.isRecurring,
         recurrenceRule: formData.recurrenceRule || null
       }

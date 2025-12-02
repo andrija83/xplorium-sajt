@@ -20,12 +20,16 @@ import { cn } from '@/lib/utils'
 interface Event {
   id: string
   title: string
+  slug: string
   date: Date
   time: string
+  endTime?: string
   category: string
   status: string
   capacity?: number
   registeredCount: number
+  image: string | null
+  createdAt: Date
   _count?: { attendees: number }
 }
 
