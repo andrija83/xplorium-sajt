@@ -3,9 +3,11 @@
 import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Search, Filter, Calendar, CheckCircle, XCircle, Clock, Trash2, Loader2 } from "lucide-react"
+import { Search, Filter, Calendar, CheckCircle, XCircle, Clock, Trash2, Loader2, LayoutList, CalendarDays } from "lucide-react"
 import { DataTable, type Column } from "@/components/admin/DataTable"
-import { getBookings, deleteBooking } from "@/app/actions/bookings"
+import { AdminBookingCalendar } from "@/components/admin/AdminBookingCalendar"
+import type { AdminBookingEvent } from "@/components/admin/AdminBookingCalendar"
+import { getBookings, deleteBooking, approveBooking, rejectBooking } from "@/app/actions/bookings"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
@@ -75,6 +77,9 @@ function BookingsContent() {
     totalPages: 1,
   })
 
+  // View mode
+  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
+
   // Filters
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "ALL")
@@ -129,6 +134,71 @@ function BookingsContent() {
   const handleRowClick = (booking: Booking) => {
     router.push(`/admin/bookings/${booking.id}`)
   }
+
+  // Handle approve
+  const handleApprove = async (bookingId: string) => {
+    try {
+      const result = await approveBooking(bookingId)
+      if (result.success) {
+        toast.success("Booking approved successfully")
+        fetchBookings(pagination.page)
+      } else {
+        toast.error(result.error || "Failed to approve booking")
+      }
+    } catch (error) {
+      logger.error("Failed to approve booking", error instanceof Error ? error : new Error(String(error)))
+      toast.error("Failed to approve booking")
+    }
+  }
+
+  // Handle reject
+  const handleReject = async (bookingId: string) => {
+    const reason = prompt("Please provide a reason for rejection (optional):")
+
+    try {
+      const result = await rejectBooking(bookingId, reason || "Rejected by admin")
+      if (result.success) {
+        toast.success("Booking rejected")
+        fetchBookings(pagination.page)
+      } else {
+        toast.error(result.error || "Failed to reject booking")
+      }
+    } catch (error) {
+      logger.error("Failed to reject booking", error instanceof Error ? error : new Error(String(error)))
+      toast.error("Failed to reject booking")
+    }
+  }
+
+  // Handle delete
+  const handleDelete = async (bookingId: string) => {
+    if (!confirm("Are you sure you want to delete this booking?")) return
+
+    try {
+      const result = await deleteBooking(bookingId)
+      if (result.success) {
+        toast.success("Booking deleted")
+        fetchBookings(pagination.page)
+      } else {
+        toast.error(result.error || "Failed to delete booking")
+      }
+    } catch (error) {
+      logger.error("Failed to delete booking", error instanceof Error ? error : new Error(String(error)))
+      toast.error("Failed to delete booking")
+    }
+  }
+
+  // Transform bookings for calendar view
+  const calendarEvents: AdminBookingEvent[] = bookings.map(booking => ({
+    id: booking.id,
+    title: booking.title,
+    date: new Date(booking.date),
+    time: booking.time,
+    type: booking.type as AdminBookingEvent['type'],
+    status: booking.status as AdminBookingEvent['status'],
+    guestCount: booking.guestCount,
+    phone: booking.phone,
+    email: booking.email,
+  }))
 
   // Table columns
   const columns: Column<Booking>[] = [
@@ -214,16 +284,50 @@ function BookingsContent() {
             Manage all venue bookings and reservations
           </p>
         </div>
-        <ExportButton
-          onExport={() => exportBookings({
-            status: statusFilter !== "ALL" ? statusFilter : undefined,
-            type: typeFilter !== "ALL" ? typeFilter : undefined,
-          })}
-          filename="bookings"
-          label="Export to CSV"
-          variant="outline"
-          className="border-cyan-400/30 text-cyan-400 hover:bg-cyan-400/10"
-        />
+        <div className="flex gap-3">
+          {/* View Toggle */}
+          <div className="flex gap-1 p-1 rounded-lg bg-black/20 border border-cyan-400/20">
+            <motion.button
+              onClick={() => setViewMode('table')}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded text-sm transition-all",
+                viewMode === 'table'
+                  ? "bg-cyan-500 text-white"
+                  : "text-cyan-400 hover:bg-cyan-400/10"
+              )}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <LayoutList className="w-4 h-4" />
+              Table
+            </motion.button>
+            <motion.button
+              onClick={() => setViewMode('calendar')}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded text-sm transition-all",
+                viewMode === 'calendar'
+                  ? "bg-cyan-500 text-white"
+                  : "text-cyan-400 hover:bg-cyan-400/10"
+              )}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <CalendarDays className="w-4 h-4" />
+              Calendar
+            </motion.button>
+          </div>
+
+          <ExportButton
+            onExport={() => exportBookings({
+              status: statusFilter !== "ALL" ? statusFilter : undefined,
+              type: typeFilter !== "ALL" ? typeFilter : undefined,
+            })}
+            filename="bookings"
+            label="Export to CSV"
+            variant="outline"
+            className="border-cyan-400/30 text-cyan-400 hover:bg-cyan-400/10"
+          />
+        </div>
       </div>
 
       {/* Filters */}
@@ -286,16 +390,38 @@ function BookingsContent() {
         </div>
       </motion.div>
 
-      {/* Table */}
-      <DataTable
-        data={bookings}
-        columns={columns}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        isLoading={isLoading}
-        emptyMessage="No bookings found"
-        onRowClick={handleRowClick}
-      />
+      {/* Content - Table or Calendar */}
+      {viewMode === 'table' ? (
+        <DataTable
+          data={bookings}
+          columns={columns}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          isLoading={isLoading}
+          emptyMessage="No bookings found"
+          onRowClick={handleRowClick}
+        />
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-cyan-400/20"
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+            </div>
+          ) : (
+            <AdminBookingCalendar
+              events={calendarEvents}
+              onEventClick={(event) => router.push(`/admin/bookings/${event.id}`)}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              onDelete={handleDelete}
+            />
+          )}
+        </motion.div>
+      )}
     </div>
   )
 }

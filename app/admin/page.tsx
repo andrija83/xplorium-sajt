@@ -7,9 +7,13 @@ import { motion } from "framer-motion"
 import { Calendar, Users, FileText, Clock } from "lucide-react"
 import { StatsCard } from "@/components/admin/StatsCard"
 import { RecentActivity } from "@/components/admin/RecentActivity"
+import { QuickActionsWidget } from "@/components/admin/QuickActionsWidget"
+import { RevenueStatsCard } from "@/components/admin/RevenueStatsCard"
 import { getDashboardStats, getRecentActivity } from "@/app/actions/dashboard"
+import { approveBooking, rejectBooking } from "@/app/actions/bookings"
 import { ChartSkeleton } from "@/components/loading/ChartSkeleton"
 import { logger } from "@/lib/logger"
+import { useToast } from "@/hooks/use-toast"
 
 // Dynamic imports for heavy chart libraries (code-splitting)
 const BookingsLineChart = dynamic(
@@ -75,12 +79,33 @@ interface DashboardStats {
   monthBookings: number
   bookingsTrend: number
   monthTrend: number
+  // Revenue stats
+  todayRevenue: number
+  yesterdayRevenue: number
+  weekRevenue: number
+  monthRevenue: number
+  todayRevenueTrend: number
+  weekRevenueTrend: number
+  monthRevenueTrend: number
+}
+
+interface PendingBooking {
+  id: string
+  title: string
+  date: Date | string
+  time: string
+  type: string
+  user: {
+    name: string | null
+    email: string
+  }
 }
 
 interface DashboardData {
   stats: DashboardStats
   recentBookings: any[]
   recentEvents: any[]
+  pendingBookingsData: PendingBooking[]
   bookingsByType: Array<{ type: string; count: number }>
   bookingsByStatus: Array<{ status: string; count: number }>
   bookingsOverTime: Array<{ date: any; count: number }>
@@ -100,6 +125,7 @@ export default function AdminDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [activities, setActivities] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
 
   // Fetch dashboard data
   useEffect(() => {
@@ -135,6 +161,65 @@ export default function AdminDashboard() {
     return () => clearInterval(interval)
   }, [])
 
+  // Quick action handlers
+  const handleQuickApprove = async (id: string) => {
+    try {
+      const result = await approveBooking(id, '')
+
+      if (result.success) {
+        toast({
+          title: "Booking Approved",
+          description: "The booking has been approved successfully.",
+          variant: "default",
+        })
+
+        // Refresh dashboard data
+        const statsResult = await getDashboardStats()
+        if (statsResult.success) {
+          setDashboardData(statsResult as DashboardData)
+        }
+      } else {
+        throw new Error(result.error || 'Failed to approve booking')
+      }
+    } catch (error) {
+      logger.error('Failed to approve booking', error instanceof Error ? error : new Error(String(error)))
+      toast({
+        title: "Error",
+        description: "Failed to approve booking. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleQuickReject = async (id: string) => {
+    try {
+      const result = await rejectBooking(id, 'Quick rejected from dashboard')
+
+      if (result.success) {
+        toast({
+          title: "Booking Rejected",
+          description: "The booking has been rejected.",
+          variant: "default",
+        })
+
+        // Refresh dashboard data
+        const statsResult = await getDashboardStats()
+        if (statsResult.success) {
+          setDashboardData(statsResult as DashboardData)
+        }
+      } else {
+        throw new Error(result.error || 'Failed to reject booking')
+      }
+    } catch (error) {
+      logger.error('Failed to reject booking', error instanceof Error ? error : new Error(String(error)))
+      toast({
+        title: "Error",
+        description: "Failed to reject booking. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (isLoading || !dashboardData) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -166,7 +251,26 @@ export default function AdminDashboard() {
         </p>
       </div>
 
+      {/* Quick Overview - Revenue & Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RevenueStatsCard
+          todayRevenue={stats.todayRevenue}
+          yesterdayRevenue={stats.yesterdayRevenue}
+          weekRevenue={stats.weekRevenue}
+          monthRevenue={stats.monthRevenue}
+          todayTrend={stats.todayRevenueTrend}
+          weekTrend={stats.weekRevenueTrend}
+          monthTrend={stats.monthRevenueTrend}
+          currency="RSD"
+        />
 
+        <QuickActionsWidget
+          pendingBookings={dashboardData.pendingBookingsData || []}
+          onApprove={handleQuickApprove}
+          onReject={handleQuickReject}
+          isLoading={false}
+        />
+      </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">

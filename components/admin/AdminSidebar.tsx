@@ -19,7 +19,9 @@ import {
   Package,
   FileDown,
   UserCircle,
-  Mail
+  Mail,
+  Settings,
+  Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -112,9 +114,24 @@ export const AdminSidebar = memo(function AdminSidebar({
       icon: FileText
     },
     {
+      label: "Revenue",
+      href: "/admin/revenue",
+      icon: DollarSign
+    },
+    {
       label: "Reports",
       href: "/admin/reports",
       icon: FileDown
+    },
+    {
+      label: "Notifications",
+      href: "/admin/notifications",
+      icon: Bell
+    },
+    {
+      label: "Settings",
+      href: "/admin/settings",
+      icon: Settings
     },
     {
       label: "Audit Logs",

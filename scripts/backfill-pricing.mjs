@@ -41,7 +41,7 @@ async function backfillPricing() {
       try {
         // Extract numeric value from price string
         // Handles formats like: "500 RSD", "1,200 RSD", "1.500,00 RSD"
-        const priceMatch = pkg.price.match(/[\d,\.]+/)
+        const priceMatch = pkg.price.match(/[\d,.]+/)
 
         if (!priceMatch) {
           console.log(`⚠️  Could not extract price from: "${pkg.price}" (${pkg.name})`)

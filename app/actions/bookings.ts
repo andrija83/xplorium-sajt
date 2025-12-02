@@ -13,6 +13,7 @@ import {
   type CreateBookingInput,
   type UpdateBookingInput,
 } from '@/lib/validations'
+import { notifyAllAdmins, createNotification } from './notifications'
 
 /**
  * Get all bookings with optional filtering
@@ -139,6 +140,24 @@ export async function createBooking(data: CreateBookingInput) {
       },
     })
 
+    // Notify all admins of new booking
+    try {
+      const notifResult = await notifyAllAdmins({
+        type: 'NEW_BOOKING',
+        title: 'New Booking Received',
+        message: `${booking.title} - ${validatedData.type} on ${new Date(booking.date).toLocaleDateString()}`,
+        data: { bookingId: booking.id }
+      })
+      if (notifResult.success) {
+        logger.info('Notification sent to admins for new booking', { bookingId: booking.id, count: notifResult.count })
+      } else {
+        logger.error('Failed to send notification for new booking', new Error(notifResult.error || 'Unknown error'))
+      }
+    } catch (notifError) {
+      logger.error('Exception while sending notification for new booking', notifError instanceof Error ? notifError : new Error(String(notifError)))
+      // Don't fail the booking creation if notification fails
+    }
+
     revalidatePath('/admin/bookings')
 
     return {
@@ -248,6 +267,15 @@ export async function approveBooking(bookingId: string, adminNotes?: string) {
       include: {
         user: true,
       },
+    })
+
+    // Notify the user
+    await createNotification({
+      userId: booking.userId,
+      type: 'BOOKING_APPROVED',
+      title: 'Booking Approved',
+      message: `Your booking "${booking.title}" has been approved!`,
+      data: { bookingId: booking.id }
     })
 
     // TODO: Send email notification in Phase 5

@@ -93,7 +93,18 @@
       "Bash(node scripts/apply-text-search-indexes.mjs:*)",
       "Bash(node scripts/apply-gdpr-fields.mjs:*)",
       "Bash(node scripts/check-user-columns.mjs:*)",
-      "Bash(powershell -Command \"Remove-Item -Recurse -Force ''.next''\")"
+      "Bash(powershell -Command \"Remove-Item -Recurse -Force ''.next''\")",
+      "Bash(node scripts/test-notifications.mjs:*)",
+      "Bash(node scripts/test-create-notification.mjs:*)",
+      "Bash(node scripts/test-notify-admins.mjs:*)",
+      "Bash(del /f /q \"node_modules\\.prisma\\client\\query_engine-windows.dll.node\")",
+      "Bash(npx next build:*)",
+      "Bash(set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=yes reset)",
+      "Bash($env:PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes reset\")",
+      "Bash(cmd /c \"set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=yes reset && npx prisma migrate reset --force\")",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes reset\" npx prisma migrate reset --force)",
+      "Bash(powershell -Command \"(Get-Content ''app\\actions\\bookings.ts'' | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command \"(Get-Content ''components\\admin\\AdminBookingCalendar.tsx'' | Measure-Object -Line).Lines\")"
     ],
     "deny": [],
     "ask": []

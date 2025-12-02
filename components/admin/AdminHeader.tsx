@@ -7,6 +7,7 @@ import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { logger } from "@/lib/logger"
+import { NotificationBell } from "./NotificationBell"
 
 /**
  * AdminHeader Component
@@ -79,8 +80,11 @@ export const AdminHeader = memo(function AdminHeader({
         </h2>
       </div>
 
-      {/* Right: User menu */}
+      {/* Right: Notifications + User menu */}
       <div className="flex items-center gap-3">
+        {/* Notification Bell */}
+        <NotificationBell />
+
         {/* Back to site link */}
         <Link
           href="/"

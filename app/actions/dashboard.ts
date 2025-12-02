@@ -15,6 +15,8 @@ export async function getDashboardStats() {
 
     const now = new Date()
     const todayStart = new Date(now.setHours(0, 0, 0, 0))
+    const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000)
+    const yesterdayEnd = new Date(todayStart.getTime() - 1)
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -33,6 +35,13 @@ export async function getDashboardStats() {
       weekBookings,
       monthBookings,
       lastMonthBookingsCount,
+      todayBookingsWithRevenue,
+      yesterdayBookingsWithRevenue,
+      weekBookingsWithRevenue,
+      lastWeekBookingsWithRevenue,
+      monthBookingsWithRevenue,
+      lastMonthBookingsWithRevenue,
+      pendingBookingsData,
     ] = await Promise.all([
       // Total bookings
       prisma.booking.count(),
@@ -98,6 +107,80 @@ export async function getDashboardStats() {
           createdAt: {
             gte: lastMonthStart,
             lte: lastMonthEnd,
+          },
+        },
+      }),
+
+      // Today's revenue
+      prisma.booking.findMany({
+        where: {
+          date: { gte: todayStart },
+          status: { in: ['APPROVED', 'COMPLETED'] },
+        },
+        select: { totalAmount: true },
+      }),
+
+      // Yesterday's revenue
+      prisma.booking.findMany({
+        where: {
+          date: { gte: yesterdayStart, lte: yesterdayEnd },
+          status: { in: ['APPROVED', 'COMPLETED'] },
+        },
+        select: { totalAmount: true },
+      }),
+
+      // This week's revenue
+      prisma.booking.findMany({
+        where: {
+          date: { gte: weekAgo },
+          status: { in: ['APPROVED', 'COMPLETED'] },
+        },
+        select: { totalAmount: true },
+      }),
+
+      // Last week's revenue
+      prisma.booking.findMany({
+        where: {
+          date: { gte: twoWeeksAgo, lt: weekAgo },
+          status: { in: ['APPROVED', 'COMPLETED'] },
+        },
+        select: { totalAmount: true },
+      }),
+
+      // This month's revenue
+      prisma.booking.findMany({
+        where: {
+          date: { gte: monthStart },
+          status: { in: ['APPROVED', 'COMPLETED'] },
+        },
+        select: { totalAmount: true },
+      }),
+
+      // Last month's revenue
+      prisma.booking.findMany({
+        where: {
+          date: { gte: lastMonthStart, lte: lastMonthEnd },
+          status: { in: ['APPROVED', 'COMPLETED'] },
+        },
+        select: { totalAmount: true },
+      }),
+
+      // Pending bookings data (for quick actions widget)
+      prisma.booking.findMany({
+        where: { status: 'PENDING' },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          date: true,
+          time: true,
+          type: true,
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
           },
         },
       }),
@@ -207,6 +290,14 @@ export async function getDashboardStats() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10) // Top 10 time slots
 
+    // Calculate revenue totals
+    const todayRevenue = todayBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+    const yesterdayRevenue = yesterdayBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+    const weekRevenue = weekBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+    const lastWeekRevenue = lastWeekBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+    const monthRevenue = monthBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+    const lastMonthRevenue = lastMonthBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+
     // Calculate trends
     const lastWeekBookings = await prisma.booking.count({
       where: {
@@ -227,6 +318,22 @@ export async function getDashboardStats() {
         ? 100
         : Math.round(((monthBookings - lastMonthBookingsCount) / lastMonthBookingsCount) * 100)
 
+    // Revenue trends
+    const todayRevenueTrend =
+      yesterdayRevenue === 0
+        ? (todayRevenue > 0 ? 100 : 0)
+        : Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
+
+    const weekRevenueTrend =
+      lastWeekRevenue === 0
+        ? (weekRevenue > 0 ? 100 : 0)
+        : Math.round(((weekRevenue - lastWeekRevenue) / lastWeekRevenue) * 100)
+
+    const monthRevenueTrend =
+      lastMonthRevenue === 0
+        ? (monthRevenue > 0 ? 100 : 0)
+        : Math.round(((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100)
+
     return {
       success: true,
       stats: {
@@ -241,9 +348,18 @@ export async function getDashboardStats() {
         monthBookings,
         bookingsTrend,
         monthTrend,
+        // Revenue stats
+        todayRevenue,
+        yesterdayRevenue,
+        weekRevenue,
+        monthRevenue,
+        todayRevenueTrend,
+        weekRevenueTrend,
+        monthRevenueTrend,
       },
       recentBookings,
       recentEvents,
+      pendingBookingsData,
       bookingsByType: bookingsByType.map((item) => ({
         type: item.type,
         count: item._count.type,

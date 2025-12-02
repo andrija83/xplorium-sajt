@@ -6,6 +6,9 @@ import { Calendar, Users, Clock, Mail, Phone, User, Cake, ArrowLeft } from 'luci
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { validateEmail } from '@/lib/validation'
+import { ThemeCalendarPicker } from '@/components/common/ThemeCalendarPicker'
+import { ThemeTimePicker } from '@/components/common/ThemeTimePicker'
+import { createBooking } from '@/app/actions/bookings'
 
 /**
  * BirthdayBookingForm Component
@@ -26,6 +29,7 @@ interface BirthdayBookingFormProps {
   initialKidsLabel?: string
   initialDurationMinutes?: number | string
   initialDurationLabel?: string
+  initialTotalPrice?: number  // Total price from PlayRoom selection
 }
 
 interface FormData {
@@ -111,7 +115,8 @@ export const BirthdayBookingForm = ({
   initialKidsCount,
   initialKidsLabel,
   initialDurationMinutes,
-  initialDurationLabel
+  initialDurationLabel,
+  initialTotalPrice = 0
 }: BirthdayBookingFormProps) => {
   const [minDate, setMinDate] = useState<string>('')
   const [formData, setFormData] = useState<FormData>({
@@ -149,6 +154,8 @@ export const BirthdayBookingForm = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState(false)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -230,6 +237,17 @@ export const BirthdayBookingForm = ({
     }
   }
 
+  // Format date for display (Serbian format)
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Izaberite datum'
+    const date = new Date(dateString)
+    const monthNames = [
+      'januar', 'februar', 'mart', 'april', 'maj', 'jun',
+      'jul', 'avgust', 'septembar', 'oktobar', 'novembar', 'decembar'
+    ]
+    return `${date.getDate()}. ${monthNames[date.getMonth()]} ${date.getFullYear()}.`
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -241,34 +259,70 @@ export const BirthdayBookingForm = ({
     setIsSubmitting(true)
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Prepare booking data according to schema requirements
+      const bookingTitle = variant === 'birthday'
+        ? `Birthday Party - ${formData.childName} (Age ${formData.childAge})`
+        : `Playroom Booking - ${formData.childName} (Age ${formData.childAge})`
 
-      logger.debug('Booking submitted', { formData })
-      toast.success('Booking request sent! We\'ll contact you soon.')
+      // Build special requests with all additional info
+      const specialRequestsDetails = [
+        formData.specialRequests,
+        `Parent: ${formData.parentName}`,
+        `Child: ${formData.childName} (${formData.childAge} years old)`,
+        initialSelectedRooms.length > 0 ? `Selected Rooms: ${initialSelectedRooms.join(', ')}` : '',
+        formData.playroomDuration ? `Duration: ${formData.playroomDuration}` : '',
+        formData.includeFoodBeverages ? `Food & Beverages: ${formData.selectedFood.join(', ')} | ${formData.selectedBeverages.join(', ')}` : '',
+        formData.includeCakeBeverages ? 'Includes Cake & Beverages' : '',
+        initialTotalPrice > 0 ? `Estimated Total: ${initialTotalPrice} RSD` : '',
+      ].filter(Boolean).join('\n')
 
-      // Reset form
-      setFormData({
-        childName: '',
-        childAge: '',
-        parentName: '',
-        email: '',
-        phone: '',
-        partyDate: '',
-        partyTime: '',
-        numberOfGuests: '',
-        playroomDuration: '',
-        selectedRooms: [],
-        includeFoodBeverages: false,
-        includeCakeBeverages: false,
-        selectedFood: [],
-        selectedBeverages: [],
-        specialRequests: ''
+      // Create booking via server action
+      const result = await createBooking({
+        title: bookingTitle,
+        date: formData.partyDate,
+        time: formData.partyTime,
+        type: variant === 'birthday' ? 'PARTY' : 'PLAYGROUND',
+        guestCount: parseInt(formData.numberOfGuests),
+        phone: formData.phone,
+        email: formData.email,
+        specialRequests: specialRequestsDetails,
+        // Price tracking for loyalty points calculation
+        ...(initialTotalPrice > 0 && {
+          totalAmount: initialTotalPrice,
+          currency: 'RSD',
+          isPaid: false, // Booking starts as unpaid
+        }),
       })
-      setErrors({})
+
+      if (result.success) {
+        logger.debug('Booking created successfully', { bookingId: result.booking?.id })
+        toast.success('Booking request sent! We\'ll contact you soon to confirm.')
+
+        // Reset form
+        setFormData({
+          childName: '',
+          childAge: '',
+          parentName: '',
+          email: '',
+          phone: '',
+          partyDate: '',
+          partyTime: '',
+          numberOfGuests: '',
+          playroomDuration: '',
+          selectedRooms: [],
+          includeFoodBeverages: false,
+          includeCakeBeverages: false,
+          selectedFood: [],
+          selectedBeverages: [],
+          specialRequests: ''
+        })
+        setErrors({})
+      } else {
+        throw new Error(result.error || 'Failed to create booking')
+      }
     } catch (error) {
-      logger.error('Booking error', error instanceof Error ? error : new Error(String(error)))
-      toast.error('Failed to submit booking. Please try again.')
+      logger.error('Booking submission error', error instanceof Error ? error : new Error(String(error)))
+      toast.error(error instanceof Error ? error.message : 'Failed to submit booking. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -471,32 +525,76 @@ export const BirthdayBookingForm = ({
               <div>
                 <label className={`block ${theme.textDim} text-sm mb-2`}>Preferred Date *</label>
                 <div className="relative">
-                  <Calendar className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${theme.textDimmer}`} />
-                  <input
-                    type="date"
-                    name="partyDate"
-                    value={formData.partyDate}
-                    onChange={handleChange}
-                    min={minDate}
-                    className={`w-full pl-11 pr-4 py-3 bg-black/50 border ${errors.partyDate ? 'border-red-400' : theme.border} rounded-lg text-white focus:outline-none ${errors.partyDate ? 'focus:border-red-400' : theme.borderFocus} transition-colors`}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    className={`w-full pl-11 pr-4 py-3 bg-black/50 border ${errors.partyDate ? 'border-red-400' : theme.border} rounded-lg text-white text-left focus:outline-none ${errors.partyDate ? 'focus:border-red-400' : theme.borderFocus} transition-colors`}
+                  >
+                    {formatDate(formData.partyDate)}
+                  </button>
+                  <Calendar className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${theme.text} pointer-events-none`} />
+
+                  <AnimatePresence>
+                    {showDatePicker && (
+                      <ThemeCalendarPicker
+                        value={formData.partyDate}
+                        onChange={(date) => {
+                          setFormData(prev => ({ ...prev, partyDate: date }))
+                          setShowDatePicker(false)
+                          // Clear error when date is selected
+                          if (errors.partyDate) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev }
+                              delete newErrors.partyDate
+                              return newErrors
+                            })
+                          }
+                        }}
+                        minDate={minDate}
+                        variant={variant}
+                        onClose={() => setShowDatePicker(false)}
+                      />
+                    )}
+                  </AnimatePresence>
                 </div>
                 {errors.partyDate && <p className="text-red-400 text-xs mt-1">{errors.partyDate}</p>}
               </div>
               <div>
                 <label className={`block ${theme.textDim} text-sm mb-2`}>Preferred Time *</label>
                 <div className="relative">
-                  <Clock className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${theme.textDimmer}`} />
-                  <input
-                    type="time"
-                    name="partyTime"
-                    value={formData.partyTime}
-                    onChange={handleChange}
-                    min="09:00"
-                    max="22:00"
-                    step={30 * 60}
-                    className={`w-full pl-11 pr-4 py-3 bg-black/50 border ${errors.partyTime ? 'border-red-400' : theme.border} rounded-lg text-white focus:outline-none ${errors.partyTime ? 'focus:border-red-400' : theme.borderFocus} transition-colors`}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowTimePicker(!showTimePicker)}
+                    className={`w-full pl-11 pr-4 py-3 bg-black/50 border ${errors.partyTime ? 'border-red-400' : theme.border} rounded-lg text-white text-left focus:outline-none ${errors.partyTime ? 'focus:border-red-400' : theme.borderFocus} transition-colors`}
+                  >
+                    {formData.partyTime || 'Izaberite vreme'}
+                  </button>
+                  <Clock className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${theme.text} pointer-events-none`} />
+
+                  <AnimatePresence>
+                    {showTimePicker && (
+                      <ThemeTimePicker
+                        value={formData.partyTime}
+                        onChange={(time) => {
+                          setFormData(prev => ({ ...prev, partyTime: time }))
+                          setShowTimePicker(false)
+                          // Clear error when time is selected
+                          if (errors.partyTime) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev }
+                              delete newErrors.partyTime
+                              return newErrors
+                            })
+                          }
+                        }}
+                        variant={variant}
+                        startHour={9}
+                        endHour={22}
+                        interval={30}
+                        onClose={() => setShowTimePicker(false)}
+                      />
+                    )}
+                  </AnimatePresence>
                 </div>
                 {errors.partyTime && <p className="text-red-400 text-xs mt-1">{errors.partyTime}</p>}
               </div>
@@ -885,6 +983,24 @@ export const BirthdayBookingForm = ({
             We'll contact you within 24 hours to confirm availability
           </p>
         </motion.form>
+
+        {/* Total Price Display - Fixed Bottom Right (only show if from PlayRoom) */}
+        {initialTotalPrice > 0 && (
+          <motion.div
+            className="fixed bottom-8 right-8 z-50 text-right"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <div className={`${theme.textDim} text-sm uppercase tracking-wider`}>Total</div>
+            <div
+              className={`text-3xl md:text-5xl font-bold ${theme.text}`}
+              style={{ textShadow: theme.glow }}
+            >
+              {initialTotalPrice} <span className="text-xl md:text-2xl">RSD</span>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
     </div >
   )

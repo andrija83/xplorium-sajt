@@ -4,7 +4,9 @@ import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Plus, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
 import { BirthdayBookingForm } from './BirthdayBookingForm'
+import { SignInModal } from '@/components/auth/SignInModal'
 
 interface PlayRoomBookingFormProps {
     onBack: () => void
@@ -67,6 +69,7 @@ const TIME_DURATION_OPTIONS = [
 ]
 
 export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
+    const { data: session, status } = useSession()
     const [step, setStep] = useState<'selection' | 'details'>('selection')
     // Initialize with mandatory items pre-selected
     const mandatoryItems = PLAY_ROOM_ITEMS.filter(item => item.mandatory).map(item => item.id)
@@ -75,6 +78,7 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
     const [selectedDuration, setSelectedDuration] = useState<string | null>(null)
     const [currentTextIndex, setCurrentTextIndex] = useState(0)
     const [isMobile, setIsMobile] = useState(false)
+    const [showSignInModal, setShowSignInModal] = useState(false)
 
     // Pink neon glow for Play Room theme
     const neonPinkGlow = '0 0 10px #ec4899, 0 0 20px #ec4899, 0 0 30px #ec4899'
@@ -88,6 +92,15 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
     }, [])
+
+    // Auto-proceed to booking form after successful sign in
+    useEffect(() => {
+        if (session && showSignInModal && selectedCapacity && selectedDuration) {
+            setShowSignInModal(false)
+            setStep('details')
+            toast.success('Successfully signed in! Continue with your booking.')
+        }
+    }, [session, showSignInModal, selectedCapacity, selectedDuration])
 
     // Rotate text every 3 seconds
     useEffect(() => {
@@ -142,6 +155,14 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
             toast.error('Please select the time duration')
             return
         }
+
+        // Check if user is authenticated
+        if (!session) {
+            toast.error('Please sign in to continue with your booking')
+            setShowSignInModal(true)
+            return
+        }
+
         setStep('details')
     }
 
@@ -485,11 +506,18 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
                             initialKidsLabel={KIDS_CAPACITY_OPTIONS.find(option => option.id === selectedCapacity)?.label}
                             initialDurationMinutes={TIME_DURATION_OPTIONS.find(option => option.id === selectedDuration)?.duration}
                             initialDurationLabel={TIME_DURATION_OPTIONS.find(option => option.id === selectedDuration)?.label}
+                            initialTotalPrice={totalPrice}
                             variant="playroom"
                         />
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Sign In Modal */}
+            <SignInModal
+                isOpen={showSignInModal}
+                onClose={() => setShowSignInModal(false)}
+            />
         </div>
     )
 }

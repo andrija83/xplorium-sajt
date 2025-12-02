@@ -34,6 +34,12 @@ export const createBookingSchema = z.object({
   phone: z.string().min(10, 'Invalid phone number'),
   email: z.string().email('Invalid email address'),
   specialRequests: z.string().optional(),
+  // Price tracking fields for loyalty points calculation
+  totalAmount: z.number().positive().optional(),
+  currency: z.string().length(3).optional(), // ISO 4217 currency code (RSD, EUR, USD, etc.)
+  paidAmount: z.number().positive().optional(),
+  isPaid: z.boolean().optional(),
+  paymentDate: z.coerce.date().optional(),
 })
 
 export const updateBookingSchema = createBookingSchema.partial().extend({
