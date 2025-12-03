@@ -56,13 +56,13 @@ export function ExportImportSection() {
           break;
       }
 
-      if (!result.success) {
-        throw new Error(result.error);
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'No data returned from export');
       }
 
       const filename = generateFilename(dataType, exportFormat);
       const blob = exportData(exportFormat, {
-        data: result.data,
+        data: result.data as any[],
         filename,
         title,
       });
@@ -76,7 +76,7 @@ export function ExportImportSection() {
 
       logger.info('Data exported', { dataType, format: exportFormat, filename });
     } catch (error) {
-      logger.error('Export failed', error);
+      logger.error('Export failed', error instanceof Error ? error : new Error(String(error)));
       toast({
         title: 'Export Failed',
         description: error instanceof Error ? error.message : 'Failed to export data',
@@ -130,8 +130,8 @@ export function ExportImportSection() {
         throw new Error('Import is only supported for bookings and events');
       }
 
-      if (!result.success) {
-        throw new Error(result.error);
+      if (!result.success || !result.results) {
+        throw new Error(result.error || 'No results returned from import');
       }
 
       const { results } = result;
@@ -161,7 +161,7 @@ export function ExportImportSection() {
       // Reset file input
       event.target.value = '';
     } catch (error) {
-      logger.error('Import failed', error);
+      logger.error('Import failed', error instanceof Error ? error : new Error(String(error)));
       toast({
         title: 'Import Failed',
         description: error instanceof Error ? error.message : 'Failed to import data',
