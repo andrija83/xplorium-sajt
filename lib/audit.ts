@@ -14,8 +14,8 @@ export async function logAudit({
   changes,
 }: {
   userId: string
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'PUBLISH' | 'ARCHIVE' | 'ROLLBACK'
-  entity: 'Event' | 'Booking' | 'User' | 'Content' | 'InventoryItem' | 'MaintenanceLog' | 'PricingPackage' | 'Campaign' | 'Settings'
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'PUBLISH' | 'ARCHIVE' | 'ROLLBACK' | 'EXPORT' | 'IMPORT' | 'RESTORE'
+  entity: 'Event' | 'Booking' | 'User' | 'Content' | 'InventoryItem' | 'MaintenanceLog' | 'PricingPackage' | 'Campaign' | 'Settings' | 'System'
   entityId: string
   changes?: Record<string, any>
 }) {

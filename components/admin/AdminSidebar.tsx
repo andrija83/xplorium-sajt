@@ -26,7 +26,9 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Download,
+  Upload
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -235,6 +237,11 @@ export const AdminSidebar = memo(function AdminSidebar({
           label: "Settings",
           href: "/admin/settings",
           icon: Settings
+        },
+        {
+          label: "Export / Import",
+          href: "/admin/export-import",
+          icon: Download
         },
         {
           label: "Audit Logs",

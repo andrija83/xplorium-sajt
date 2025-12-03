@@ -29,6 +29,7 @@ const getPageTitle = (pathname: string): string => {
   if (pathname.startsWith('/admin/users')) return 'Users'
   if (pathname.startsWith('/admin/campaigns')) return 'Campaigns'
   if (pathname.startsWith('/admin/content')) return 'Content'
+  if (pathname.startsWith('/admin/export-import')) return 'Export / Import'
   if (pathname.startsWith('/admin/audit')) return 'Audit Logs'
   return 'Admin'
 }

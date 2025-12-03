@@ -112,7 +112,8 @@
       "Bash(node scripts/seed-test-data.mjs:*)",
       "Bash(npm i:*)",
       "Bash(node scripts/test-email.mjs:*)",
-      "Bash(node scripts/check-email-status.mjs:*)"
+      "Bash(node scripts/check-email-status.mjs:*)",
+      "Bash(node scripts/test-export.mjs:*)"
     ],
     "deny": [],
     "ask": []
