@@ -291,11 +291,11 @@ export async function createBooking(data: CreateBookingInput) {
     // Validate input
     const validatedData = createBookingSchema.parse(data)
 
-    // Check for booking conflicts (with 45-minute buffer)
+    // Check for booking conflicts (default 120 minute duration)
     const conflictCheck = await checkBookingConflicts(
       validatedData.date,
       validatedData.time,
-      validatedData.duration || 120
+      120 // Default duration in minutes
     )
 
     if (conflictCheck.success && conflictCheck.conflict?.hasConflict) {
@@ -390,7 +390,7 @@ export async function updateBooking(id: string, data: UpdateBookingInput) {
     if (validatedData.date || validatedData.time) {
       const checkDate = validatedData.date || originalBooking.date
       const checkTime = validatedData.time || originalBooking.time
-      const checkDuration = validatedData.duration || originalBooking.duration || 120
+      const checkDuration = 120 // Default duration in minutes
 
       const conflictCheck = await checkBookingConflicts(
         checkDate,

@@ -432,3 +432,43 @@ enum NotificationType {
   PAYMENT_RECEIVED
   SYSTEM_ALERT
 }
+
+model Campaign {
+  id              String         @id @default(cuid())
+  name            String
+  description     String?        @db.Text
+  type            CampaignType
+  status          CampaignStatus @default(DRAFT)
+  subject         String?        // Email subject line
+  content         String         @db.Text // Email/SMS content
+  targetAudience  Json           // Filter criteria for target audience
+  scheduledDate   DateTime?      // When to send (null = draft)
+  sentDate        DateTime?      // When it was actually sent
+  totalRecipients Int            @default(0)
+  sentCount       Int            @default(0)
+  openedCount     Int            @default(0)
+  clickedCount    Int            @default(0)
+  unsubscribeCount Int           @default(0)
+  createdBy       String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([scheduledDate])
+  @@index([createdBy])
+}
+
+enum CampaignType {
+  EMAIL
+  SMS
+  BOTH
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+}

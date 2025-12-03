@@ -23,7 +23,10 @@ import {
   Settings,
   Bell,
   BarChart3,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronRight,
+  TrendingUp
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -32,10 +35,13 @@ import { cn } from "@/lib/utils"
  *
  * Navigation sidebar for the admin dashboard
  * Features:
+ * - Grouped navigation with collapsible sections
  * - Active link highlighting with neon cyan glow
  * - Pending bookings badge
- * - Collapsible on mobile
+ * - Collapsible sidebar on desktop
+ * - Mobile-responsive with slide-out menu
  * - Glass morphism design matching Xplorium theme
+ * - Persistent group expanded state (localStorage)
  */
 
 interface NavItem {
@@ -43,6 +49,13 @@ interface NavItem {
   href: string
   icon: React.ComponentType<{ className?: string }>
   badge?: number
+}
+
+interface NavGroup {
+  id: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  items: NavItem[]
 }
 
 interface AdminSidebarProps {
@@ -61,94 +74,174 @@ export const AdminSidebar = memo(function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
-  // Navigation items
-  const navItems: NavItem[] = [
+  // Initialize expanded groups from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('admin-nav-expanded')
+    if (stored) {
+      try {
+        setExpandedGroups(new Set(JSON.parse(stored)))
+      } catch (e) {
+        // Ignore parse errors
+      }
+    } else {
+      // Default: expand all groups
+      setExpandedGroups(new Set(['bookings', 'customers', 'finance', 'insights', 'operations', 'system']))
+    }
+  }, [])
+
+  // Save expanded groups to localStorage
+  useEffect(() => {
+    if (expandedGroups.size > 0) {
+      localStorage.setItem('admin-nav-expanded', JSON.stringify(Array.from(expandedGroups)))
+    }
+  }, [expandedGroups])
+
+  // Toggle group expansion
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(groupId)) {
+        next.delete(groupId)
+      } else {
+        next.add(groupId)
+      }
+      return next
+    })
+  }
+
+  // Top-level navigation items (always visible)
+  const topLevelItems: NavItem[] = [
     {
       label: "Dashboard",
       href: "/admin",
       icon: LayoutDashboard
     },
     {
-      label: "Bookings",
-      href: "/admin/bookings",
-      icon: Calendar,
-      badge: pendingCount
-    },
-    {
-      label: "Scheduling",
-      href: "/admin/scheduling",
-      icon: Clock
-    },
-    {
-      label: "Events",
-      href: "/admin/events",
-      icon: BookOpen
-    },
-    {
-      label: "Pricing",
-      href: "/admin/pricing",
-      icon: DollarSign
-    },
-    {
-      label: "Maintenance",
-      href: "/admin/maintenance",
-      icon: Wrench
-    },
-    {
-      label: "Inventory",
-      href: "/admin/inventory",
-      icon: Package
-    },
-    {
-      label: "Users",
-      href: "/admin/users",
-      icon: Users
-    },
-    {
-      label: "Customers",
-      href: "/admin/customers",
-      icon: UserCircle
-    },
-    {
-      label: "Marketing",
-      href: "/admin/marketing",
-      icon: Mail
-    },
-    {
-      label: "Content",
-      href: "/admin/content",
-      icon: FileText
-    },
-    {
-      label: "Revenue",
-      href: "/admin/revenue",
-      icon: DollarSign
-    },
-    {
-      label: "Analytics",
-      href: "/admin/analytics",
-      icon: BarChart3
-    },
-    {
-      label: "Reports",
-      href: "/admin/reports",
-      icon: FileDown
-    },
-    {
       label: "Notifications",
       href: "/admin/notifications",
       icon: Bell
+    }
+  ]
+
+  // Grouped navigation items
+  const navGroups: NavGroup[] = [
+    {
+      id: "bookings",
+      label: "Bookings & Events",
+      icon: Calendar,
+      items: [
+        {
+          label: "Bookings",
+          href: "/admin/bookings",
+          icon: Calendar,
+          badge: pendingCount
+        },
+        {
+          label: "Scheduling",
+          href: "/admin/scheduling",
+          icon: Clock
+        },
+        {
+          label: "Events",
+          href: "/admin/events",
+          icon: BookOpen
+        }
+      ]
     },
     {
-      label: "Settings",
-      href: "/admin/settings",
-      icon: Settings
+      id: "customers",
+      label: "Customers & Marketing",
+      icon: UserCircle,
+      items: [
+        {
+          label: "Customers",
+          href: "/admin/customers",
+          icon: UserCircle
+        },
+        {
+          label: "Customer Insights",
+          href: "/admin/customers/insights",
+          icon: TrendingUp
+        },
+        {
+          label: "Campaigns",
+          href: "/admin/campaigns",
+          icon: Mail
+        },
+        {
+          label: "Users",
+          href: "/admin/users",
+          icon: Users
+        }
+      ]
     },
     {
-      label: "Audit Logs",
-      href: "/admin/audit",
-      icon: Shield
+      id: "finance",
+      label: "Finance & Analytics",
+      icon: DollarSign,
+      items: [
+        {
+          label: "Revenue",
+          href: "/admin/revenue",
+          icon: DollarSign
+        },
+        {
+          label: "Analytics",
+          href: "/admin/analytics",
+          icon: BarChart3
+        },
+        {
+          label: "Pricing",
+          href: "/admin/pricing",
+          icon: DollarSign
+        },
+        {
+          label: "Reports",
+          href: "/admin/reports",
+          icon: FileDown
+        }
+      ]
+    },
+    {
+      id: "operations",
+      label: "Operations",
+      icon: Wrench,
+      items: [
+        {
+          label: "Maintenance",
+          href: "/admin/maintenance",
+          icon: Wrench
+        },
+        {
+          label: "Inventory",
+          href: "/admin/inventory",
+          icon: Package
+        },
+        {
+          label: "Content",
+          href: "/admin/content",
+          icon: FileText
+        }
+      ]
+    },
+    {
+      id: "system",
+      label: "Settings & Security",
+      icon: Settings,
+      items: [
+        {
+          label: "Settings",
+          href: "/admin/settings",
+          icon: Settings
+        },
+        {
+          label: "Audit Logs",
+          href: "/admin/audit",
+          icon: Shield
+        }
+      ]
     }
   ]
 
@@ -158,6 +251,11 @@ export const AdminSidebar = memo(function AdminSidebar({
       return pathname === "/admin"
     }
     return pathname?.startsWith(href)
+  }
+
+  // Check if any item in group is active
+  const isGroupActive = (group: NavGroup) => {
+    return group.items.some(item => isActive(item.href))
   }
 
   // Close mobile menu on navigation
@@ -225,8 +323,9 @@ export const AdminSidebar = memo(function AdminSidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {navItems.map((item) => {
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {/* Top-level items */}
+        {topLevelItems.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)
 
@@ -285,25 +384,171 @@ export const AdminSidebar = memo(function AdminSidebar({
                   {item.label}
                 </span>
               )}
-
-              {/* Badge */}
-              {item.badge !== undefined && item.badge > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className={cn(
-                    "relative z-10 ml-auto px-2 py-0.5 rounded-full text-xs font-bold",
-                    "bg-red-500/20 text-red-400 border border-red-400/50",
-                    isCollapsed && "absolute -top-1 -right-1 px-1.5"
-                  )}
-                  style={{
-                    boxShadow: "0 0 10px rgba(239, 68, 68, 0.5)"
-                  }}
-                >
-                  {item.badge}
-                </motion.span>
-              )}
             </Link>
+          )
+        })}
+
+        {/* Divider */}
+        {!isCollapsed && (
+          <div className="my-2 border-t border-cyan-400/10" />
+        )}
+
+        {/* Grouped items */}
+        {navGroups.map((group) => {
+          const GroupIcon = group.icon
+          const isExpanded = expandedGroups.has(group.id)
+          const groupActive = isGroupActive(group)
+
+          return (
+            <div key={group.id} className="space-y-1">
+              {/* Group header */}
+              <button
+                onClick={() => !isCollapsed && toggleGroup(group.id)}
+                className={cn(
+                  "group relative flex items-center gap-3 px-4 py-3 rounded-lg w-full",
+                  "transition-all duration-300",
+                  "hover:bg-cyan-400/10",
+                  groupActive && "bg-cyan-400/10",
+                  isCollapsed && "justify-center px-2"
+                )}
+              >
+                {/* Icon */}
+                <GroupIcon
+                  className={cn(
+                    "w-5 h-5 relative z-10 transition-colors",
+                    groupActive ? "text-cyan-400" : "text-cyan-100/60 group-hover:text-cyan-300"
+                  )}
+                  {...(groupActive && {
+                    style: { filter: "drop-shadow(0 0 8px rgba(34, 211, 238, 0.8))" }
+                  })}
+                />
+
+                {/* Label */}
+                {!isCollapsed && (
+                  <>
+                    <span
+                      className={cn(
+                        "relative z-10 font-medium transition-colors flex-1 text-left",
+                        groupActive ? "text-cyan-400" : "text-cyan-100/70 group-hover:text-cyan-300"
+                      )}
+                      style={
+                        groupActive
+                          ? { textShadow: "0 0 10px rgba(34, 211, 238, 0.6)" }
+                          : undefined
+                      }
+                    >
+                      {group.label}
+                    </span>
+
+                    {/* Expand/collapse icon */}
+                    <motion.div
+                      animate={{ rotate: isExpanded ? 0 : -90 }}
+                      transition={{ duration: 0.2 }}
+                      className="relative z-10"
+                    >
+                      <ChevronDown
+                        className={cn(
+                          "w-4 h-4 transition-colors",
+                          groupActive ? "text-cyan-400" : "text-cyan-100/40"
+                        )}
+                      />
+                    </motion.div>
+                  </>
+                )}
+              </button>
+
+              {/* Group items */}
+              {!isCollapsed && (
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-4 space-y-1 py-1">
+                        {group.items.map((item) => {
+                          const Icon = item.icon
+                          const active = isActive(item.href)
+
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className={cn(
+                                "group relative flex items-center gap-3 px-4 py-2 rounded-lg",
+                                "transition-all duration-300",
+                                "hover:bg-cyan-400/10",
+                                active && "bg-cyan-400/20"
+                              )}
+                            >
+                              {/* Active indicator */}
+                              {active && (
+                                <motion.div
+                                  layoutId="activeTab"
+                                  className="absolute inset-0 rounded-lg border-2 border-cyan-400/50"
+                                  style={{
+                                    boxShadow: "0 0 20px rgba(34, 211, 238, 0.4), inset 0 0 20px rgba(34, 211, 238, 0.1)"
+                                  }}
+                                  transition={{
+                                    type: "spring",
+                                    stiffness: 500,
+                                    damping: 30
+                                  }}
+                                />
+                              )}
+
+                              {/* Icon */}
+                              <Icon
+                                className={cn(
+                                  "w-4 h-4 relative z-10 transition-colors",
+                                  active ? "text-cyan-400" : "text-cyan-100/50 group-hover:text-cyan-300"
+                                )}
+                                {...(active && {
+                                  style: { filter: "drop-shadow(0 0 8px rgba(34, 211, 238, 0.8))" }
+                                })}
+                              />
+
+                              {/* Label */}
+                              <span
+                                className={cn(
+                                  "relative z-10 text-sm font-medium transition-colors",
+                                  active ? "text-cyan-400" : "text-cyan-100/60 group-hover:text-cyan-300"
+                                )}
+                                style={
+                                  active
+                                    ? { textShadow: "0 0 10px rgba(34, 211, 238, 0.6)" }
+                                    : undefined
+                                }
+                              >
+                                {item.label}
+                              </span>
+
+                              {/* Badge */}
+                              {item.badge !== undefined && item.badge > 0 && (
+                                <motion.span
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="relative z-10 ml-auto px-2 py-0.5 rounded-full text-xs font-bold
+                                           bg-red-500/20 text-red-400 border border-red-400/50"
+                                  style={{
+                                    boxShadow: "0 0 10px rgba(239, 68, 68, 0.5)"
+                                  }}
+                                >
+                                  {item.badge}
+                                </motion.span>
+                              )}
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
+            </div>
           )
         })}
       </nav>

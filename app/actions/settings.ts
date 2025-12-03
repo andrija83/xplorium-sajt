@@ -459,7 +459,9 @@ export async function getBufferTime() {
     })
 
     // Default to 45 minutes if not set
-    const bufferMinutes = setting?.value?.minutes ?? 45
+    const bufferMinutes = setting?.value && typeof setting.value === 'object' && 'minutes' in setting.value
+      ? (setting.value as { minutes: number }).minutes
+      : 45
 
     return {
       success: true,
