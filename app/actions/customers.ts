@@ -496,3 +496,221 @@ export async function getMarketingList(filters?: {
     }
   }
 }
+
+/**
+ * Get Customer Insights Analytics
+ * Comprehensive customer analytics including CLV, segmentation, churn, etc.
+ */
+export async function getCustomerInsights() {
+  try {
+    await requireAdmin()
+
+    const now = new Date()
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+    const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+
+    // Get all customers and bookings
+    const [
+      allCustomers,
+      allBookings,
+      repeatCustomers,
+      recentActiveCustomers,
+      churnedCustomers,
+    ] = await Promise.all([
+      // All customers
+      prisma.user.count(),
+
+      // All bookings with revenue data
+      prisma.booking.findMany({
+        select: {
+          email: true,
+          totalAmount: true,
+          isPaid: true,
+          date: true,
+          createdAt: true,
+          status: true,
+        },
+        where: {
+          status: {
+            in: ['APPROVED', 'COMPLETED'],
+          },
+        },
+      }),
+
+      // Repeat customers (more than 1 booking)
+      prisma.user.count({
+        where: {
+          totalBookings: {
+            gt: 1,
+          },
+        },
+      }),
+
+      // Active customers (booked in last 90 days)
+      prisma.user.count({
+        where: {
+          lastBookingDate: {
+            gte: ninetyDaysAgo,
+          },
+        },
+      }),
+
+      // Churned customers (last booking >90 days ago, but has bookings)
+      prisma.user.count({
+        where: {
+          AND: [
+            {
+              lastBookingDate: {
+                lt: ninetyDaysAgo,
+              },
+            },
+            {
+              totalBookings: {
+                gt: 0,
+              },
+            },
+          ],
+        },
+      }),
+    ])
+
+    // Calculate Customer Lifetime Value (CLV)
+    const customerRevenue = new Map<string, number>()
+    const customerBookingCount = new Map<string, number>()
+    let totalRevenue = 0
+    let paidBookingsCount = 0
+
+    allBookings.forEach((booking) => {
+      const email = booking.email.toLowerCase()
+      const revenue = booking.totalAmount || 0
+
+      if (booking.isPaid) {
+        customerRevenue.set(email, (customerRevenue.get(email) || 0) + revenue)
+        totalRevenue += revenue
+        paidBookingsCount++
+      }
+
+      customerBookingCount.set(email, (customerBookingCount.get(email) || 0) + 1)
+    })
+
+    // Calculate averages
+    const uniqueCustomersWithRevenue = customerRevenue.size
+    const averageCustomerLifetimeValue =
+      uniqueCustomersWithRevenue > 0 ? totalRevenue / uniqueCustomersWithRevenue : 0
+    const averageBookingValue = paidBookingsCount > 0 ? totalRevenue / paidBookingsCount : 0
+
+    // Calculate repeat customer rate
+    const repeatCustomerRate = allCustomers > 0 ? (repeatCustomers / allCustomers) * 100 : 0
+
+    // Customer Segmentation
+    const segmentation = {
+      vip: 0,
+      regular: 0,
+      firstTime: 0,
+    }
+
+    customerBookingCount.forEach((count) => {
+      if (count >= 5) {
+        segmentation.vip++
+      } else if (count > 1) {
+        segmentation.regular++
+      } else {
+        segmentation.firstTime++
+      }
+    })
+
+    // Churn analysis
+    const churnRate =
+      recentActiveCustomers + churnedCustomers > 0
+        ? (churnedCustomers / (recentActiveCustomers + churnedCustomers)) * 100
+        : 0
+
+    // Get top customers by revenue
+    const topCustomersByRevenue = Array.from(customerRevenue.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([email, revenue]) => ({
+        email,
+        revenue,
+        bookings: customerBookingCount.get(email) || 0,
+      }))
+
+    // Get top customers by booking count
+    const topCustomersByBookings = Array.from(customerBookingCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([email, count]) => ({
+        email,
+        bookings: count,
+        revenue: customerRevenue.get(email) || 0,
+      }))
+
+    // Birthday reminders - For now, we'll return empty array as birthday field needs to be added to schema
+    // TODO: Add birthday field to User schema in future migration
+    const birthdaysNext30Days: any[] = []
+
+    // Monthly trends (last 12 months)
+    const monthlyData = []
+    for (let i = 11; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
+
+      const monthBookings = allBookings.filter((b) => {
+        const bookingDate = new Date(b.createdAt)
+        return bookingDate >= monthStart && bookingDate <= monthEnd
+      })
+
+      const monthRevenue = monthBookings.reduce(
+        (sum, b) => sum + (b.isPaid ? b.totalAmount || 0 : 0),
+        0
+      )
+      const uniqueCustomers = new Set(monthBookings.map((b) => b.email.toLowerCase())).size
+
+      monthlyData.push({
+        month: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        revenue: monthRevenue,
+        customers: uniqueCustomers,
+        bookings: monthBookings.length,
+      })
+    }
+
+    return {
+      success: true,
+      insights: {
+        // Overview metrics
+        totalCustomers: allCustomers,
+        activeCustomers: recentActiveCustomers,
+        repeatCustomers,
+        repeatCustomerRate: Math.round(repeatCustomerRate * 10) / 10,
+        churnRate: Math.round(churnRate * 10) / 10,
+        churnedCustomers,
+
+        // Financial metrics
+        averageCustomerLifetimeValue: Math.round(averageCustomerLifetimeValue),
+        averageBookingValue: Math.round(averageBookingValue),
+        totalRevenue: Math.round(totalRevenue),
+
+        // Segmentation
+        segmentation,
+
+        // Top customers
+        topCustomersByRevenue,
+        topCustomersByBookings,
+
+        // Birthday reminders
+        upcomingBirthdays: birthdaysNext30Days,
+
+        // Trends
+        monthlyTrends: monthlyData,
+      },
+    }
+  } catch (error) {
+    logger.serverActionError('getCustomerInsights', error)
+    return {
+      success: false,
+      error: sanitizeErrorForClient(error),
+    }
+  }
+}

@@ -372,6 +372,13 @@ export async function initializeDefaultSettings() {
         key: 'features.payments',
         value: { enabled: false },
         category: 'features'
+      },
+
+      // Scheduling Settings
+      {
+        key: 'scheduling.bufferTime',
+        value: { minutes: 45 },
+        category: 'scheduling'
       }
     ]
 
@@ -438,6 +445,93 @@ export async function deleteSetting(key: string) {
     return {
       success: false,
       error: 'Failed to delete setting'
+    }
+  }
+}
+
+/**
+ * Get buffer time setting in minutes
+ */
+export async function getBufferTime() {
+  try {
+    const setting = await prisma.siteSettings.findUnique({
+      where: { key: 'scheduling.bufferTime' }
+    })
+
+    // Default to 45 minutes if not set
+    const bufferMinutes = setting?.value?.minutes ?? 45
+
+    return {
+      success: true,
+      bufferTime: bufferMinutes
+    }
+  } catch (error) {
+    logger.serverActionError('getBufferTime', error)
+    return {
+      success: false,
+      error: 'Failed to fetch buffer time',
+      bufferTime: 45 // Return default on error
+    }
+  }
+}
+
+/**
+ * Update buffer time setting
+ */
+export async function updateBufferTime(minutes: number) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
+      return { success: false, error: 'Unauthorized - Admin access required' }
+    }
+
+    // Validate: buffer time must be between 0 and 180 minutes (3 hours)
+    if (minutes < 0 || minutes > 180) {
+      return {
+        success: false,
+        error: 'Buffer time must be between 0 and 180 minutes'
+      }
+    }
+
+    const setting = await prisma.siteSettings.upsert({
+      where: { key: 'scheduling.bufferTime' },
+      update: {
+        value: { minutes },
+        updatedBy: session.user.id
+      },
+      create: {
+        key: 'scheduling.bufferTime',
+        value: { minutes },
+        category: 'scheduling',
+        updatedBy: session.user.id
+      }
+    })
+
+    await logAudit({
+      userId: session.user.id,
+      action: 'UPDATE',
+      entity: 'Settings',
+      entityId: 'scheduling.bufferTime',
+      changes: { minutes }
+    })
+
+    revalidatePath('/admin/scheduling')
+    revalidatePath('/admin/settings')
+
+    return {
+      success: true,
+      bufferTime: minutes,
+      message: `Buffer time updated to ${minutes} minutes`
+    }
+  } catch (error) {
+    logger.serverActionError('updateBufferTime', error)
+    return {
+      success: false,
+      error: 'Failed to update buffer time'
     }
   }
 }

@@ -14,6 +14,9 @@ import {
   type UpdateBookingInput,
 } from '@/lib/validations'
 import { notifyAllAdmins, createNotification } from './notifications'
+import { checkBookingConflict, suggestAlternativeTimes, type ExistingBooking } from '@/lib/scheduling'
+import { getBufferTime } from './settings'
+import { startOfDay, endOfDay } from 'date-fns'
 
 /**
  * Get all bookings with optional filtering
@@ -79,6 +82,169 @@ export async function getBookings({
 }
 
 /**
+ * Check for booking conflicts
+ * @param date - Booking date
+ * @param time - Booking time (HH:MM format)
+ * @param duration - Booking duration in minutes (default: 120)
+ * @param excludeBookingId - Optional booking ID to exclude from conflict check (for updates)
+ * @returns Conflict information with suggestions
+ */
+export async function checkBookingConflicts(
+  date: Date,
+  time: string,
+  duration: number = 120,
+  excludeBookingId?: string
+) {
+  try {
+    // Get dynamic buffer time from settings
+    const bufferResult = await getBufferTime()
+    const bufferTimeMinutes = bufferResult.bufferTime
+
+    // Combine date and time
+    const [hours, minutes] = time.split(':').map(Number)
+    const bookingDateTime = new Date(date)
+    bookingDateTime.setHours(hours, minutes, 0, 0)
+
+    // Get all bookings for the same day
+    const dayStart = startOfDay(new Date(date))
+    const dayEnd = endOfDay(new Date(date))
+
+    const existingBookings = await prisma.booking.findMany({
+      where: {
+        date: {
+          gte: dayStart,
+          lte: dayEnd
+        },
+        status: {
+          in: ['PENDING', 'APPROVED', 'COMPLETED']
+        }
+      },
+      select: {
+        id: true,
+        date: true,
+        time: true, // Need time to reconstruct full DateTime
+        title: true,
+        type: true
+      }
+    })
+
+    // Convert to ExistingBooking format
+    // IMPORTANT: Combine date + time to get the actual booking DateTime
+    // Note: Duration field doesn't exist in database, defaulting to 120 minutes
+    const formattedBookings: ExistingBooking[] = existingBookings.map(b => {
+      const bookingDateTime = new Date(b.date)
+      const [hours, minutes] = b.time.split(':').map(Number)
+      bookingDateTime.setHours(hours, minutes, 0, 0)
+
+      return {
+        id: b.id,
+        date: bookingDateTime, // Full DateTime including the actual time
+        duration: 120 // Default duration since field doesn't exist in schema
+      }
+    })
+
+    // Check for conflicts with dynamic buffer time
+    const conflict = checkBookingConflict(
+      bookingDateTime,
+      duration,
+      formattedBookings,
+      excludeBookingId,
+      bufferTimeMinutes // Pass dynamic buffer time
+    )
+
+    // If there's a conflict, suggest alternatives with dynamic buffer time
+    let suggestedTimes: Date[] = []
+    if (conflict.hasConflict) {
+      suggestedTimes = suggestAlternativeTimes(
+        bookingDateTime,
+        duration,
+        formattedBookings,
+        3, // Suggest 3 alternative times
+        bufferTimeMinutes // Pass dynamic buffer time
+      )
+    }
+
+    return {
+      success: true,
+      conflict: {
+        ...conflict,
+        suggestedTimes
+      },
+      bufferTimeMinutes // Return buffer time for display
+    }
+  } catch (error) {
+    logger.serverActionError('checkBookingConflicts', error)
+    return {
+      success: false,
+      error: 'Failed to check booking conflicts'
+    }
+  }
+}
+
+/**
+ * Get all bookings for a specific day (optimized for availability checking)
+ * @param date - The date to check
+ * @returns Array of bookings with time and duration
+ */
+export async function getBookingsForDay(date: Date) {
+  try {
+    const dayStart = startOfDay(new Date(date))
+    const dayEnd = endOfDay(new Date(date))
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        date: {
+          gte: dayStart,
+          lte: dayEnd
+        },
+        status: {
+          in: ['PENDING', 'APPROVED', 'COMPLETED']
+        }
+      },
+      select: {
+        id: true,
+        date: true,
+        time: true,
+        title: true,
+        type: true
+      }
+    })
+
+    // Get buffer time
+    const bufferResult = await getBufferTime()
+    const bufferTimeMinutes = bufferResult.bufferTime
+
+    // Convert to format with full DateTime
+    const formattedBookings = bookings.map(b => {
+      const bookingDateTime = new Date(b.date)
+      const [hours, minutes] = b.time.split(':').map(Number)
+      bookingDateTime.setHours(hours, minutes, 0, 0)
+
+      return {
+        id: b.id,
+        datetime: bookingDateTime.toISOString(),
+        time: b.time,
+        duration: 120, // Default duration
+        title: b.title,
+        type: b.type
+      }
+    })
+
+    return {
+      success: true,
+      bookings: formattedBookings,
+      bufferTimeMinutes
+    }
+  } catch (error) {
+    logger.serverActionError('getBookingsForDay', error)
+    return {
+      success: false,
+      error: 'Failed to get bookings'
+    }
+  }
+}
+
+/**
  * Get a single booking by ID
  * @param id - Booking ID
  * @returns Booking data
@@ -124,6 +290,22 @@ export async function createBooking(data: CreateBookingInput) {
 
     // Validate input
     const validatedData = createBookingSchema.parse(data)
+
+    // Check for booking conflicts (with 45-minute buffer)
+    const conflictCheck = await checkBookingConflicts(
+      validatedData.date,
+      validatedData.time,
+      validatedData.duration || 120
+    )
+
+    if (conflictCheck.success && conflictCheck.conflict?.hasConflict) {
+      return {
+        success: false,
+        error: conflictCheck.conflict.message || 'Booking conflicts with existing bookings',
+        conflictType: conflictCheck.conflict.conflictType,
+        suggestedTimes: conflictCheck.conflict.suggestedTimes
+      }
+    }
 
     // Create booking
     // Combine date and time into scheduledAt timestamp
@@ -202,6 +384,29 @@ export async function updateBooking(id: string, data: UpdateBookingInput) {
 
     if (!originalBooking) {
       return { error: 'Booking not found' }
+    }
+
+    // If date or time is being changed, check for conflicts
+    if (validatedData.date || validatedData.time) {
+      const checkDate = validatedData.date || originalBooking.date
+      const checkTime = validatedData.time || originalBooking.time
+      const checkDuration = validatedData.duration || originalBooking.duration || 120
+
+      const conflictCheck = await checkBookingConflicts(
+        checkDate,
+        checkTime,
+        checkDuration,
+        id // Exclude this booking from conflict check
+      )
+
+      if (conflictCheck.success && conflictCheck.conflict?.hasConflict) {
+        return {
+          success: false,
+          error: conflictCheck.conflict.message || 'Booking conflicts with existing bookings',
+          conflictType: conflictCheck.conflict.conflictType,
+          suggestedTimes: conflictCheck.conflict.suggestedTimes
+        }
+      }
     }
 
     // Update booking

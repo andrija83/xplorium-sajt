@@ -417,6 +417,425 @@ export async function getTopCustomers(limit: number = 10, startDate?: Date, endD
 }
 
 /**
+ * Revenue Forecast Interface
+ */
+export interface RevenueForecast {
+  month: string
+  forecastedRevenue: number
+  confidence: 'high' | 'medium' | 'low'
+}
+
+/**
+ * Get revenue forecast for next 3 months using linear regression
+ */
+export async function getRevenueForecast() {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
+      return { success: false, error: 'Unauthorized - Admin access required' }
+    }
+
+    // Get last 12 months of revenue data
+    const twelveMonthsAgo = subMonths(new Date(), 12)
+    const bookings = await prisma.booking.findMany({
+      where: {
+        date: { gte: twelveMonthsAgo },
+        status: { in: ['APPROVED', 'COMPLETED'] }
+      },
+      select: {
+        date: true,
+        totalAmount: true
+      },
+      orderBy: { date: 'asc' }
+    })
+
+    // Group by month
+    const monthlyRevenue: Record<string, number> = {}
+    bookings.forEach(booking => {
+      const monthKey = format(new Date(booking.date), 'yyyy-MM')
+      if (!monthlyRevenue[monthKey]) {
+        monthlyRevenue[monthKey] = 0
+      }
+      monthlyRevenue[monthKey] += booking.totalAmount || 0
+    })
+
+    // Convert to array with indices for regression
+    const dataPoints: Array<{ x: number; y: number; month: string }> = []
+    let index = 0
+    for (let i = 11; i >= 0; i--) {
+      const monthDate = subMonths(new Date(), i)
+      const monthKey = format(monthDate, 'yyyy-MM')
+      dataPoints.push({
+        x: index++,
+        y: monthlyRevenue[monthKey] || 0,
+        month: monthKey
+      })
+    }
+
+    // Simple linear regression: y = mx + b
+    const n = dataPoints.length
+    const sumX = dataPoints.reduce((sum, p) => sum + p.x, 0)
+    const sumY = dataPoints.reduce((sum, p) => sum + p.y, 0)
+    const sumXY = dataPoints.reduce((sum, p) => sum + p.x * p.y, 0)
+    const sumXX = dataPoints.reduce((sum, p) => sum + p.x * p.x, 0)
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX)
+    const intercept = (sumY - slope * sumX) / n
+
+    // Calculate R-squared for confidence
+    const yMean = sumY / n
+    const ssTotal = dataPoints.reduce((sum, p) => sum + Math.pow(p.y - yMean, 2), 0)
+    const ssResidual = dataPoints.reduce((sum, p) => {
+      const predicted = slope * p.x + intercept
+      return sum + Math.pow(p.y - predicted, 2)
+    }, 0)
+    const rSquared = 1 - (ssResidual / ssTotal)
+
+    // Determine confidence based on R-squared
+    let confidence: 'high' | 'medium' | 'low'
+    if (rSquared > 0.7) confidence = 'high'
+    else if (rSquared > 0.4) confidence = 'medium'
+    else confidence = 'low'
+
+    // Forecast next 3 months
+    const forecast: RevenueForecast[] = []
+    for (let i = 1; i <= 3; i++) {
+      const futureMonth = format(subMonths(new Date(), -i), 'yyyy-MM')
+      const forecastedRevenue = Math.max(0, slope * (index + i - 1) + intercept)
+      forecast.push({
+        month: futureMonth,
+        forecastedRevenue: Math.round(forecastedRevenue),
+        confidence
+      })
+    }
+
+    return {
+      success: true,
+      forecast,
+      historicalData: dataPoints.map(p => ({
+        month: p.month,
+        revenue: p.y
+      })),
+      rSquared
+    }
+  } catch (error) {
+    logger.serverActionError('getRevenueForecast', error)
+    return {
+      success: false,
+      error: 'Failed to generate revenue forecast'
+    }
+  }
+}
+
+/**
+ * Popular Services Interface
+ */
+export interface PopularService {
+  type: string
+  bookings: number
+  revenue: number
+  averageValue: number
+  percentage: number
+}
+
+/**
+ * Get most popular services/packages
+ */
+export async function getPopularServices(startDate?: Date, endDate?: Date) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
+      return { success: false, error: 'Unauthorized - Admin access required' }
+    }
+
+    const start = startDate || subMonths(new Date(), 3)
+    const end = endDate || new Date()
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        date: { gte: start, lte: end },
+        status: { in: ['APPROVED', 'COMPLETED'] }
+      },
+      select: {
+        type: true,
+        totalAmount: true
+      }
+    })
+
+    // Group by type
+    const byType: Record<string, { bookings: number; revenue: number }> = {}
+    let totalBookings = 0
+
+    bookings.forEach(booking => {
+      const type = booking.type
+      if (!byType[type]) {
+        byType[type] = { bookings: 0, revenue: 0 }
+      }
+      byType[type].bookings += 1
+      byType[type].revenue += booking.totalAmount || 0
+      totalBookings += 1
+    })
+
+    // Convert to array with percentages
+    const popularServices: PopularService[] = Object.entries(byType)
+      .map(([type, data]) => ({
+        type,
+        bookings: data.bookings,
+        revenue: data.revenue,
+        averageValue: data.bookings > 0 ? data.revenue / data.bookings : 0,
+        percentage: totalBookings > 0 ? (data.bookings / totalBookings) * 100 : 0
+      }))
+      .sort((a, b) => b.bookings - a.bookings)
+
+    return {
+      success: true,
+      services: popularServices,
+      totalBookings
+    }
+  } catch (error) {
+    logger.serverActionError('getPopularServices', error)
+    return {
+      success: false,
+      error: 'Failed to fetch popular services'
+    }
+  }
+}
+
+/**
+ * Cancellation Metrics Interface
+ */
+export interface CancellationMetrics {
+  totalCancelled: number
+  cancellationRate: number
+  cancelledRevenue: number
+  cancelledByType: Array<{ type: string; count: number }>
+  monthlyTrend: Array<{ month: string; cancelled: number; total: number; rate: number }>
+}
+
+/**
+ * Get cancellation rate and metrics
+ */
+export async function getCancellationMetrics(startDate?: Date, endDate?: Date) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
+      return { success: false, error: 'Unauthorized - Admin access required' }
+    }
+
+    const start = startDate || subMonths(new Date(), 6)
+    const end = endDate || new Date()
+
+    // Get all bookings (including cancelled)
+    const allBookings = await prisma.booking.findMany({
+      where: {
+        date: { gte: start, lte: end }
+      },
+      select: {
+        status: true,
+        type: true,
+        totalAmount: true,
+        date: true
+      }
+    })
+
+    const totalBookings = allBookings.length
+    const cancelledBookings = allBookings.filter(
+      b => b.status === 'CANCELLED' || b.status === 'REJECTED'
+    )
+    const totalCancelled = cancelledBookings.length
+    const cancellationRate = totalBookings > 0 ? (totalCancelled / totalBookings) * 100 : 0
+    const cancelledRevenue = cancelledBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
+
+    // Cancelled by type
+    const cancelledByTypeMap: Record<string, number> = {}
+    cancelledBookings.forEach(booking => {
+      const type = booking.type
+      cancelledByTypeMap[type] = (cancelledByTypeMap[type] || 0) + 1
+    })
+
+    const cancelledByType = Object.entries(cancelledByTypeMap).map(([type, count]) => ({
+      type,
+      count
+    }))
+
+    // Monthly trend (last 6 months)
+    const monthlyMap: Record<string, { cancelled: number; total: number }> = {}
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = subMonths(new Date(), i)
+      const monthKey = format(monthDate, 'yyyy-MM')
+      monthlyMap[monthKey] = { cancelled: 0, total: 0 }
+    }
+
+    allBookings.forEach(booking => {
+      const monthKey = format(new Date(booking.date), 'yyyy-MM')
+      if (monthlyMap[monthKey]) {
+        monthlyMap[monthKey].total += 1
+        if (booking.status === 'CANCELLED' || booking.status === 'REJECTED') {
+          monthlyMap[monthKey].cancelled += 1
+        }
+      }
+    })
+
+    const monthlyTrend = Object.entries(monthlyMap).map(([month, data]) => ({
+      month,
+      cancelled: data.cancelled,
+      total: data.total,
+      rate: data.total > 0 ? (data.cancelled / data.total) * 100 : 0
+    }))
+
+    const metrics: CancellationMetrics = {
+      totalCancelled,
+      cancellationRate,
+      cancelledRevenue,
+      cancelledByType,
+      monthlyTrend
+    }
+
+    return {
+      success: true,
+      metrics
+    }
+  } catch (error) {
+    logger.serverActionError('getCancellationMetrics', error)
+    return {
+      success: false,
+      error: 'Failed to fetch cancellation metrics'
+    }
+  }
+}
+
+/**
+ * Time-to-Approval Metrics Interface
+ */
+export interface TimeToApprovalMetrics {
+  averageHours: number
+  medianHours: number
+  fastest: number
+  slowest: number
+  within24Hours: number
+  within48Hours: number
+  totalMeasured: number
+  byType: Array<{ type: string; averageHours: number }>
+}
+
+/**
+ * Get time-to-approval metrics for bookings
+ */
+export async function getTimeToApprovalMetrics(startDate?: Date, endDate?: Date) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
+      return { success: false, error: 'Unauthorized - Admin access required' }
+    }
+
+    const start = startDate || subMonths(new Date(), 3)
+    const end = endDate || new Date()
+
+    // Get approved bookings with creation and update timestamps
+    const bookings = await prisma.booking.findMany({
+      where: {
+        date: { gte: start, lte: end },
+        status: 'APPROVED'
+      },
+      select: {
+        type: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
+
+    if (bookings.length === 0) {
+      return {
+        success: true,
+        metrics: {
+          averageHours: 0,
+          medianHours: 0,
+          fastest: 0,
+          slowest: 0,
+          within24Hours: 0,
+          within48Hours: 0,
+          totalMeasured: 0,
+          byType: []
+        }
+      }
+    }
+
+    // Calculate time-to-approval for each booking (in hours)
+    const approvalTimes = bookings.map(b => {
+      const created = new Date(b.createdAt)
+      const updated = new Date(b.updatedAt)
+      const hours = (updated.getTime() - created.getTime()) / (1000 * 60 * 60)
+      return {
+        type: b.type,
+        hours: Math.max(0, hours) // Ensure non-negative
+      }
+    })
+
+    // Calculate statistics
+    const hours = approvalTimes.map(at => at.hours).sort((a, b) => a - b)
+    const averageHours = hours.reduce((sum, h) => sum + h, 0) / hours.length
+    const medianHours = hours[Math.floor(hours.length / 2)]
+    const fastest = hours[0]
+    const slowest = hours[hours.length - 1]
+
+    const within24Hours = hours.filter(h => h <= 24).length
+    const within48Hours = hours.filter(h => h <= 48).length
+
+    // Group by type
+    const byTypeMap: Record<string, number[]> = {}
+    approvalTimes.forEach(at => {
+      if (!byTypeMap[at.type]) {
+        byTypeMap[at.type] = []
+      }
+      byTypeMap[at.type].push(at.hours)
+    })
+
+    const byType = Object.entries(byTypeMap).map(([type, times]) => ({
+      type,
+      averageHours: times.reduce((sum, t) => sum + t, 0) / times.length
+    }))
+
+    const metrics: TimeToApprovalMetrics = {
+      averageHours: Math.round(averageHours * 100) / 100,
+      medianHours: Math.round(medianHours * 100) / 100,
+      fastest: Math.round(fastest * 100) / 100,
+      slowest: Math.round(slowest * 100) / 100,
+      within24Hours,
+      within48Hours,
+      totalMeasured: bookings.length,
+      byType
+    }
+
+    return {
+      success: true,
+      metrics
+    }
+  } catch (error) {
+    logger.serverActionError('getTimeToApprovalMetrics', error)
+    return {
+      success: false,
+      error: 'Failed to fetch time-to-approval metrics'
+    }
+  }
+}
+
+/**
  * Export revenue data to CSV
  */
 export async function exportRevenueData(startDate?: Date, endDate?: Date) {

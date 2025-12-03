@@ -2,22 +2,22 @@
 
 **Project:** Xplorium Admin Panel
 **Current Status:** 97% Complete
-**Last Updated:** 2025-12-02
+**Last Updated:** 2025-12-02 (Advanced Analytics Complete)
 
 This document outlines potential enhancements and new features for the Xplorium admin panel, organized by priority and implementation effort.
 
 ## 📊 Implementation Summary
 
-**Completed:** 8 major features
-- 5 fully complete (Notification Center, Site Settings, Events Calendar, Quick Stats Dashboard, Booking Calendar)
-- 3 partially complete (Revenue Dashboard, Export/Import, Financial Management)
+**Completed:** 10 major features
+- 7 fully complete (Notification Center, Site Settings, Events Calendar, Quick Stats Dashboard, Booking Calendar, Customer Insights, Advanced Analytics)
+- 3 partially complete (Export/Import, Financial Management, Marketing)
 
 **In Progress:** 0
-**Not Started:** 10 features remaining
+**Not Started:** 8 features remaining
 
 ### Progress Overview
 - ✅ **Phase 1 Quick Wins:** 100% complete (5/5 features - ALL DONE!)
-- ✅ **Phase 2 Core Enhancements:** 40% complete (2/5 features - both partial)
+- ✅ **Phase 2 Core Enhancements:** 80% complete (4/5 features - 2 full, 2 partial)
 - ⏳ **Phase 3 Advanced Features:** 0% complete (0/4 features)
 - ⏳ **Phase 4 Long-Term Vision:** 0% complete (0/3 features)
 
@@ -89,6 +89,32 @@ The following features have been implemented since the last update (November 30 
 - [x] Booking density heatmap (day x hour grid)
 - **Status:** COMPLETE
 - **Files:** `components/admin/QuickActionsWidget.tsx`, `components/admin/RevenueStatsCard.tsx`, `components/admin/charts/BookingsHeatmap.tsx`, `app/admin/page.tsx`
+
+### Customer Insights Dashboard ✅
+- [x] Customer Lifetime Value (CLV) calculation
+- [x] Repeat customer rate with percentage
+- [x] Customer segmentation (VIP/Regular/First-time) with pie chart
+- [x] Churn analysis and churn rate tracking
+- [x] Top 10 customers by revenue
+- [x] Top 10 customers by booking count
+- [x] Average booking value metrics
+- [x] Monthly customer trends (12-month line chart)
+- [x] Active vs churned customer tracking
+- [x] Financial overview (total revenue, CLV, avg value)
+- **Status:** COMPLETE
+- **Files:** `app/admin/customers/insights/page.tsx`, `components/admin/CustomerInsightsDashboard.tsx`, `app/actions/customers.ts`
+
+### Advanced Analytics Dashboard ✅
+- [x] Revenue forecasting (3-month projection using linear regression)
+- [x] Most popular services analysis with market share
+- [x] Cancellation rate tracking with monthly trends
+- [x] Time-to-approval metrics (average, median, fastest, slowest)
+- [x] Service performance comparison cards
+- [x] Automated insights and recommendations
+- [x] Cancellation breakdown by booking type
+- [x] Approval time breakdown by booking type
+- **Status:** COMPLETE
+- **Files:** `app/admin/analytics/page.tsx`, `app/actions/revenue.ts`, `components/admin/charts/RevenueForecastChart.tsx`
 
 ---
 
@@ -164,29 +190,36 @@ The following features have been implemented since the last update (November 30 
 ---
 
 ### 4. Customer Insights Dashboard
-**Effort:** 4-5 hours | **Impact:** High | **Status:** Not Started
+**Effort:** 4-5 hours | **Impact:** High | **Status:** ✅ COMPLETE
 
 **Features:**
-- [ ] Customer lifetime value (CLV) calculation
-- [ ] Repeat customer rate percentage
-- [ ] Customer segmentation (VIP, regular, first-time)
-- [ ] Last visit tracking
-- [ ] Birthday reminders for follow-up marketing
-- [ ] Average booking value per customer
-- [ ] Customer churn prediction
+- [x] Customer lifetime value (CLV) calculation
+- [x] Repeat customer rate percentage
+- [x] Customer segmentation (VIP, regular, first-time) with pie chart
+- [x] Last visit tracking (active vs churned customers)
+- [x] Average booking value per customer
+- [x] Customer churn analysis with churn rate calculation
+- [x] Top 10 customers by revenue
+- [x] Top 10 customers by booking count
+- [x] Monthly trends visualization (12-month history)
+- [x] Financial metrics dashboard (Total revenue, CLV, avg booking value)
+- [ ] Birthday reminders for follow-up marketing (TODO: requires birthday field in schema)
 
 **Technical Notes:**
-- Add new tab/section to `app/admin/customers/page.tsx`
-- Create server actions in `app/actions/customers.ts`
-- Add aggregation queries to calculate metrics
-- Use existing chart components for visualization
+- ✅ Created standalone page at `/admin/customers/insights`
+- ✅ Server action `getCustomerInsights()` in `app/actions/customers.ts`
+- ✅ CustomerInsightsDashboard component with comprehensive analytics
+- ✅ Uses Recharts for data visualization (pie chart, line chart)
+- ✅ Calculates CLV, repeat rate, churn rate, segmentation
+- ✅ Real-time refresh capability
+- ✅ Button added to customers page header for easy access
 
 ---
 
 ## 💡 Medium-Impact Ideas
 
 ### 5. Advanced Analytics & Revenue Dashboard
-**Effort:** 1-2 days | **Impact:** Medium-High | **Status:** ✅ PARTIALLY COMPLETE
+**Effort:** 1-2 days | **Impact:** Medium-High | **Status:** ✅ COMPLETE
 
 **Features:**
 - [x] Revenue trends over time (line chart)
@@ -195,38 +228,79 @@ The following features have been implemented since the last update (November 30 
 - [x] Top customers by revenue
 - [x] Time range filtering (7d, 30d, 90d, 1y, all)
 - [x] Export revenue data to CSV
-- [ ] Revenue forecasting (3-month projection)
-- [ ] Booking conversion rate (inquiries → confirmed)
-- [ ] Most popular services/packages
-- [ ] Cancellation rate tracking
-- [ ] Time-to-approval metrics
-- [ ] Seasonal trend analysis
+- [x] Revenue forecasting (3-month projection with linear regression)
+- [x] Most popular services/packages analysis
+- [x] Cancellation rate tracking with monthly trends
+- [x] Time-to-approval metrics (avg, median, fastest, slowest)
+- [x] Performance insights and recommendations
+- [ ] Booking conversion rate (inquiries → confirmed) - NOT APPLICABLE (no inquiry system)
+- [ ] Seasonal trend analysis (deferred to future)
 
 **Technical Notes:**
-- ✅ Created `/admin/revenue` page
+- ✅ Created `/admin/revenue` page with comprehensive financial dashboard
+- ✅ Created `/admin/analytics` page for advanced analytics
 - ✅ RevenueLineChart, RevenueByTypeChart, PaymentStatusChart components
-- ✅ Server actions in `app/actions/revenue.ts`
-- ⏳ Use time-series analysis for forecasting
-- ⏳ Consider adding trend lines to existing charts
+- ✅ RevenueForecastChart component with confidence indicators
+- ✅ Server actions in `app/actions/revenue.ts`:
+  - `getRevenueForecast()` - Linear regression with R² confidence score
+  - `getPopularServices()` - Service performance analysis
+  - `getCancellationMetrics()` - Cancellation tracking and trends
+  - `getTimeToApprovalMetrics()` - Approval time analytics
+- ✅ Analytics dashboard features:
+  - Popular services bar chart with market share
+  - Cancellation trend line chart (6-month history)
+  - Service performance comparison cards
+  - Time-to-approval metrics by type
+  - Automated insights and recommendations
+- ✅ Navigation link added to AdminSidebar
 
 ---
 
 ### 6. Smart Scheduling Assistant
-**Effort:** 1-2 days | **Impact:** Medium | **Status:** Not Started
+**Effort:** 1-2 days | **Impact:** Medium | **Status:** ✅ PARTIALLY COMPLETE
 
 **Features:**
 - [ ] Suggest optimal booking times based on availability
-- [ ] Conflict detection and alternative time suggestions
-- [ ] Automatic booking reminders (24h before)
+- [x] Conflict detection and alternative time suggestions (with configurable buffer)
+- [ ] Automatic booking reminders (24h before) - requires email integration
 - [ ] Waitlist management for fully booked slots
-- [ ] Buffer time between bookings
-- [ ] Smart overbooking prevention
+- [x] Buffer time between bookings (FULLY CONFIGURABLE via admin panel)
+- [x] Smart overbooking prevention (automated conflict checking)
 
 **Technical Notes:**
-- Add to booking form components
-- Create scheduling algorithm in `lib/scheduling.ts`
-- Integrate with existing booking validation
-- Use cron jobs or Vercel Cron for automated reminders
+- ✅ Created `lib/scheduling.ts` - Comprehensive scheduling utilities library
+- ✅ Functions implemented:
+  - `checkBookingConflict()` - Detects overlaps and buffer violations (accepts dynamic buffer time)
+  - `suggestAlternativeTimes()` - Provides 3 alternative time slots (uses dynamic buffer time)
+  - `getNextAvailableSlot()` - Finds next available time
+  - `getBookingWindow()` - Calculates time windows with buffer
+  - `getAvailableSlots()` - Lists all available slots for a day
+- ✅ **Configurable Buffer Time System:**
+  - Stored in database via Settings model (`scheduling.bufferTime`)
+  - Default: 45 minutes (can be changed from 0-180 minutes)
+  - Server actions: `getBufferTime()`, `updateBufferTime()`
+  - Real-time validation uses current database value
+  - UI automatically updates to reflect changes
+- ✅ Integrated with booking server actions:
+  - `checkBookingConflicts()` - Fetches buffer time from DB dynamically
+  - Updated `createBooking()` to validate conflicts with current buffer time
+  - Updated `updateBooking()` to validate when date/time changes
+- ✅ UI Components created:
+  - `BufferTimeWarning` - Displays conflict alerts with severity levels (accepts dynamic buffer time)
+  - `BufferTimeInfo` - Educational component about buffer time
+  - Suggested alternative times with click-to-select
+- ✅ Created `/admin/scheduling` page:
+  - **Editable buffer time configuration** with inline editor
+  - Real-time preview of timeline with current buffer time
+  - Visual timeline showing how buffer time works (updates dynamically)
+  - Current configuration display
+  - Smart scheduling features overview
+  - Validation: 0-180 minutes range
+  - Save/Cancel with loading states
+- ✅ Navigation link added to AdminSidebar
+- ✅ Audit logging for buffer time changes
+- ⏳ Booking form integration pending (requires form component updates)
+- ⏳ Automated reminders require email service (Resend integration)
 
 ---
 
@@ -516,13 +590,13 @@ Priority order based on immediate value:
 4. ⏳ **Customer Insights Dashboard** (NOT STARTED - moved to Phase 2)
 5. ⏳ **Bulk Operations** (NOT STARTED - moved to Phase 2)
 
-### Phase 2: Core Enhancements (2-4 weeks) - 25% Complete ✅
+### Phase 2: Core Enhancements (2-4 weeks) - 80% Complete ✅
 
-6. ✅ **Advanced Analytics Dashboard** (PARTIAL - revenue dashboard implemented)
-7. ✅ **Export & Import** (PARTIAL - CSV export implemented for bookings, revenue, audit)
-8. ⏳ **Smart Scheduling Assistant** (NOT STARTED - improves booking workflow)
-9. ⏳ **Inventory Alerts & Automation** (NOT STARTED - reduces manual work)
-10. ⏳ **Theming & Personalization** (NOT STARTED - improves user experience)
+6. ✅ **Customer Insights Dashboard** (COMPLETE - CLV, segmentation, churn analysis, trends)
+7. ✅ **Advanced Analytics Dashboard** (COMPLETE - revenue forecasting, popular services, cancellation tracking, approval metrics)
+8. ✅ **Export & Import** (PARTIAL - CSV export implemented for bookings, revenue, audit)
+9. ⏳ **Smart Scheduling Assistant** (NOT STARTED - improves booking workflow)
+10. ⏳ **Inventory Alerts & Automation** (NOT STARTED - reduces manual work)
 
 ### Phase 3: Advanced Features (1-3 months)
 

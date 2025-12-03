@@ -21,10 +21,12 @@ import {
   getPaymentStats,
   getTopCustomers,
   exportRevenueData,
+  getRevenueForecast,
   type RevenueStats,
   type RevenueByType,
   type RevenueOverTime,
-  type PaymentStats
+  type PaymentStats,
+  type RevenueForecast
 } from '@/app/actions/revenue'
 import { subMonths, subDays, format } from 'date-fns'
 import { toast } from 'sonner'
@@ -46,6 +48,11 @@ const PaymentStatusChart = dynamic(
   { loading: () => <ChartSkeleton />, ssr: false }
 )
 
+const RevenueForecastChart = dynamic(
+  () => import('@/components/admin/charts/RevenueForecastChart').then(m => ({ default: m.RevenueForecastChart })),
+  { loading: () => <ChartSkeleton />, ssr: false }
+)
+
 /**
  * Revenue & Financial Dashboard
  *
@@ -63,6 +70,9 @@ interface DashboardData {
   revenueOverTime: RevenueOverTime[]
   paymentStats: PaymentStats | null
   topCustomers: any[]
+  forecast: RevenueForecast[]
+  forecastHistorical: Array<{ month: string; revenue: number }>
+  rSquared: number
 }
 
 type DateRange = '7days' | '30days' | '3months' | '6months' | '1year'
@@ -73,7 +83,10 @@ export default function RevenuePage() {
     revenueByType: [],
     revenueOverTime: [],
     paymentStats: null,
-    topCustomers: []
+    topCustomers: [],
+    forecast: [],
+    forecastHistorical: [],
+    rSquared: 0
   })
   const [isLoading, setIsLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange>('30days')
@@ -113,12 +126,13 @@ export default function RevenuePage() {
       setIsLoading(true)
       const { start, end } = getDateRange(dateRange)
 
-      const [statsRes, byTypeRes, overTimeRes, paymentRes, customersRes] = await Promise.all([
+      const [statsRes, byTypeRes, overTimeRes, paymentRes, customersRes, forecastRes] = await Promise.all([
         getRevenueStats(start, end),
         getRevenueByType(start, end),
         getRevenueOverTime(start, end, dateRange === '7days' ? 'day' : dateRange === '1year' ? 'month' : 'day'),
         getPaymentStats(start, end),
-        getTopCustomers(10, start, end)
+        getTopCustomers(10, start, end),
+        getRevenueForecast()
       ])
 
       setData({
@@ -126,7 +140,10 @@ export default function RevenuePage() {
         revenueByType: byTypeRes.success ? byTypeRes.revenueByType || [] : [],
         revenueOverTime: overTimeRes.success ? overTimeRes.revenueOverTime || [] : [],
         paymentStats: paymentRes.success ? paymentRes.stats || null : null,
-        topCustomers: customersRes.success ? customersRes.customers || [] : []
+        topCustomers: customersRes.success ? customersRes.customers || [] : [],
+        forecast: forecastRes.success ? forecastRes.forecast || [] : [],
+        forecastHistorical: forecastRes.success ? forecastRes.historicalData || [] : [],
+        rSquared: forecastRes.success ? forecastRes.rSquared || 0 : 0
       })
     } catch (error) {
       logger.error('Failed to fetch revenue data', error instanceof Error ? error : new Error(String(error)))
@@ -182,7 +199,7 @@ export default function RevenuePage() {
     )
   }
 
-  const { stats, revenueByType, revenueOverTime, paymentStats, topCustomers } = data
+  const { stats, revenueByType, revenueOverTime, paymentStats, topCustomers, forecast, forecastHistorical, rSquared } = data
   const currency = stats?.currency || 'RSD'
 
   return (
@@ -320,6 +337,26 @@ export default function RevenuePage() {
           <RevenueByTypeChart data={revenueByType} currency={currency} />
         </motion.div>
       </div>
+
+      {/* Revenue Forecast */}
+      {forecast.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-purple-400/20"
+        >
+          <h3 className="text-lg font-semibold text-purple-300 mb-4">
+            3-Month Revenue Forecast
+          </h3>
+          <RevenueForecastChart
+            historicalData={forecastHistorical}
+            forecast={forecast}
+            currency={currency}
+            rSquared={rSquared}
+          />
+        </motion.div>
+      )}
 
       {/* Payment Status & Top Customers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

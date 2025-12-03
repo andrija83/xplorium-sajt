@@ -591,6 +591,8 @@ export const BirthdayBookingForm = ({
                         startHour={9}
                         endHour={22}
                         interval={30}
+                        selectedDate={formData.partyDate}
+                        duration={120}
                         onClose={() => setShowTimePicker(false)}
                       />
                     )}

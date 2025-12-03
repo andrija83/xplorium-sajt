@@ -114,39 +114,23 @@ export default function CustomersPage() {
   const [tierFilter, setTierFilter] = useState<string>("ALL")
   const [marketingFilter, setMarketingFilter] = useState<string>("ALL")
 
+  // Store all users for client-side filtering and pagination
+  const [allUsers, setAllUsers] = useState<Customer[]>([])
+
   // Fetch customers
-  const fetchCustomers = async (page = 1) => {
+  const fetchCustomers = async () => {
     try {
       setIsLoading(true)
 
+      // Fetch ALL users (no limit)
       const result = await getUsers({
         search: searchQuery || undefined,
-        limit: pagination.limit,
-        offset: (page - 1) * pagination.limit,
+        limit: 1000, // High limit to get all users
+        offset: 0,
       })
 
       if (result.success && result.users) {
-        // Filter by loyalty tier and marketing opt-in on client side
-        let filteredUsers = result.users as Customer[]
-
-        if (tierFilter !== "ALL") {
-          filteredUsers = filteredUsers.filter(u => u.loyaltyTier === tierFilter)
-        }
-
-        if (marketingFilter === "OPTED_IN") {
-          filteredUsers = filteredUsers.filter(u => u.marketingOptIn === true)
-        } else if (marketingFilter === "OPTED_OUT") {
-          filteredUsers = filteredUsers.filter(u => u.marketingOptIn === false)
-        }
-
-        setCustomers(filteredUsers)
-        const total = filteredUsers.length
-        setPagination(prev => ({
-          ...prev,
-          page,
-          total,
-          totalPages: Math.ceil(total / prev.limit),
-        }))
+        setAllUsers(result.users as Customer[])
       }
     } catch (error) {
       logger.error("Failed to fetch customers", error instanceof Error ? error : new Error(String(error)))
@@ -156,19 +140,56 @@ export default function CustomersPage() {
     }
   }
 
+  // Apply filters and pagination client-side
   useEffect(() => {
-    fetchCustomers(1)
-  }, [tierFilter, marketingFilter])
+    let filteredUsers = [...allUsers]
+
+    // Apply tier filter
+    if (tierFilter !== "ALL") {
+      filteredUsers = filteredUsers.filter(u => u.loyaltyTier === tierFilter)
+    }
+
+    // Apply marketing filter
+    if (marketingFilter === "OPTED_IN") {
+      filteredUsers = filteredUsers.filter(u => u.marketingOptIn === true)
+    } else if (marketingFilter === "OPTED_OUT") {
+      filteredUsers = filteredUsers.filter(u => u.marketingOptIn === false)
+    }
+
+    // Calculate pagination
+    const total = filteredUsers.length
+    const totalPages = Math.ceil(total / pagination.limit)
+    const start = (pagination.page - 1) * pagination.limit
+    const end = start + pagination.limit
+    const paginatedUsers = filteredUsers.slice(start, end)
+
+    setCustomers(paginatedUsers)
+    setPagination(prev => ({
+      ...prev,
+      total,
+      totalPages,
+    }))
+  }, [allUsers, tierFilter, marketingFilter, pagination.page, pagination.limit])
+
+  useEffect(() => {
+    fetchCustomers()
+  }, [])
 
   // Handle search
   const handleSearch = () => {
-    fetchCustomers(1)
+    setPagination(prev => ({ ...prev, page: 1 }))
+    fetchCustomers()
   }
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    fetchCustomers(page)
+    setPagination(prev => ({ ...prev, page }))
   }
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }, [tierFilter, marketingFilter])
 
   // Handle row click
   const handleRowClick = (customer: Customer) => {
@@ -356,6 +377,14 @@ export default function CustomersPage() {
             Manage customer relationships, loyalty program, and marketing lists
           </p>
         </div>
+
+        <Button
+          onClick={() => router.push('/admin/customers/insights')}
+          className="bg-purple-500/20 border border-purple-400/50 text-purple-300 hover:bg-purple-500/30"
+        >
+          <TrendingUp className="w-4 h-4 mr-2" />
+          View Customer Insights
+        </Button>
       </div>
 
       {/* Statistics Cards */}

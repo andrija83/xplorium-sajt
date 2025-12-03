@@ -104,7 +104,12 @@
       "Bash(cmd /c \"set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=yes reset && npx prisma migrate reset --force\")",
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"yes reset\" npx prisma migrate reset --force)",
       "Bash(powershell -Command \"(Get-Content ''app\\actions\\bookings.ts'' | Measure-Object -Line).Lines\")",
-      "Bash(powershell -Command \"(Get-Content ''components\\admin\\AdminBookingCalendar.tsx'' | Measure-Object -Line).Lines\")"
+      "Bash(powershell -Command \"(Get-Content ''components\\admin\\AdminBookingCalendar.tsx'' | Measure-Object -Line).Lines\")",
+      "Bash(node scripts/check-bookings.mjs:*)",
+      "Bash(node scripts/test-conflict-detection.mjs:*)",
+      "Bash(node scripts/inspect-dates.mjs:*)",
+      "Bash(node scripts/test-fix.mjs:*)",
+      "Bash(node scripts/seed-test-data.mjs:*)"
     ],
     "deny": [],
     "ask": []

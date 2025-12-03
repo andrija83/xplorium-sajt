@@ -21,7 +21,9 @@ import {
   UserCircle,
   Mail,
   Settings,
-  Bell
+  Bell,
+  BarChart3,
+  Clock
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -74,6 +76,11 @@ export const AdminSidebar = memo(function AdminSidebar({
       badge: pendingCount
     },
     {
+      label: "Scheduling",
+      href: "/admin/scheduling",
+      icon: Clock
+    },
+    {
       label: "Events",
       href: "/admin/events",
       icon: BookOpen
@@ -117,6 +124,11 @@ export const AdminSidebar = memo(function AdminSidebar({
       label: "Revenue",
       href: "/admin/revenue",
       icon: DollarSign
+    },
+    {
+      label: "Analytics",
+      href: "/admin/analytics",
+      icon: BarChart3
     },
     {
       label: "Reports",
