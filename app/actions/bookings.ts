@@ -16,7 +16,12 @@ import {
 import { notifyAllAdmins, createNotification } from './notifications'
 import { checkBookingConflict, suggestAlternativeTimes, type ExistingBooking } from '@/lib/scheduling'
 import { getBufferTime } from './settings'
-import { startOfDay, endOfDay } from 'date-fns'
+import { startOfDay, endOfDay, format } from 'date-fns'
+import {
+  sendBookingConfirmationEmail,
+  sendBookingApprovedEmail,
+  sendBookingRejectedEmail
+} from '@/lib/email'
 
 /**
  * Get all bookings with optional filtering
@@ -340,6 +345,36 @@ export async function createBooking(data: CreateBookingInput) {
       // Don't fail the booking creation if notification fails
     }
 
+    // Send confirmation email to customer
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true, email: true }
+      })
+
+      if (user && user.email) {
+        const emailResult = await sendBookingConfirmationEmail({
+          to: user.email,
+          customerName: user.name || 'Customer',
+          bookingId: booking.id,
+          bookingTitle: booking.title,
+          bookingDate: format(new Date(booking.date), 'MMMM d, yyyy'),
+          bookingTime: booking.time,
+          guestCount: booking.guestCount,
+          specialRequests: booking.specialRequests || undefined
+        })
+
+        if (emailResult.success) {
+          logger.info('Confirmation email sent to customer', { bookingId: booking.id, email: user.email })
+        } else {
+          logger.error('Failed to send confirmation email', new Error(emailResult.error || 'Unknown error'))
+        }
+      }
+    } catch (emailError) {
+      logger.error('Exception while sending confirmation email', emailError instanceof Error ? emailError : new Error(String(emailError)))
+      // Don't fail the booking creation if email fails
+    }
+
     revalidatePath('/admin/bookings')
 
     return {
@@ -483,12 +518,29 @@ export async function approveBooking(bookingId: string, adminNotes?: string) {
       data: { bookingId: booking.id }
     })
 
-    // TODO: Send email notification in Phase 5
-    // await sendEmail({
-    //   to: booking.email,
-    //   template: 'booking-approved',
-    //   data: booking,
-    // })
+    // Send approval email to customer
+    try {
+      if (booking.user && booking.user.email) {
+        const emailResult = await sendBookingApprovedEmail({
+          to: booking.user.email,
+          customerName: booking.user.name || 'Customer',
+          bookingId: booking.id,
+          bookingTitle: booking.title,
+          bookingDate: format(new Date(booking.date), 'MMMM d, yyyy'),
+          bookingTime: booking.time,
+          adminNotes: validatedData.adminNotes || undefined
+        })
+
+        if (emailResult.success) {
+          logger.info('Approval email sent to customer', { bookingId: booking.id, email: booking.user.email })
+        } else {
+          logger.error('Failed to send approval email', new Error(emailResult.error || 'Unknown error'))
+        }
+      }
+    } catch (emailError) {
+      logger.error('Exception while sending approval email', emailError instanceof Error ? emailError : new Error(String(emailError)))
+      // Don't fail the approval if email fails
+    }
 
     // Log audit
     await logAudit({
@@ -549,12 +601,29 @@ export async function rejectBooking(bookingId: string, reason: string) {
       },
     })
 
-    // TODO: Send email notification in Phase 5
-    // await sendEmail({
-    //   to: booking.email,
-    //   template: 'booking-rejected',
-    //   data: { ...booking, reason: validatedData.reason },
-    // })
+    // Send rejection email to customer
+    try {
+      if (booking.user && booking.user.email) {
+        const emailResult = await sendBookingRejectedEmail({
+          to: booking.user.email,
+          customerName: booking.user.name || 'Customer',
+          bookingId: booking.id,
+          bookingTitle: booking.title,
+          bookingDate: format(new Date(booking.date), 'MMMM d, yyyy'),
+          bookingTime: booking.time,
+          reason: validatedData.reason || undefined
+        })
+
+        if (emailResult.success) {
+          logger.info('Rejection email sent to customer', { bookingId: booking.id, email: booking.user.email })
+        } else {
+          logger.error('Failed to send rejection email', new Error(emailResult.error || 'Unknown error'))
+        }
+      }
+    } catch (emailError) {
+      logger.error('Exception while sending rejection email', emailError instanceof Error ? emailError : new Error(String(emailError)))
+      // Don't fail the rejection if email fails
+    }
 
     // Log audit
     await logAudit({
