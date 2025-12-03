@@ -70,6 +70,7 @@ export const CafeSection = memo(() => {
     const result = await getApprovedBookings()
     if (result.success && result.bookings) {
       // Transform database bookings to CalendarEvent format
+      // Note: phone and email removed for GDPR compliance (public endpoint)
       const calendarEvents: CalendarEvent[] = result.bookings.map((booking) => ({
         id: booking.id,
         title: booking.title,
@@ -77,8 +78,6 @@ export const CafeSection = memo(() => {
         time: booking.time,
         type: booking.type as CalendarEvent['type'],
         guestCount: booking.guestCount || undefined,
-        phone: booking.phone || undefined,
-        email: booking.email || undefined,
       }))
       setEvents(calendarEvents)
     }

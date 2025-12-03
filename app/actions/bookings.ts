@@ -706,7 +706,8 @@ export async function deleteBooking(id: string) {
 /**
  * Get approved bookings for public calendar display
  * Public endpoint - no auth required
- * @returns Array of approved bookings
+ * NOTE: PII (email, phone) excluded for GDPR compliance
+ * @returns Array of approved bookings (without PII)
  */
 export async function getApprovedBookings() {
   try {
@@ -721,8 +722,9 @@ export async function getApprovedBookings() {
         time: true,
         type: true,
         guestCount: true,
-        email: true,
-        phone: true,
+        // PII removed for GDPR compliance - public endpoint should not expose:
+        // email: true,
+        // phone: true,
       },
       orderBy: {
         date: 'asc',

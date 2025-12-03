@@ -47,31 +47,36 @@
     - `validateImportData()`
   - **Completed:** December 3, 2025
 
-- [ ] **1.3 Remove PII from Public Booking Endpoint**
+- [x] **1.3 Remove PII from Public Booking Endpoint** ✅ COMPLETED
   - **File:** `app/actions/bookings.ts:711-743` (`getApprovedBookings`)
-  - **Issue:** Public endpoint exposes email and phone numbers (GDPR violation)
-  - **Action:** Remove from select clause:
-    ```typescript
-    select: {
-      id: true,
-      title: true,
-      date: true,
-      time: true,
-      type: true,
-      guestCount: true,
-      // REMOVE: email, phone
-    }
-    ```
+  - **Issue:** Public endpoint exposed email and phone numbers (GDPR violation)
+  - **Action Taken:**
+    - Removed `email: true` and `phone: true` from select clause ✓
+    - Added JSDoc comment noting GDPR compliance ✓
+    - Updated all consuming components ✓
+  - **Files Modified:**
+    - `app/actions/bookings.ts` - Removed PII fields from public endpoint
+    - `features/cafe/CafeSection.tsx` - Removed phone/email mapping
+    - `hooks/queries/useBookings.ts` - Removed phone/email mapping
+  - **Impact:**
+    - Public calendar no longer exposes customer contact information ✓
+    - GDPR compliant - no PII in public endpoints ✓
+    - CalendarEvent interface keeps optional fields for backward compatibility ✓
+  - **Completed:** December 3, 2025
 
-- [ ] **1.4 Change Weak Default Password**
+- [x] **1.4 Change Weak Default Password** ✅ COMPLETED
   - **File:** `.env.example:27`
-  - **Issue:** `ADMIN_PASSWORD="Admin@123456"` is predictable
-  - **Action:**
-    ```env
-    # IMPORTANT: Use a strong, unique password in production
-    # Minimum 12 characters with uppercase, lowercase, numbers, and symbols
-    ADMIN_PASSWORD="CHANGE_ME_TO_STRONG_PASSWORD"
-    ```
+  - **Issue:** `ADMIN_PASSWORD="Admin@123456"` was weak and predictable
+  - **Action Taken:**
+    - Changed to: `ADMIN_PASSWORD="CHANGE_ME_TO_STRONG_PASSWORD_MIN_12_CHARS"` ✓
+    - Added prominent warning comment: "IMPORTANT: Change these values before running in production!" ✓
+    - Added password requirements comment: "Minimum 12 characters with uppercase, lowercase, numbers, and symbols" ✓
+    - Added password generation command: `openssl rand -base64 24` ✓
+  - **Impact:**
+    - Developers can't accidentally use weak default password ✓
+    - Clear guidance on password requirements ✓
+    - Easy command to generate strong passwords ✓
+  - **Completed:** December 3, 2025
 
 - [ ] **1.5 Implement CSRF Protection**
   - **Files:** All server actions in `app/actions/`
@@ -316,11 +321,11 @@
 
 ## 📊 Progress Tracking
 
-### Phase 1: Critical (2/6 complete) - 33% ✓
+### Phase 1: Critical (4/6 complete) - 67% ✓
 - [x] Schema Mismatch ✅
 - [x] Admin Authorization ✅
-- [ ] PII Exposure
-- [ ] Weak Password
+- [x] PII Exposure ✅
+- [x] Weak Password ✅
 - [ ] CSRF Protection
 - [ ] Rate Limiting
 
