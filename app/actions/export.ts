@@ -5,6 +5,8 @@ import { logger } from '@/lib/logger';
 import { formatExportDate, formatExportDateTime } from '@/lib/export-utils';
 import { logAudit } from '@/lib/audit';
 import { requireAdmin } from '@/lib/auth-utils';
+import { strictRateLimit, checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { headers } from 'next/headers';
 
 /**
  * Export bookings data
@@ -13,6 +15,20 @@ export async function exportBookings(startDate?: string, endDate?: string) {
   try {
     const session = await requireAdmin();
     const user = session.user;
+
+    // Rate limit exports (3 per hour per user)
+    const headersList = await headers();
+    const clientIp = getClientIp(headersList);
+    const rateLimitKey = `export:${user.id}:${clientIp}`;
+    const rateLimitResult = await checkRateLimit(rateLimitKey, strictRateLimit);
+
+    if (!rateLimitResult.success) {
+      logger.warn('Export rate limit exceeded', { userId: user.id, clientIp });
+      return {
+        success: false,
+        error: `Too many export requests. Please try again in ${Math.ceil((rateLimitResult.reset * 1000 - Date.now()) / 60000)} minutes.`,
+      };
+    }
 
     const whereClause: any = {};
 
@@ -200,6 +216,20 @@ export async function exportBackup() {
   try {
     const session = await requireAdmin();
     const user = session.user;
+
+    // Rate limit full backups (3 per hour per user) - very strict
+    const headersList = await headers();
+    const clientIp = getClientIp(headersList);
+    const rateLimitKey = `backup:${user.id}:${clientIp}`;
+    const rateLimitResult = await checkRateLimit(rateLimitKey, strictRateLimit);
+
+    if (!rateLimitResult.success) {
+      logger.warn('Backup export rate limit exceeded', { userId: user.id, clientIp });
+      return {
+        success: false,
+        error: `Too many backup requests. Please try again in ${Math.ceil((rateLimitResult.reset * 1000 - Date.now()) / 60000)} minutes.`,
+      };
+    }
 
     const [bookings, events, users, notifications, auditLogs, campaigns, siteContent] = await Promise.all([
       prisma.booking.findMany({ include: { user: { select: { email: true, name: true } } } }),

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
 import { logger } from '@/lib/logger'
 import { revalidatePath } from 'next/cache'
+import { updateLoyaltyPointsSchema } from '@/lib/validations'
 
 /**
  * Calculate loyalty tier based on points
@@ -35,9 +36,20 @@ export async function updateLoyaltyPoints(
       return { error: 'Unauthorized' }
     }
 
+    // Validate input
+    const validation = updateLoyaltyPointsSchema.safeParse({ userId, points, reason })
+    if (!validation.success) {
+      return {
+        success: false,
+        error: validation.error.errors[0].message,
+      }
+    }
+
+    const { userId: validatedUserId, points: validatedPoints, reason: validatedReason } = validation.data
+
     // Get current user
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: validatedUserId },
       select: {
         id: true,
         loyaltyPoints: true,
@@ -52,14 +64,14 @@ export async function updateLoyaltyPoints(
     }
 
     const oldPoints = user.loyaltyPoints
-    const newPoints = Math.max(0, oldPoints + points) // Don't allow negative points
+    const newPoints = Math.max(0, oldPoints + validatedPoints) // Don't allow negative points
 
     // Calculate new tier
     const newTier = calculateTier(newPoints)
 
     // Update user
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id: validatedUserId },
       data: {
         loyaltyPoints: newPoints,
         loyaltyTier: newTier,
@@ -71,26 +83,26 @@ export async function updateLoyaltyPoints(
       userId: session.user.id,
       action: 'UPDATE',
       entity: 'User',
-      entityId: userId,
+      entityId: validatedUserId,
       changes: {
         loyaltyPoints: { from: oldPoints, to: newPoints },
         loyaltyTier: { from: user.loyaltyTier, to: newTier },
-        reason: reason || 'Manual adjustment',
+        reason: validatedReason || 'Manual adjustment',
       },
     })
 
     logger.info('Loyalty points updated', {
-      customerId: userId,
-      points,
+      customerId: validatedUserId,
+      points: validatedPoints,
       oldPoints,
       newPoints,
       oldTier: user.loyaltyTier,
       newTier,
-      reason,
+      reason: validatedReason,
     })
 
     revalidatePath('/admin/customers')
-    revalidatePath(`/admin/customers/${userId}`)
+    revalidatePath(`/admin/customers/${validatedUserId}`)
 
     return {
       success: true,

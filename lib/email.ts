@@ -1,12 +1,25 @@
 import { Resend } from 'resend'
 import { logger } from './logger'
+import { escape } from 'html-escaper'
 
 /**
  * Email Service Utility
  *
  * Handles all email sending using Resend API
  * Supports development mode (logs to console) and production mode (sends real emails)
+ *
+ * SECURITY: All user-provided content is escaped using html-escaper to prevent XSS attacks
  */
+
+/**
+ * Escapes HTML special characters to prevent XSS attacks in email templates
+ * @param str - String to escape
+ * @returns Escaped string safe for HTML insertion
+ */
+function escapeHtml(str: string | undefined | null): string {
+  if (!str) return ''
+  return escape(str)
+}
 
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -113,7 +126,7 @@ export async function sendBookingConfirmationEmail(data: {
 }) {
   return sendEmail({
     to: data.to,
-    subject: `Booking Confirmation - ${data.bookingTitle}`,
+    subject: `Booking Confirmation - ${escapeHtml(data.bookingTitle)}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%); padding: 30px; text-align: center;">
@@ -123,7 +136,7 @@ export async function sendBookingConfirmationEmail(data: {
 
         <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-            Hi ${data.customerName},
+            Hi ${escapeHtml(data.customerName)},
           </p>
 
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
@@ -135,19 +148,19 @@ export async function sendBookingConfirmationEmail(data: {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Booking ID:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingId}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingId)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Event:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingTitle}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingTitle)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Date:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingDate}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingDate)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Time:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingTime}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingTime)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Guests:</td>
@@ -156,7 +169,7 @@ export async function sendBookingConfirmationEmail(data: {
               ${data.specialRequests ? `
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600; vertical-align: top;">Special Requests:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.specialRequests}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.specialRequests)}</td>
               </tr>
               ` : ''}
             </table>
@@ -198,7 +211,7 @@ export async function sendBookingApprovedEmail(data: {
 }) {
   return sendEmail({
     to: data.to,
-    subject: `Booking Approved - ${data.bookingTitle}`,
+    subject: `Booking Approved - ${escapeHtml(data.bookingTitle)}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center;">
@@ -208,7 +221,7 @@ export async function sendBookingApprovedEmail(data: {
 
         <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-            Hi ${data.customerName},
+            Hi ${escapeHtml(data.customerName)},
           </p>
 
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
@@ -220,25 +233,25 @@ export async function sendBookingApprovedEmail(data: {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Booking ID:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingId}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingId)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Event:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingTitle}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingTitle)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Date:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingDate}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingDate)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Time:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingTime}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingTime)}</td>
               </tr>
             </table>
             ${data.adminNotes ? `
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #d1fae5;">
               <p style="color: #6b7280; font-size: 14px; margin: 0 0 5px 0; font-weight: 600;">Note from our team:</p>
-              <p style="color: #374151; font-size: 14px; margin: 0;">${data.adminNotes}</p>
+              <p style="color: #374151; font-size: 14px; margin: 0;">${escapeHtml(data.adminNotes)}</p>
             </div>
             ` : ''}
           </div>
@@ -279,7 +292,7 @@ export async function sendBookingRejectedEmail(data: {
 }) {
   return sendEmail({
     to: data.to,
-    subject: `Booking Update - ${data.bookingTitle}`,
+    subject: `Booking Update - ${escapeHtml(data.bookingTitle)}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 30px; text-align: center;">
@@ -289,7 +302,7 @@ export async function sendBookingRejectedEmail(data: {
 
         <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-            Hi ${data.customerName},
+            Hi ${escapeHtml(data.customerName)},
           </p>
 
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
@@ -301,19 +314,19 @@ export async function sendBookingRejectedEmail(data: {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Booking ID:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingId}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingId)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Event:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingTitle}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingTitle)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Date:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingDate}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingDate)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Time:</td>
-                <td style="padding: 8px 0; color: #374151;">${data.bookingTime}</td>
+                <td style="padding: 8px 0; color: #374151;">${escapeHtml(data.bookingTime)}</td>
               </tr>
             </table>
             ${data.reason ? `
@@ -371,7 +384,7 @@ export async function sendWelcomeEmail(data: {
 
         <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-            Hi ${data.name},
+            Hi ${escapeHtml(data.name)},
           </p>
 
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
@@ -438,7 +451,7 @@ export async function sendPasswordResetEmail(data: {
 
         <div style="background: white; padding: 30px; border: 1px solid #e5e7eb;">
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-            Hi ${data.name},
+            Hi ${escapeHtml(data.name)},
           </p>
 
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
@@ -518,7 +531,7 @@ export async function sendAdminNotificationEmail(data: {
 
           ${data.bookingId ? `
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXTAUTH_URL}/admin/bookings/${data.bookingId}" style="display: inline-block; background: #06b6d4; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+            <a href="${process.env.NEXTAUTH_URL}/admin/bookings/${escapeHtml(data.bookingId)}" style="display: inline-block; background: #06b6d4; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">
               View Booking
             </a>
           </div>

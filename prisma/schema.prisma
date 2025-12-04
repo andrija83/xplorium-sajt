@@ -83,6 +83,13 @@ model Booking {
   @@index([status, scheduledAt])
   @@index([isPaid])
   @@index([paymentDate])
+  // Additional composite indexes for common dashboard queries
+  @@index([userId, status]) // User's bookings filtered by status
+  @@index([date, time]) // Finding bookings by date and time (conflict checking)
+  @@index([createdAt]) // Dashboard queries filtering by creation date
+  @@index([type, date]) // Bookings by type and date (analytics)
+  @@index([status, date]) // Approved/pending bookings by date (calendar queries)
+  @@index([createdAt, status]) // Recent bookings with status filter
 }
 
 model Event {
@@ -199,6 +206,10 @@ model AuditLog {
   @@index([userId])
   @@index([entity, entityId])
   @@index([createdAt])
+  // Additional composite indexes for audit log queries
+  @@index([action, createdAt]) // Audit logs by action type ordered by date
+  @@index([userId, createdAt]) // User's audit logs ordered by date
+  @@index([entity, createdAt]) // Entity audit history ordered by date
 }
 
 model MaintenanceLog {
@@ -268,6 +279,9 @@ model Notification {
   @@index([read])
   @@index([createdAt])
   @@index([userId, read])
+  // Additional composite index for notification queries
+  @@index([userId, createdAt]) // User's notifications ordered by date
+  @@index([userId, read, createdAt]) // Unread notifications for user ordered by date
 }
 
 model NotificationPreferences {

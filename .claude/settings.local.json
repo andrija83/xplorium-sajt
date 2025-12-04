@@ -113,7 +113,12 @@
       "Bash(npm i:*)",
       "Bash(node scripts/test-email.mjs:*)",
       "Bash(node scripts/check-email-status.mjs:*)",
-      "Bash(node scripts/test-export.mjs:*)"
+      "Bash(node scripts/test-export.mjs:*)",
+      "Bash(npm run lint:*)",
+      "Bash(powershell -Command \"(Get-Content ''app\\actions\\dashboard.ts'' | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command:*)",
+      "Bash(node scripts/sanitize-emails.mjs:*)",
+      "Bash(del \"scripts\\sanitize-emails.mjs\")"
     ],
     "deny": [],
     "ask": []

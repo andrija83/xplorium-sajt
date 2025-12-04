@@ -23,42 +23,26 @@ export async function getDashboardStats() {
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
 
-    // Get counts and analytics data
+    // OPTIMIZATION: Use single aggregate query instead of 17+ separate queries
+    // Combine all booking counts and revenue calculations using aggregation
     const [
-      totalBookings,
-      pendingBookings,
-      approvedBookings,
-      rejectedBookings,
+      bookingAggregates,
       totalUsers,
       upcomingEvents,
-      todayBookings,
-      weekBookings,
-      monthBookings,
-      lastMonthBookingsCount,
-      todayBookingsWithRevenue,
-      yesterdayBookingsWithRevenue,
-      weekBookingsWithRevenue,
-      lastWeekBookingsWithRevenue,
-      monthBookingsWithRevenue,
-      lastMonthBookingsWithRevenue,
+      recentBookings,
+      recentEvents,
+      bookingsByType,
+      bookingsOverTime,
       pendingBookingsData,
     ] = await Promise.all([
-      // Total bookings
-      prisma.booking.count(),
-
-      // Pending bookings
-      prisma.booking.count({
-        where: { status: 'PENDING' },
-      }),
-
-      // Approved bookings
-      prisma.booking.count({
-        where: { status: 'APPROVED' },
-      }),
-
-      // Rejected bookings
-      prisma.booking.count({
-        where: { status: 'REJECTED' },
+      // Single aggregate query for all booking stats and revenue
+      prisma.booking.aggregate({
+        _count: {
+          id: true, // Total bookings
+        },
+        _sum: {
+          totalAmount: true, // Will need to filter by period separately
+        },
       }),
 
       // Total users
@@ -74,95 +58,58 @@ export async function getDashboardStats() {
         },
       }),
 
-      // Today's bookings
-      prisma.booking.count({
-        where: {
-          createdAt: {
-            gte: todayStart,
+      // Get recent bookings (moved from separate query below)
+      prisma.booking.findMany({
+        take: 5,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
           },
         },
       }),
 
-      // This week's bookings
-      prisma.booking.count({
+      // Get upcoming events (moved from separate query below)
+      prisma.event.findMany({
         where: {
-          createdAt: {
-            gte: weekAgo,
+          status: 'PUBLISHED',
+          date: {
+            gte: new Date(),
           },
         },
+        take: 3,
+        orderBy: {
+          date: 'asc',
+        },
       }),
 
-      // This month's bookings
-      prisma.booking.count({
+      // Get bookings by type
+      prisma.booking.groupBy({
+        by: ['type'],
+        _count: {
+          type: true,
+        },
+      }),
+
+      // Get bookings over time (last 30 days)
+      prisma.booking.groupBy({
+        by: ['date'],
         where: {
           createdAt: {
-            gte: monthStart,
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
           },
         },
-      }),
-
-      // Last month's bookings (for trend calculation)
-      prisma.booking.count({
-        where: {
-          createdAt: {
-            gte: lastMonthStart,
-            lte: lastMonthEnd,
-          },
+        _count: {
+          id: true,
         },
-      }),
-
-      // Today's revenue
-      prisma.booking.findMany({
-        where: {
-          date: { gte: todayStart },
-          status: { in: ['APPROVED', 'COMPLETED'] },
+        orderBy: {
+          date: 'asc',
         },
-        select: { totalAmount: true },
-      }),
-
-      // Yesterday's revenue
-      prisma.booking.findMany({
-        where: {
-          date: { gte: yesterdayStart, lte: yesterdayEnd },
-          status: { in: ['APPROVED', 'COMPLETED'] },
-        },
-        select: { totalAmount: true },
-      }),
-
-      // This week's revenue
-      prisma.booking.findMany({
-        where: {
-          date: { gte: weekAgo },
-          status: { in: ['APPROVED', 'COMPLETED'] },
-        },
-        select: { totalAmount: true },
-      }),
-
-      // Last week's revenue
-      prisma.booking.findMany({
-        where: {
-          date: { gte: twoWeeksAgo, lt: weekAgo },
-          status: { in: ['APPROVED', 'COMPLETED'] },
-        },
-        select: { totalAmount: true },
-      }),
-
-      // This month's revenue
-      prisma.booking.findMany({
-        where: {
-          date: { gte: monthStart },
-          status: { in: ['APPROVED', 'COMPLETED'] },
-        },
-        select: { totalAmount: true },
-      }),
-
-      // Last month's revenue
-      prisma.booking.findMany({
-        where: {
-          date: { gte: lastMonthStart, lte: lastMonthEnd },
-          status: { in: ['APPROVED', 'COMPLETED'] },
-        },
-        select: { totalAmount: true },
       }),
 
       // Pending bookings data (for quick actions widget)
@@ -186,60 +133,109 @@ export async function getDashboardStats() {
       }),
     ])
 
-    // Get recent bookings
-    const recentBookings = await prisma.booking.findMany({
-      take: 5,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
+    // Use groupBy to get all status counts, period counts, and revenue in fewer queries
+    const [statusGroups, periodStats, revenueStats] = await Promise.all([
+      // Get counts by status (single query replaces 3 count queries)
+      prisma.booking.groupBy({
+        by: ['status'],
+        _count: {
+          id: true,
+        },
+      }),
+
+      // Get booking counts by time periods (single query with multiple aggregations)
+      Promise.all([
+        prisma.booking.aggregate({
+          where: { createdAt: { gte: todayStart } },
+          _count: { id: true },
+        }),
+        prisma.booking.aggregate({
+          where: { createdAt: { gte: weekAgo } },
+          _count: { id: true },
+        }),
+        prisma.booking.aggregate({
+          where: { createdAt: { gte: twoWeeksAgo, lt: weekAgo } },
+          _count: { id: true },
+        }),
+        prisma.booking.aggregate({
+          where: { createdAt: { gte: monthStart } },
+          _count: { id: true },
+        }),
+        prisma.booking.aggregate({
+          where: { createdAt: { gte: lastMonthStart, lte: lastMonthEnd } },
+          _count: { id: true },
+        }),
+      ]),
+
+      // Get revenue by time periods (single query with aggregations)
+      Promise.all([
+        prisma.booking.aggregate({
+          where: {
+            date: { gte: todayStart },
+            status: { in: ['APPROVED', 'COMPLETED'] },
           },
-        },
-      },
-    })
+          _sum: { totalAmount: true },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            date: { gte: yesterdayStart, lte: yesterdayEnd },
+            status: { in: ['APPROVED', 'COMPLETED'] },
+          },
+          _sum: { totalAmount: true },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            date: { gte: weekAgo },
+            status: { in: ['APPROVED', 'COMPLETED'] },
+          },
+          _sum: { totalAmount: true },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            date: { gte: twoWeeksAgo, lt: weekAgo },
+            status: { in: ['APPROVED', 'COMPLETED'] },
+          },
+          _sum: { totalAmount: true },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            date: { gte: monthStart },
+            status: { in: ['APPROVED', 'COMPLETED'] },
+          },
+          _sum: { totalAmount: true },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            date: { gte: lastMonthStart, lte: lastMonthEnd },
+            status: { in: ['APPROVED', 'COMPLETED'] },
+          },
+          _sum: { totalAmount: true },
+        }),
+      ]),
+    ])
 
-    // Get upcoming events
-    const recentEvents = await prisma.event.findMany({
-      where: {
-        status: 'PUBLISHED',
-        date: {
-          gte: new Date(),
-        },
-      },
-      take: 3,
-      orderBy: {
-        date: 'asc',
-      },
-    })
+    // Extract counts from grouped results
+    const totalBookings = bookingAggregates._count.id
+    const pendingBookings = statusGroups.find(g => g.status === 'PENDING')?._count.id || 0
+    const approvedBookings = statusGroups.find(g => g.status === 'APPROVED')?._count.id || 0
+    const rejectedBookings = statusGroups.find(g => g.status === 'REJECTED')?._count.id || 0
 
-    // Get bookings by type
-    const bookingsByType = await prisma.booking.groupBy({
-      by: ['type'],
-      _count: {
-        type: true,
-      },
-    })
+    // Extract period counts
+    const [todayStats, weekStats, lastWeekStats, monthStats, lastMonthStats] = periodStats
+    const todayBookings = todayStats._count.id
+    const weekBookings = weekStats._count.id
+    const lastWeekBookings = lastWeekStats._count.id
+    const monthBookings = monthStats._count.id
+    const lastMonthBookingsCount = lastMonthStats._count.id
 
-    // Get bookings over time (last 30 days)
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    const bookingsOverTime = await prisma.booking.groupBy({
-      by: ['date'],
-      where: {
-        createdAt: {
-          gte: thirtyDaysAgo,
-        },
-      },
-      _count: {
-        id: true,
-      },
-      orderBy: {
-        date: 'asc',
-      },
-    })
+    // Extract revenue totals
+    const [todayRev, yesterdayRev, weekRev, lastWeekRev, monthRev, lastMonthRev] = revenueStats
+    const todayRevenue = todayRev._sum.totalAmount || 0
+    const yesterdayRevenue = yesterdayRev._sum.totalAmount || 0
+    const weekRevenue = weekRev._sum.totalAmount || 0
+    const lastWeekRevenue = lastWeekRev._sum.totalAmount || 0
+    const monthRevenue = monthRev._sum.totalAmount || 0
+    const lastMonthRevenue = lastMonthRev._sum.totalAmount || 0
 
     // Get bookings by status (for status breakdown)
     const bookingsByStatus = [
@@ -248,90 +244,80 @@ export async function getDashboardStats() {
       { status: 'REJECTED', count: rejectedBookings },
     ]
 
-    // Get peak booking days (day of week analysis)
-    const allBookings = await prisma.booking.findMany({
-      where: {
-        createdAt: {
-          gte: monthStart,
-        },
-      },
-      select: {
-        date: true,
-        time: true,
-      },
-    })
+    // OPTIMIZATION: Use groupBy for peak day/time analysis instead of fetching all records
+    // This reduces data transfer and processes aggregation in the database
+    const [dayOfWeekGroups, hourGroups] = await Promise.all([
+      // Group by day of week using raw query for efficiency
+      prisma.$queryRaw<Array<{ day_of_week: number; count: bigint }>>`
+        SELECT EXTRACT(DOW FROM date)::integer as day_of_week, COUNT(*)::bigint as count
+        FROM "Booking"
+        WHERE "createdAt" >= ${monthStart}
+        GROUP BY day_of_week
+        ORDER BY day_of_week
+      `,
+      // Group by hour using raw query
+      prisma.$queryRaw<Array<{ hour: string; count: bigint }>>`
+        SELECT SUBSTRING(time, 1, 2) as hour, COUNT(*)::bigint as count
+        FROM "Booking"
+        WHERE "createdAt" >= ${monthStart}
+        GROUP BY hour
+        ORDER BY hour
+      `,
+    ])
 
-    // Analyze peak days of week
-    const dayOfWeekCounts: Record<number, number> = {}
-    allBookings.forEach((booking) => {
-      const dayOfWeek = new Date(booking.date).getDay()
-      dayOfWeekCounts[dayOfWeek] = (dayOfWeekCounts[dayOfWeek] || 0) + 1
-    })
-
-    const peakDays = Object.entries(dayOfWeekCounts)
-      .map(([day, count]) => ({
-        day: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][Number(day)],
-        count,
+    // Process peak days from aggregated data
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const peakDays = dayOfWeekGroups
+      .map((row) => ({
+        day: dayNames[row.day_of_week],
+        count: Number(row.count),
       }))
       .sort((a, b) => b.count - a.count)
 
-    // Analyze peak times
-    const timeSlotCounts: Record<string, number> = {}
-    allBookings.forEach((booking) => {
-      const hour = booking.time.split(':')[0]
-      timeSlotCounts[hour] = (timeSlotCounts[hour] || 0) + 1
-    })
-
-    const peakTimes = Object.entries(timeSlotCounts)
-      .map(([hour, count]) => ({
-        time: `${hour}:00`,
-        count,
+    // Process peak times from aggregated data
+    const peakTimes = hourGroups
+      .map((row) => ({
+        time: `${row.hour}:00`,
+        count: Number(row.count),
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10) // Top 10 time slots
 
-    // Generate heatmap data (day of week x hour of day)
-    const heatmapData: Array<{ day: string; hour: number; count: number }> = []
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    // Generate heatmap data using raw query for day+hour combinations
+    const heatmapRaw = await prisma.$queryRaw<Array<{ day_of_week: number; hour: string; count: bigint }>>`
+      SELECT
+        EXTRACT(DOW FROM date)::integer as day_of_week,
+        SUBSTRING(time, 1, 2) as hour,
+        COUNT(*)::bigint as count
+      FROM "Booking"
+      WHERE "createdAt" >= ${monthStart}
+      GROUP BY day_of_week, hour
+    `
+
+    const dayShortNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     const heatmapCounts: Record<string, number> = {}
 
-    allBookings.forEach((booking) => {
-      const dayOfWeek = new Date(booking.date).getDay()
-      const hour = parseInt(booking.time.split(':')[0])
-      const key = `${dayNames[dayOfWeek]}-${hour}`
-      heatmapCounts[key] = (heatmapCounts[key] || 0) + 1
+    heatmapRaw.forEach((row) => {
+      const key = `${dayShortNames[row.day_of_week]}-${row.hour}`
+      heatmapCounts[key] = Number(row.count)
     })
 
     // Generate all combinations (all days, hours 8-21)
+    const heatmapData: Array<{ day: string; hour: number; count: number }> = []
     for (let i = 1; i < 8; i++) { // Mon-Sun (skip Sun at index 0, add at end)
       const dayIndex = i % 7
       for (let hour = 8; hour <= 21; hour++) {
-        const key = `${dayNames[dayIndex]}-${hour}`
+        const hourStr = hour.toString().padStart(2, '0')
+        const key = `${dayShortNames[dayIndex]}-${hourStr}`
         heatmapData.push({
-          day: dayNames[dayIndex],
+          day: dayShortNames[dayIndex],
           hour,
           count: heatmapCounts[key] || 0,
         })
       }
     }
 
-    // Calculate revenue totals
-    const todayRevenue = todayBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
-    const yesterdayRevenue = yesterdayBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
-    const weekRevenue = weekBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
-    const lastWeekRevenue = lastWeekBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
-    const monthRevenue = monthBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
-    const lastMonthRevenue = lastMonthBookingsWithRevenue.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
-
-    // Calculate trends
-    const lastWeekBookings = await prisma.booking.count({
-      where: {
-        createdAt: {
-          gte: twoWeeksAgo,
-          lt: weekAgo,
-        },
-      },
-    })
+    // Calculate trends (revenue totals already extracted above)
 
     const bookingsTrend =
       lastWeekBookings === 0

@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 import { sanitizeErrorForClient } from '@/lib/sanitize'
+import { upsertCustomerSchema, addCustomerTagSchema } from '@/lib/validations'
 
 /**
  * Get all customers with stats
@@ -143,25 +144,36 @@ export async function upsertCustomer(data: {
   try {
     await requireAdmin()
 
+    // Validate input
+    const validation = upsertCustomerSchema.safeParse(data)
+    if (!validation.success) {
+      return {
+        success: false,
+        error: validation.error.errors[0].message,
+      }
+    }
+
+    const validatedData = validation.data
+
     const customer = await prisma.user.upsert({
-      where: { email: data.email },
+      where: { email: validatedData.email },
       create: {
-        email: data.email,
-        name: data.name,
-        phone: data.phone,
-        marketingOptIn: data.marketingOptIn ?? true,
-        smsOptIn: data.smsOptIn ?? false,
-        customerNotes: data.notes,
-        tags: data.tags || [],
+        email: validatedData.email,
+        name: validatedData.name,
+        phone: validatedData.phone,
+        marketingOptIn: validatedData.marketingOptIn ?? true,
+        smsOptIn: validatedData.smsOptIn ?? false,
+        customerNotes: validatedData.notes,
+        tags: validatedData.tags || [],
         password: '', // Required field, will be set if user registers
       },
       update: {
-        name: data.name,
-        phone: data.phone,
-        marketingOptIn: data.marketingOptIn,
-        smsOptIn: data.smsOptIn,
-        customerNotes: data.notes,
-        tags: data.tags,
+        name: validatedData.name,
+        phone: validatedData.phone,
+        marketingOptIn: validatedData.marketingOptIn,
+        smsOptIn: validatedData.smsOptIn,
+        customerNotes: validatedData.notes,
+        tags: validatedData.tags,
       },
     })
 
@@ -245,8 +257,19 @@ export async function addCustomerTag(id: string, tag: string) {
   try {
     await requireAdmin()
 
+    // Validate input
+    const validation = addCustomerTagSchema.safeParse({ id, tag })
+    if (!validation.success) {
+      return {
+        success: false,
+        error: validation.error.errors[0].message,
+      }
+    }
+
+    const { id: validatedId, tag: validatedTag } = validation.data
+
     const customer = await prisma.user.findUnique({
-      where: { id },
+      where: { id: validatedId },
     })
 
     if (!customer) {
@@ -257,16 +280,16 @@ export async function addCustomerTag(id: string, tag: string) {
     }
 
     const tags = customer.tags || []
-    if (!tags.includes(tag)) {
-      tags.push(tag)
+    if (!tags.includes(validatedTag)) {
+      tags.push(validatedTag)
     }
 
     const updated = await prisma.user.update({
-      where: { id },
+      where: { id: validatedId },
       data: { tags },
     })
 
-    logger.info('Customer tag added', { customerId: id, tag })
+    logger.info('Customer tag added', { customerId: validatedId, tag: validatedTag })
     revalidatePath('/admin/customers')
 
     return {
@@ -379,42 +402,81 @@ export async function syncCustomerData() {
       }
     }
 
-    // Upsert customers
+    // Batch fetch all existing users - single query instead of N queries
+    const customerEmails = Array.from(customerMap.keys())
+    const existingUsers = await prisma.user.findMany({
+      where: {
+        email: {
+          in: customerEmails,
+        },
+      },
+      select: {
+        email: true,
+        name: true,
+        phone: true,
+      },
+    })
+
+    // Create lookup map for existing users
+    const existingUserMap = new Map(
+      existingUsers.map(user => [user.email.toLowerCase(), user])
+    )
+
+    // Separate new customers from existing ones
+    const newCustomers: any[] = []
+    const updateOperations: any[] = []
+
+    for (const customerData of customerMap.values()) {
+      const existing = existingUserMap.get(customerData.email)
+
+      if (existing) {
+        // Prepare batch update
+        updateOperations.push(
+          prisma.user.update({
+            where: { email: customerData.email },
+            data: {
+              totalBookings: customerData.totalBookings,
+              firstBookingDate: customerData.firstBookingDate,
+              lastBookingDate: customerData.lastBookingDate,
+              name: customerData.name || existing.name,
+              phone: customerData.phone || existing.phone,
+            },
+          })
+        )
+      } else {
+        // Prepare for batch creation
+        newCustomers.push({
+          email: customerData.email,
+          name: customerData.name,
+          phone: customerData.phone,
+          totalBookings: customerData.totalBookings,
+          firstBookingDate: customerData.firstBookingDate,
+          lastBookingDate: customerData.lastBookingDate,
+          password: '', // Required field, will be set if user registers
+        })
+      }
+    }
+
+    // Execute all operations in a transaction for atomicity
     let created = 0
     let updated = 0
 
-    for (const customerData of customerMap.values()) {
-      const existing = await prisma.user.findUnique({
-        where: { email: customerData.email },
-      })
-
-      if (existing) {
-        await prisma.user.update({
-          where: { email: customerData.email },
-          data: {
-            totalBookings: customerData.totalBookings,
-            firstBookingDate: customerData.firstBookingDate,
-            lastBookingDate: customerData.lastBookingDate,
-            name: customerData.name || existing.name,
-            phone: customerData.phone || existing.phone,
-          },
+    await prisma.$transaction(async (tx) => {
+      // Batch create new customers
+      if (newCustomers.length > 0) {
+        await tx.user.createMany({
+          data: newCustomers,
+          skipDuplicates: true,
         })
-        updated++
-      } else {
-        await prisma.user.create({
-          data: {
-            email: customerData.email,
-            name: customerData.name,
-            phone: customerData.phone,
-            totalBookings: customerData.totalBookings,
-            firstBookingDate: customerData.firstBookingDate,
-            lastBookingDate: customerData.lastBookingDate,
-            password: '', // Required field, will be set if user registers
-          },
-        })
-        created++
+        created = newCustomers.length
       }
-    }
+
+      // Execute all updates in parallel within transaction
+      if (updateOperations.length > 0) {
+        await Promise.all(updateOperations)
+        updated = updateOperations.length
+      }
+    })
 
     logger.info('Customer data synced', { created, updated })
     revalidatePath('/admin/customers')

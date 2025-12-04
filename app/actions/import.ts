@@ -4,6 +4,9 @@ import { prisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { logAudit } from '@/lib/audit';
 import { requireAdmin } from '@/lib/auth-utils';
+import { strictRateLimit, checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { headers } from 'next/headers';
+import { importBookingSchema, importEventSchema } from '@/lib/validations';
 
 interface ImportBookingData {
   Title: string;
@@ -26,6 +29,20 @@ export async function importBookings(data: ImportBookingData[]) {
     const session = await requireAdmin();
     const user = session.user;
 
+    // Rate limit imports (3 per hour per user) - destructive operation
+    const headersList = await headers();
+    const clientIp = getClientIp(headersList);
+    const rateLimitKey = `import:${user.id}:${clientIp}`;
+    const rateLimitResult = await checkRateLimit(rateLimitKey, strictRateLimit);
+
+    if (!rateLimitResult.success) {
+      logger.warn('Import rate limit exceeded', { userId: user.id, clientIp });
+      return {
+        success: false,
+        error: `Too many import requests. Please try again in ${Math.ceil((rateLimitResult.reset * 1000 - Date.now()) / 60000)} minutes.`,
+      };
+    }
+
     const results = {
       success: 0,
       failed: 0,
@@ -34,47 +51,42 @@ export async function importBookings(data: ImportBookingData[]) {
 
     for (const [index, booking] of data.entries()) {
       try {
-        // Validate required fields
-        if (!booking.Title || !booking.Date || !booking.Time || !booking.Type || !booking['User Email'] || !booking.Phone) {
+        // Validate with Zod schema
+        const validation = importBookingSchema.safeParse(booking);
+        if (!validation.success) {
           results.failed++;
-          results.errors.push(`Row ${index + 1}: Missing required fields (Title, Date, Time, Type, User Email, Phone)`);
+          results.errors.push(`Row ${index + 1}: ${validation.error.errors[0].message}`);
           continue;
         }
 
-        // Validate booking type
-        const validTypes = ['CAFE', 'SENSORY_ROOM', 'PLAYGROUND', 'PARTY', 'EVENT'];
-        if (!validTypes.includes(booking.Type)) {
-          results.failed++;
-          results.errors.push(`Row ${index + 1}: Invalid booking type. Must be one of: ${validTypes.join(', ')}`);
-          continue;
-        }
+        const validatedBooking = validation.data;
 
         // Find user by email
         const bookingUser = await prisma.user.findUnique({
-          where: { email: booking['User Email'] },
+          where: { email: validatedBooking['User Email'] },
         });
 
         if (!bookingUser) {
           results.failed++;
-          results.errors.push(`Row ${index + 1}: User not found with email ${booking['User Email']}`);
+          results.errors.push(`Row ${index + 1}: User not found with email ${validatedBooking['User Email']}`);
           continue;
         }
 
         // Create booking
-        const bookingDate = new Date(booking.Date);
+        const bookingDate = new Date(validatedBooking.Date);
         await prisma.booking.create({
           data: {
-            title: booking.Title,
+            title: validatedBooking.Title,
             date: bookingDate,
-            time: booking.Time,
-            type: booking.Type,
-            guestCount: Number(booking['Guest Count']) || 1,
-            phone: booking.Phone,
-            email: booking['User Email'],
-            totalAmount: booking['Total Amount'] ? Number(booking['Total Amount']) : null,
-            currency: booking.Currency || 'RSD',
+            time: validatedBooking.Time,
+            type: validatedBooking.Type,
+            guestCount: validatedBooking['Guest Count'],
+            phone: validatedBooking.Phone,
+            email: validatedBooking['User Email'],
+            totalAmount: validatedBooking['Total Amount'] || null,
+            currency: validatedBooking.Currency || 'RSD',
             userId: bookingUser.id,
-            specialRequests: booking['Special Requests'] || null,
+            specialRequests: validatedBooking['Special Requests'] || null,
             status: 'APPROVED',
             scheduledAt: bookingDate,
           },
@@ -149,36 +161,31 @@ export async function importEvents(data: ImportEventData[]) {
 
     for (const [index, event] of data.entries()) {
       try {
-        // Validate required fields
-        if (!event.Slug || !event.Title || !event.Description || !event.Date || !event.Time || !event.Category) {
+        // Validate with Zod schema
+        const validation = importEventSchema.safeParse(event);
+        if (!validation.success) {
           results.failed++;
-          results.errors.push(`Row ${index + 1}: Missing required fields (Slug, Title, Description, Date, Time, Category)`);
+          results.errors.push(`Row ${index + 1}: ${validation.error.errors[0].message}`);
           continue;
         }
 
-        // Validate event category
-        const validCategories = ['WORKSHOP', 'PARTY', 'SPECIAL_EVENT', 'HOLIDAY', 'SEASONAL', 'CLASS', 'TOURNAMENT', 'OTHER'];
-        if (!validCategories.includes(event.Category)) {
-          results.failed++;
-          results.errors.push(`Row ${index + 1}: Invalid event category. Must be one of: ${validCategories.join(', ')}`);
-          continue;
-        }
+        const validatedEvent = validation.data;
 
         // Create event
         await prisma.event.create({
           data: {
-            slug: event.Slug,
-            title: event.Title,
-            description: event.Description,
-            date: new Date(event.Date),
-            time: event.Time,
-            endTime: event['End Time'] || null,
-            category: event.Category,
-            capacity: event.Capacity ? Number(event.Capacity) : null,
-            price: event.Price ? Number(event.Price) : null,
-            currency: event.Currency || 'RSD',
-            location: event.Location || null,
-            image: event.Image || null,
+            slug: validatedEvent.Slug,
+            title: validatedEvent.Title,
+            description: validatedEvent.Description,
+            date: new Date(validatedEvent.Date),
+            time: validatedEvent.Time,
+            endTime: validatedEvent['End Time'] || null,
+            category: validatedEvent.Category,
+            capacity: validatedEvent.Capacity || null,
+            price: validatedEvent.Price || null,
+            currency: validatedEvent.Currency || 'RSD',
+            location: validatedEvent.Location || null,
+            image: validatedEvent.Image || null,
             status: 'PUBLISHED',
             tags: [],
           },
@@ -229,6 +236,20 @@ export async function restoreBackup(backup: any) {
   try {
     const session = await requireAdmin();
     const user = session.user;
+
+    // Rate limit restores (3 per hour per user) - VERY destructive operation
+    const headersList = await headers();
+    const clientIp = getClientIp(headersList);
+    const rateLimitKey = `restore:${user.id}:${clientIp}`;
+    const rateLimitResult = await checkRateLimit(rateLimitKey, strictRateLimit);
+
+    if (!rateLimitResult.success) {
+      logger.warn('Restore rate limit exceeded', { userId: user.id, clientIp });
+      return {
+        success: false,
+        error: `Too many restore requests. Please try again in ${Math.ceil((rateLimitResult.reset * 1000 - Date.now()) / 60000)} minutes.`,
+      };
+    }
 
     // Validate backup structure
     if (!backup.data || !backup.version) {

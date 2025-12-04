@@ -3,6 +3,79 @@ import { headers } from 'next/headers'
 import { Prisma } from '@prisma/client'
 
 /**
+ * List of sensitive field names that should be removed from audit logs
+ * These fields commonly contain passwords, tokens, and other sensitive data
+ */
+const SENSITIVE_FIELDS = [
+  'password',
+  'passwordHash',
+  'hashedPassword',
+  'newPassword',
+  'oldPassword',
+  'currentPassword',
+  'confirmPassword',
+  'token',
+  'accessToken',
+  'refreshToken',
+  'apiKey',
+  'secret',
+  'secretKey',
+  'apiSecret',
+  'privateKey',
+  'ssn',
+  'socialSecurity',
+  'creditCard',
+  'cardNumber',
+  'cvv',
+  'pin',
+  'bankAccount',
+  'routingNumber',
+]
+
+/**
+ * Recursively sanitizes an object by removing sensitive fields
+ * @param obj - Object to sanitize
+ * @returns Sanitized object with sensitive fields redacted
+ */
+function sanitizeAuditData(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeAuditData(item))
+  }
+
+  // Handle objects
+  if (typeof obj === 'object') {
+    const sanitized: Record<string, any> = {}
+
+    for (const [key, value] of Object.entries(obj)) {
+      const lowerKey = key.toLowerCase()
+
+      // Check if the key matches any sensitive field pattern
+      const isSensitive = SENSITIVE_FIELDS.some(
+        sensitiveField => lowerKey.includes(sensitiveField.toLowerCase())
+      )
+
+      if (isSensitive) {
+        // Redact sensitive fields
+        sanitized[key] = '[REDACTED]'
+      } else {
+        // Recursively sanitize nested objects
+        sanitized[key] = sanitizeAuditData(value)
+      }
+    }
+
+    return sanitized
+  }
+
+  // Return primitive values as-is
+  return obj
+}
+
+/**
  * Log an admin action to the audit log
  * @param params - Audit log parameters
  */
@@ -31,7 +104,7 @@ export async function logAudit({
         action,
         entity,
         entityId,
-        changes: changes ? (changes as Prisma.InputJsonValue) : Prisma.DbNull,
+        changes: changes ? (sanitizeAuditData(changes) as Prisma.InputJsonValue) : Prisma.DbNull,
         ipAddress,
         userAgent,
       },

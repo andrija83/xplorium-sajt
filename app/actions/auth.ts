@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger'
 import { signUpSchema, type SignUpInput } from '@/lib/validations'
 import { signIn } from '@/lib/auth'
 import { AuthError } from 'next-auth'
-import { authRateLimit, checkRateLimit } from '@/lib/rate-limit'
+import { authRateLimit, strictRateLimit, checkRateLimit } from '@/lib/rate-limit'
 import {
   ConflictError,
   RateLimitError,
@@ -144,17 +144,31 @@ export async function signInAction(
  */
 export async function resetPassword(email: string) {
   try {
+    // Rate limit password reset requests (3 per hour per email)
+    const rateLimitResult = await checkRateLimit(email, strictRateLimit)
+
+    if (!rateLimitResult.success) {
+      logger.warn('Password reset rate limit exceeded', { email })
+      return {
+        success: false,
+        error: `Too many reset attempts. Please try again in ${Math.ceil((rateLimitResult.reset * 1000 - Date.now()) / 60000)} minutes.`,
+      }
+    }
+
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     // TODO: Integrate Resend here
     // See TODO_RESEND_MIGRATION.md
 
+    logger.info('Password reset requested', { email })
+
     return {
       success: true,
       message: 'Reset link sent successfully',
     }
   } catch (error) {
+    logger.serverActionError('resetPassword', error)
     return {
       success: false,
       error: 'Failed to send reset link',
