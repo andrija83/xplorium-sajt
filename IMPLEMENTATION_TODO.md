@@ -148,9 +148,11 @@
   - Files: 1 modified
   - Complexity: High
 
-- [ ] **Add health check endpoint** ⏱️ 1 hour
-  - Create `app/api/health/route.ts`
-  - Simple DB connection test
+- [x] **Add health check endpoint** ⏱️ 1 hour ✅
+  - ✅ Created `app/api/health/route.ts`
+  - ✅ Returns: status, timestamp, version, uptime, database connectivity + latency
+  - ✅ Returns 200 for healthy, 503 for unhealthy
+  - ✅ Useful for load balancers, Kubernetes probes, uptime monitoring
   - Files: 1 new
   - Complexity: Low
 
