@@ -1,11 +1,9 @@
 'use server'
 
 import { prisma } from '@/lib/db'
-import { hashPassword } from '@/lib/password'
+import { hashPassword, comparePassword } from '@/lib/password'
 import { logger } from '@/lib/logger'
-import { signUpSchema, type SignUpInput } from '@/lib/validations'
-import { signIn } from '@/lib/auth'
-import { AuthError } from 'next-auth'
+import { signUpSchema, signInSchema, type SignUpInput } from '@/lib/validations'
 import { authRateLimit, strictRateLimit, checkRateLimit } from '@/lib/rate-limit'
 import {
   ConflictError,
@@ -83,15 +81,16 @@ export async function signUp(
 }
 
 /**
- * Sign in a user using NextAuth with rate limiting
+ * Verify user credentials without creating a session
+ * The actual session is created client-side via NextAuth signIn
  * @param email - User email
  * @param password - User password
- * @returns Standardized response with success message
+ * @returns Standardized response with user data if valid
  */
-export async function signInAction(
+export async function verifyCredentials(
   email: string,
   password: string
-): Promise<StandardResponse<{ message: string }>> {
+): Promise<StandardResponse<{ valid: boolean; userId?: string }>> {
   try {
     // Rate limit by email to prevent brute force attacks
     const rateLimitResult = await checkRateLimit(email, authRateLimit)
@@ -107,32 +106,68 @@ export async function signInAction(
       throw new RateLimitError(retryAfterSeconds)
     }
 
-    logger.auth('Attempting sign in for:', { email })
-
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
-
-    logger.auth('Sign in successful:', { email })
-
-    return createSuccessResponse({ message: 'Signed in successfully' })
-  } catch (error) {
-    // Handle NextAuth specific errors
-    if (error instanceof AuthError) {
-      logger.auth('AuthError type:', { type: error.type })
-
-      switch (error.type) {
-        case 'CredentialsSignin':
-          return handleServerError('signInAction', new AuthenticationError('Invalid email or password'))
-        case 'CallbackRouteError':
-          return handleServerError('signInAction', new AuthenticationError('Authentication callback failed. Please check your credentials.'))
-        default:
-          return handleServerError('signInAction', new AuthenticationError(`Authentication failed: ${error.type}`))
-      }
+    // Validate input
+    const validatedFields = signInSchema.safeParse({ email, password })
+    if (!validatedFields.success) {
+      throw new AuthenticationError('Invalid email or password format')
     }
 
+    logger.auth('Verifying credentials for:', { email })
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        password: true,
+        blocked: true,
+      },
+    })
+
+    if (!user || !user.password) {
+      logger.auth('User not found:', { email })
+      throw new AuthenticationError('Invalid email or password')
+    }
+
+    if (user.blocked) {
+      logger.auth('User is blocked:', { email })
+      throw new AuthenticationError('Account has been blocked. Please contact support.')
+    }
+
+    // Verify password
+    const isValidPassword = await comparePassword(password, user.password)
+
+    if (!isValidPassword) {
+      logger.auth('Invalid password for:', { email })
+      throw new AuthenticationError('Invalid email or password')
+    }
+
+    logger.auth('Credentials verified for:', { email })
+
+    return createSuccessResponse({ valid: true, userId: user.id })
+  } catch (error) {
+    return handleServerError('verifyCredentials', error)
+  }
+}
+
+/**
+ * Sign in a user - validates and returns success for client to complete sign in
+ * @deprecated Use verifyCredentials instead for pre-validation
+ */
+export async function signInAction(
+  email: string,
+  password: string
+): Promise<StandardResponse<{ message: string }>> {
+  try {
+    // Verify credentials first
+    const result = await verifyCredentials(email, password)
+
+    if (!result.success) {
+      return result as StandardResponse<{ message: string }>
+    }
+
+    return createSuccessResponse({ message: 'Credentials verified. Completing sign in...' })
+  } catch (error) {
     return handleServerError('signInAction', error)
   }
 }

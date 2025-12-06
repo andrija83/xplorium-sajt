@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AUTH_COLORS } from "@/constants/animations"
 import { validateEmail, sanitizeInput } from "@/lib/validation"
-import { signInAction } from "@/app/actions/auth"
+import { verifyCredentials } from "@/app/actions/auth"
+import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
@@ -107,25 +108,40 @@ export function SignInModal({ isOpen, onClose, onSwitchToSignUp, onForgotPasswor
     setIsLoading(true)
 
     try {
-      const result = await signInAction(email, password)
+      // First verify credentials server-side (with rate limiting)
+      const verifyResult = await verifyCredentials(email, password)
 
-      if (result.success) {
-        toast.success('Signed in successfully!')
-
-        // Update the session to reflect the new authenticated state
-        await update()
-
-        handleClose()
-
-        // Refresh the page to update all components
-        // Wait for exit animation (500ms)
-        setTimeout(() => {
-          router.refresh()
-        }, 500)
-      } else {
-        toast.error(result.error || 'Failed to sign in')
+      if (!verifyResult.success) {
+        toast.error(verifyResult.error || 'Failed to sign in')
         setIsLoading(false)
+        return
       }
+
+      // Credentials valid - now use NextAuth client-side signIn
+      const signInResult = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (signInResult?.error) {
+        toast.error('Failed to sign in. Please try again.')
+        setIsLoading(false)
+        return
+      }
+
+      toast.success('Signed in successfully!')
+
+      // Update the session to reflect the new authenticated state
+      await update()
+
+      handleClose()
+
+      // Refresh the page to update all components
+      // Wait for exit animation (500ms)
+      setTimeout(() => {
+        router.refresh()
+      }, 500)
     } catch (error) {
       logger.error('Sign in error', error instanceof Error ? error : new Error(String(error)))
       toast.error('An unexpected error occurred')
