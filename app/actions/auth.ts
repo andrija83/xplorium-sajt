@@ -91,97 +91,55 @@ export async function verifyCredentials(
   email: string,
   password: string
 ): Promise<StandardResponse<{ valid: boolean; userId?: string }>> {
-  // Use console.log directly for production debugging (temporarily)
-  const log = (step: string, data?: object) => {
-    console.log(`[verifyCredentials] ${step}`, JSON.stringify(data || {}))
-  }
-
-  log('START', { email, timestamp: new Date().toISOString(), nodeEnv: process.env.NODE_ENV })
-
   try {
-    // Step 1: Rate limiting
-    log('Step 1: Checking rate limit')
-    let rateLimitResult
-    try {
-      rateLimitResult = await checkRateLimit(email, authRateLimit)
-      log('Rate limit check passed', { success: rateLimitResult.success, remaining: rateLimitResult.remaining })
-    } catch (rateLimitError) {
-      const errMsg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError)
-      log('Rate limit check FAILED', { error: errMsg })
-      console.error('[verifyCredentials] Rate limit error:', rateLimitError)
-      throw rateLimitError
-    }
+    // Rate limit by email to prevent brute force attacks
+    const rateLimitResult = await checkRateLimit(email, authRateLimit)
 
     if (!rateLimitResult.success) {
-      log('Rate limit exceeded')
+      logger.warn('Sign in rate limit exceeded', { email })
       const retryAfterSeconds = rateLimitResult.reset - Math.floor(Date.now() / 1000)
       throw new RateLimitError(retryAfterSeconds)
     }
 
-    // Step 2: Validate input
-    log('Step 2: Validating input')
+    // Validate input
     const validatedFields = signInSchema.safeParse({ email, password })
     if (!validatedFields.success) {
-      log('Input validation failed', { errors: validatedFields.error.errors.map(e => e.message) })
       throw new AuthenticationError('Invalid email or password format')
     }
-    log('Input validation passed')
 
-    // Step 3: Find user in database
-    log('Step 3: Finding user in database')
-    let user
-    try {
-      user = await prisma.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          password: true,
-          blocked: true,
-        },
-      })
-      log('Database query completed', { userFound: !!user, userId: user?.id })
-    } catch (dbError) {
-      const errMsg = dbError instanceof Error ? dbError.message : String(dbError)
-      log('Database query FAILED', { error: errMsg })
-      console.error('[verifyCredentials] Database error:', dbError)
-      throw dbError
-    }
+    logger.auth('Verifying credentials for:', { email })
+
+    // Find user in database
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        password: true,
+        blocked: true,
+      },
+    })
 
     if (!user || !user.password) {
-      log('User not found or no password')
+      logger.auth('User not found:', { email })
       throw new AuthenticationError('Invalid email or password')
     }
 
     if (user.blocked) {
-      log('User is blocked')
+      logger.auth('User is blocked:', { email })
       throw new AuthenticationError('Account has been blocked. Please contact support.')
     }
 
-    // Step 4: Verify password
-    log('Step 4: Verifying password')
-    let isValidPassword
-    try {
-      isValidPassword = await comparePassword(password, user.password)
-      log('Password comparison completed', { isValid: isValidPassword })
-    } catch (bcryptError) {
-      const errMsg = bcryptError instanceof Error ? bcryptError.message : String(bcryptError)
-      log('Password comparison FAILED', { error: errMsg })
-      console.error('[verifyCredentials] Bcrypt error:', bcryptError)
-      throw bcryptError
-    }
+    // Verify password
+    const isValidPassword = await comparePassword(password, user.password)
 
     if (!isValidPassword) {
-      log('Invalid password')
+      logger.auth('Invalid password for:', { email })
       throw new AuthenticationError('Invalid email or password')
     }
 
-    log('SUCCESS - Credentials verified', { userId: user.id })
+    logger.auth('Credentials verified for:', { email })
     return createSuccessResponse({ valid: true, userId: user.id })
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error)
-    const errName = error instanceof Error ? error.name : 'Unknown'
-    log('CAUGHT ERROR', { errorName: errName, errorMessage: errMsg })
-    console.error('[verifyCredentials] Full error:', error)
     return handleServerError('verifyCredentials', error)
   }
 }
