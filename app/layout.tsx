@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Great_Vibes, Monoton } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { SessionProvider } from "next-auth/react"
 import { Toaster } from "sonner"
@@ -116,6 +117,7 @@ export default function RootLayout({
           <Toaster position="top-right" richColors closeButton />
         </SessionProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
