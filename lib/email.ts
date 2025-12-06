@@ -21,15 +21,25 @@ function escapeHtml(str: string | undefined | null): string {
   return escape(str)
 }
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 // Default from email
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@xplorium.com'
 
 // Check if Resend is configured
 const isResendConfigured = () => {
   return !!(process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== '')
+}
+
+// Lazy initialize Resend client only when needed and configured
+let resendClient: Resend | null = null
+
+function getResendClient(): Resend | null {
+  if (!isResendConfigured()) {
+    return null
+  }
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendClient
 }
 
 /**
@@ -68,6 +78,16 @@ export async function sendEmail(options: SendEmailOptions) {
     }
 
     logger.info('Resend configured, sending via API')
+
+    // Get the Resend client
+    const resend = getResendClient()
+    if (!resend) {
+      logger.error('Failed to initialize Resend client')
+      return {
+        success: false,
+        error: 'Email service not available'
+      }
+    }
 
     // Send real email via Resend
     const { data, error } = await resend.emails.send({
