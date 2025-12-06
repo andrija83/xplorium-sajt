@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Save, RotateCcw, Building, Mail, Clock, Share2, Bell, Zap } from 'lucide-react'
+import { Save, RotateCcw, Building, Mail, Clock, Share2, Bell, Zap, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -86,7 +86,9 @@ export const SettingsEditor = ({ settings, onSave }: SettingsEditorProps) => {
       'hours': 'hours',
       'social': 'social',
       'email': 'notifications',
-      'features': 'features'
+      'features': 'features',
+      'rateLimit': 'security',
+      'scheduling': 'security'
     }
     return categoryMap[prefix] || 'general'
   }
@@ -146,7 +148,7 @@ export const SettingsEditor = ({ settings, onSave }: SettingsEditorProps) => {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid grid-cols-6 w-full bg-black/20 border border-cyan-400/20">
+        <TabsList className="grid grid-cols-7 w-full bg-black/20 border border-cyan-400/20">
           <TabsTrigger value="general" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <Building className="w-4 h-4 mr-2" />
             General
@@ -170,6 +172,10 @@ export const SettingsEditor = ({ settings, onSave }: SettingsEditorProps) => {
           <TabsTrigger value="features" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <Zap className="w-4 h-4 mr-2" />
             Features
+          </TabsTrigger>
+          <TabsTrigger value="security" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+            <Shield className="w-4 h-4 mr-2" />
+            Security
           </TabsTrigger>
         </TabsList>
 
@@ -468,6 +474,127 @@ export const SettingsEditor = ({ settings, onSave }: SettingsEditorProps) => {
                 </div>
               )
             })}
+          </motion.div>
+        </TabsContent>
+
+        {/* Security Settings */}
+        <TabsContent value="security" className="space-y-6 mt-6">
+          {/* Booking Rate Limiting */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-cyan-400/20 space-y-4"
+          >
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 rounded-lg bg-cyan-500/20 border border-cyan-400/30">
+                <Shield className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-cyan-300">Booking Rate Limiting</h3>
+                <p className="text-sm text-cyan-100/60 mt-1">
+                  Prevent spam by limiting how many bookings users can create
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="rate-limit-max" className="text-cyan-300">Max Requests</Label>
+                <Input
+                  id="rate-limit-max"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={formData['rateLimit.bookingCreation']?.maxRequests || 10}
+                  onChange={(e) => updateSetting('rateLimit.bookingCreation', {
+                    ...formData['rateLimit.bookingCreation'],
+                    maxRequests: parseInt(e.target.value) || 10
+                  })}
+                  className="mt-2 bg-black/40 border-cyan-400/30 text-white"
+                />
+                <p className="text-xs text-cyan-100/50 mt-2">
+                  Maximum bookings allowed per time window (1-100)
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="rate-limit-window" className="text-cyan-300">Time Window (minutes)</Label>
+                <Input
+                  id="rate-limit-window"
+                  type="number"
+                  min={1}
+                  max={1440}
+                  value={formData['rateLimit.bookingCreation']?.windowMinutes || 60}
+                  onChange={(e) => updateSetting('rateLimit.bookingCreation', {
+                    ...formData['rateLimit.bookingCreation'],
+                    windowMinutes: parseInt(e.target.value) || 60
+                  })}
+                  className="mt-2 bg-black/40 border-cyan-400/30 text-white"
+                />
+                <p className="text-xs text-cyan-100/50 mt-2">
+                  Time window in minutes (1-1440)
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-400/20">
+              <p className="text-sm text-cyan-100">
+                <strong className="text-cyan-300">Current Limit:</strong>{' '}
+                {formData['rateLimit.bookingCreation']?.maxRequests || 10} bookings per{' '}
+                {formData['rateLimit.bookingCreation']?.windowMinutes || 60} minutes
+              </p>
+              <p className="text-xs text-cyan-100/60 mt-2">
+                Users who exceed this limit will see an error message and must wait before creating more bookings.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Scheduling Buffer Time */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="p-6 rounded-xl bg-black/20 backdrop-blur-sm border border-cyan-400/20 space-y-4"
+          >
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 rounded-lg bg-purple-500/20 border border-purple-400/30">
+                <Clock className="w-6 h-6 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-cyan-300">Booking Buffer Time</h3>
+                <p className="text-sm text-cyan-100/60 mt-1">
+                  Minimum time gap between bookings to allow for setup/cleanup
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="buffer-time" className="text-cyan-300">Buffer Time (minutes)</Label>
+              <Input
+                id="buffer-time"
+                type="number"
+                min={0}
+                max={180}
+                value={formData['scheduling.bufferTime']?.minutes || 45}
+                onChange={(e) => updateSetting('scheduling.bufferTime', {
+                  minutes: parseInt(e.target.value) || 45
+                })}
+                className="mt-2 bg-black/40 border-cyan-400/30 text-white w-48"
+              />
+              <p className="text-xs text-cyan-100/50 mt-2">
+                Required gap between bookings (0-180 minutes)
+              </p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-400/20">
+              <p className="text-sm text-cyan-100">
+                <strong className="text-cyan-300">Current Buffer:</strong>{' '}
+                {formData['scheduling.bufferTime']?.minutes || 45} minutes
+              </p>
+              <p className="text-xs text-cyan-100/60 mt-2">
+                Prevents double-bookings and allows time for preparation between events.
+              </p>
+            </div>
           </motion.div>
         </TabsContent>
       </Tabs>

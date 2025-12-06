@@ -38,6 +38,11 @@ model User {
   deletionRequestedAt    DateTime?
   deletionScheduledFor   DateTime?
   marketingConsentUpdatedAt DateTime?
+  // Soft delete fields
+  deleted                Boolean          @default(false)
+  deletedAt              DateTime?
+  deletedBy              String?
+  originalEmail          String?          // Store original email before anonymization
   auditLogs              AuditLog[]
   bookings               Booking[]
   notifications          Notification[]
@@ -49,6 +54,8 @@ model User {
   @@index([marketingOptIn])
   @@index([deletionRequestedAt])
   @@index([deletionScheduledFor])
+  @@index([deleted])
+  @@index([deletedAt])
 }
 
 model Booking {

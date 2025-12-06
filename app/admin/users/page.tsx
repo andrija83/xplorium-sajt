@@ -4,9 +4,9 @@ import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Search, Shield, User as UserIcon, Lock, Unlock, Trash2, MoreHorizontal, Mail } from "lucide-react"
+import { Search, Shield, User as UserIcon, Lock, Unlock, Trash2, MoreHorizontal, Mail, UserCheck, UserX, RotateCcw } from "lucide-react"
 import type { Column } from "@/components/admin/DataTable"
-import { getUsers, deleteUser, toggleUserBlock } from "@/app/actions/users"
+import { getUsers, deleteUser, toggleUserBlock, restoreUser } from "@/app/actions/users"
 import { DataTableSkeleton } from "@/components/loading/DataTableSkeleton"
 import { logger } from "@/lib/logger"
 
@@ -37,6 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import Image from "next/image"
 
@@ -59,6 +60,15 @@ interface User {
   image: string | null
   blocked: boolean
   createdAt: Date
+  deleted?: boolean
+  deletedAt?: Date | null
+  deletedBy?: string | null
+  originalEmail?: string | null
+  _count?: {
+    bookings: number
+    notifications: number
+    auditLogs: number
+  }
 }
 
 const ROLE_COLORS = {
@@ -78,6 +88,9 @@ export default function UsersPage() {
     totalPages: 1,
   })
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"active" | "deleted">("active")
+
   // Filters
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<string>("ALL")
@@ -94,6 +107,7 @@ export default function UsersPage() {
         search: searchQuery || undefined,
         limit: pagination.limit,
         offset: (page - 1) * pagination.limit,
+        includeDeleted: activeTab === "deleted",
       })
 
       if (result.success && result.users) {
@@ -116,7 +130,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers(1)
-  }, [roleFilter, statusFilter])
+  }, [roleFilter, statusFilter, activeTab])
 
   // Handle search
   const handleSearch = () => {
@@ -144,16 +158,39 @@ export default function UsersPage() {
   }
 
   // Handle delete
-  const handleDelete = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return
+  const handleDelete = async (userId: string, user: User) => {
+    const recordCount = (user._count?.bookings || 0) + (user._count?.notifications || 0) + (user._count?.auditLogs || 0)
+
+    const message = recordCount > 0
+      ? `This user has ${recordCount} related records (bookings, notifications, audit logs). These records will be preserved and this user can be restored by a Super Admin. Continue?`
+      : "Are you sure you want to delete this user? This user can be restored later by a Super Admin."
+
+    if (!confirm(message)) return
 
     try {
       const result = await deleteUser(userId)
       if (result.success) {
-        toast.success("User deleted successfully")
+        toast.success("User deleted successfully. Records preserved.")
         fetchUsers(pagination.page)
       } else {
         toast.error(result.error || "Failed to delete user")
+      }
+    } catch (error) {
+      toast.error("An error occurred")
+    }
+  }
+
+  // Handle restore
+  const handleRestore = async (userId: string) => {
+    if (!confirm("Restore this user? They will regain access to their account.")) return
+
+    try {
+      const result = await restoreUser(userId)
+      if (result.success) {
+        toast.success("User restored successfully")
+        fetchUsers(pagination.page)
+      } else {
+        toast.error(result.error || "Failed to restore user")
       }
     } catch (error) {
       toast.error("An error occurred")
@@ -165,7 +202,7 @@ export default function UsersPage() {
     router.push(`/admin/users/${user.id}`)
   }
 
-  // Table columns
+  // Table columns - dynamic based on tab
   const columns: Column<User>[] = [
     {
       header: "User",
@@ -182,7 +219,14 @@ export default function UsersPage() {
           </div>
           <div>
             <div className="font-medium text-cyan-300">{user.name || "Unnamed User"}</div>
-            <div className="text-xs text-cyan-100/50">{user.email}</div>
+            <div className="text-xs text-cyan-100/50">
+              {activeTab === "deleted" && user.originalEmail ? user.originalEmail : user.email}
+            </div>
+            {activeTab === "deleted" && user._count && (
+              <div className="text-xs text-yellow-400/70 mt-1">
+                {user._count.bookings} bookings • {user._count.notifications} notifications • {user._count.auditLogs} logs
+              </div>
+            )}
           </div>
         </div>
       ),
@@ -224,10 +268,12 @@ export default function UsersPage() {
       center: true,
     },
     {
-      header: "Joined",
+      header: activeTab === "deleted" ? "Deleted" : "Joined",
       accessor: (user) => (
         <span className="text-xs text-cyan-100/50">
-          {format(new Date(user.createdAt), "MMM dd, yyyy")}
+          {activeTab === "deleted" && user.deletedAt
+            ? format(new Date(user.deletedAt), "MMM dd, yyyy")
+            : format(new Date(user.createdAt), "MMM dd, yyyy")}
         </span>
       ),
       width: "w-32",
@@ -244,33 +290,55 @@ export default function UsersPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-black/90 border-cyan-400/20 text-cyan-100">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
-                <UserIcon className="w-4 h-4 mr-2" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.location.href = `mailto:${user.email}`}>
-                <Mail className="w-4 h-4 mr-2" />
-                Send Email
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-cyan-400/20" />
-              <DropdownMenuItem onClick={() => handleToggleBlock(user.id)}>
-                {user.blocked ? (
-                  <>
-                    <Unlock className="w-4 h-4 mr-2" /> Unblock User
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4 mr-2" /> Block User
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleDelete(user.id)}
-                className="text-red-400 focus:text-red-400 focus:bg-red-400/10"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete User
-              </DropdownMenuItem>
+
+              {activeTab === "deleted" ? (
+                // Deleted users - show restore option
+                <>
+                  <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-cyan-400/20" />
+                  <DropdownMenuItem
+                    onClick={() => handleRestore(user.id)}
+                    className="text-green-400 focus:text-green-400 focus:bg-green-400/10"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Restore User
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                // Active users - show normal actions
+                <>
+                  <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = `mailto:${user.email}`}>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Send Email
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-cyan-400/20" />
+                  <DropdownMenuItem onClick={() => handleToggleBlock(user.id)}>
+                    {user.blocked ? (
+                      <>
+                        <Unlock className="w-4 h-4 mr-2" /> Unblock User
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4 mr-2" /> Block User
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDelete(user.id, user)}
+                    className="text-red-400 focus:text-red-400 focus:bg-red-400/10"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete User
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -300,71 +368,95 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      {/* Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-4 rounded-xl bg-black/20 backdrop-blur-sm border border-cyan-400/20"
-      >
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400/60" />
-              <Input
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pl-10 bg-black/40 border-cyan-400/30 text-white
-                           placeholder:text-cyan-100/30 focus:border-cyan-400"
-              />
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "deleted")}>
+        <TabsList className="bg-black/40 border border-cyan-400/20">
+          <TabsTrigger
+            value="active"
+            className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white"
+          >
+            <UserCheck className="w-4 h-4 mr-2" />
+            Active Users
+          </TabsTrigger>
+          <TabsTrigger
+            value="deleted"
+            className="data-[state=active]:bg-yellow-500 data-[state=active]:text-white"
+          >
+            <UserX className="w-4 h-4 mr-2" />
+            Deleted Users
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab} className="mt-6 space-y-6">
+          {/* Filters */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-xl bg-black/20 backdrop-blur-sm border border-cyan-400/20"
+          >
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Search */}
+              <div className="flex-1 flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400/60" />
+                  <Input
+                    placeholder="Search by name or email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    className="pl-10 bg-black/40 border-cyan-400/30 text-white
+                               placeholder:text-cyan-100/30 focus:border-cyan-400"
+                  />
+                </div>
+                <Button
+                  onClick={handleSearch}
+                  className="bg-cyan-500 hover:bg-cyan-600 text-white"
+                >
+                  Search
+                </Button>
+              </div>
+
+              {/* Role Filter */}
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-40 bg-black/40 border-cyan-400/30 text-white">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Roles</SelectItem>
+                  <SelectItem value="USER">User</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Status Filter - only show for active users */}
+              {activeTab === "active" && (
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40 bg-black/40 border-cyan-400/30 text-white">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Status</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="BLOCKED">Blocked</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-            <Button
-              onClick={handleSearch}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white"
-            >
-              Search
-            </Button>
-          </div>
+          </motion.div>
 
-          {/* Role Filter */}
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-40 bg-black/40 border-cyan-400/30 text-white">
-              <SelectValue placeholder="Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Roles</SelectItem>
-              <SelectItem value="USER">User</SelectItem>
-              <SelectItem value="ADMIN">Admin</SelectItem>
-              <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Status Filter */}
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40 bg-black/40 border-cyan-400/30 text-white">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Status</SelectItem>
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="BLOCKED">Blocked</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </motion.div>
-
-      {/* Table */}
-      <DataTable
-        data={users}
-        columns={columns}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        isLoading={isLoading}
-        emptyMessage="No users found"
-        onRowClick={handleRowClick}
-      />
+          {/* Table */}
+          <DataTable
+            data={users}
+            columns={columns}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            isLoading={isLoading}
+            emptyMessage={activeTab === "deleted" ? "No deleted users found" : "No users found"}
+            onRowClick={handleRowClick}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

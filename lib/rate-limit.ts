@@ -170,6 +170,23 @@ export async function checkRateLimit(
   }
 }
 
+/**
+ * Create a dynamic rate limiter based on database settings
+ * Used for booking creation with configurable limits
+ */
+export async function createDynamicRateLimiter(maxRequests: number, windowMinutes: number) {
+  if (isUpstashConfigured) {
+    return new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(maxRequests, `${windowMinutes} m`),
+      analytics: true,
+      prefix: 'ratelimit:booking',
+    })
+  } else {
+    return new InMemoryRateLimiter(maxRequests, windowMinutes * 60 * 1000)
+  }
+}
+
 // Log warning if Upstash is not configured
 if (!isUpstashConfigured && process.env.NODE_ENV === 'production') {
   logger.warn(

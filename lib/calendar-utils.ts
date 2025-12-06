@@ -10,8 +10,22 @@ import type { AdminBookingEvent } from '@/components/admin/AdminBookingCalendar'
  */
 
 /**
- * Export bookings to ICS file
- * Creates a downloadable .ics file for calendar import
+ * Export bookings to ICS file for calendar import
+ * Creates a downloadable .ics file compatible with Google Calendar, Outlook, Apple Calendar, etc.
+ *
+ * @param events - Array of booking events to export
+ * @param filename - Name of the downloaded .ics file (default: 'bookings.ics')
+ *
+ * @example
+ * ```typescript
+ * const bookings = await getAdminBookings()
+ * exportToICS(bookings, 'xplorium-bookings.ics')
+ * ```
+ *
+ * @remarks
+ * - Assumes 1-hour duration for all events
+ * - Sets status to CONFIRMED for approved bookings, TENTATIVE for others
+ * - Includes booking details (type, guests, contact info) in description
  */
 export function exportToICS(events: AdminBookingEvent[], filename: string = 'bookings.ics') {
   const icsEvents: EventAttributes[] = events.map(event => {
@@ -83,7 +97,17 @@ export function exportToICS(events: AdminBookingEvent[], filename: string = 'boo
 }
 
 /**
- * Parse time string to Date object
+ * Parse time string and combine with date to create Date object
+ *
+ * @param date - Base date to use
+ * @param timeString - Time in "HH:MM" format (24-hour)
+ * @returns New Date object with time applied
+ *
+ * @example
+ * ```typescript
+ * const date = new Date('2024-12-04')
+ * const eventTime = parseTimeToDate(date, '14:30') // 2:30 PM on Dec 4, 2024
+ * ```
  */
 export function parseTimeToDate(date: Date, timeString: string): Date {
   const [hours, minutes] = timeString.split(':').map(Number)
@@ -93,7 +117,17 @@ export function parseTimeToDate(date: Date, timeString: string): Date {
 }
 
 /**
- * Format date for display
+ * Format date and time for user-friendly display
+ *
+ * @param date - Event date
+ * @param time - Event time in "HH:MM" format
+ * @returns Formatted string like "Wed, Dec 4, 2024, 2:30 PM"
+ *
+ * @example
+ * ```typescript
+ * const formatted = formatEventDate(new Date('2024-12-04'), '14:30')
+ * // Returns: "Wed, Dec 4, 2024, 2:30 PM"
+ * ```
  */
 export function formatEventDate(date: Date, time: string): string {
   const eventDate = parseTimeToDate(date, time)

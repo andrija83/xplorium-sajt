@@ -118,7 +118,9 @@
       "Bash(powershell -Command \"(Get-Content ''app\\actions\\dashboard.ts'' | Measure-Object -Line).Lines\")",
       "Bash(powershell -Command:*)",
       "Bash(node scripts/sanitize-emails.mjs:*)",
-      "Bash(del \"scripts\\sanitize-emails.mjs\")"
+      "Bash(del \"scripts\\sanitize-emails.mjs\")",
+      "Bash(grep:*)",
+      "Bash(node scripts/test-booking-rate-limit.mjs:*)"
     ],
     "deny": [],
     "ask": []

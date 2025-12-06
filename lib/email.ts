@@ -46,21 +46,16 @@ export interface SendEmailOptions {
 
 export async function sendEmail(options: SendEmailOptions) {
   try {
-    console.log('📧 [EMAIL] Attempting to send email:', {
+    logger.info('Attempting to send email', {
       to: options.to,
       subject: options.subject,
       from: FROM_EMAIL,
       hasApiKey: !!process.env.RESEND_API_KEY
     })
 
-    // If Resend is not configured, log to console (development mode)
+    // If Resend is not configured, log warning (development mode)
     if (!isResendConfigured()) {
-      console.warn('⚠️  [EMAIL] Resend not configured - Email would be sent:', {
-        to: options.to,
-        subject: options.subject,
-        from: FROM_EMAIL
-      })
-      logger.warn('Resend not configured - Email would be sent:', {
+      logger.warn('Resend not configured - Email would be sent', {
         to: options.to,
         subject: options.subject,
         from: FROM_EMAIL
@@ -72,7 +67,7 @@ export async function sendEmail(options: SendEmailOptions) {
       }
     }
 
-    console.log('🚀 [EMAIL] Resend configured, sending via API...')
+    logger.info('Resend configured, sending via API')
 
     // Send real email via Resend
     const { data, error } = await resend.emails.send({
@@ -86,7 +81,6 @@ export async function sendEmail(options: SendEmailOptions) {
     })
 
     if (error) {
-      console.error('❌ [EMAIL] Failed to send email via Resend:', error)
       logger.error('Failed to send email via Resend', error)
       return {
         success: false,
@@ -94,7 +88,6 @@ export async function sendEmail(options: SendEmailOptions) {
       }
     }
 
-    console.log('✅ [EMAIL] Email sent successfully!', { emailId: data?.id, to: options.to })
     logger.info('Email sent successfully', { emailId: data?.id, to: options.to, subject: options.subject })
     return {
       success: true,
@@ -102,8 +95,7 @@ export async function sendEmail(options: SendEmailOptions) {
       message: 'Email sent successfully'
     }
   } catch (error) {
-    console.error('💥 [EMAIL] Unexpected error sending email:', error)
-    logger.error('Error sending email', error instanceof Error ? error : new Error(String(error)))
+    logger.error('Unexpected error sending email', error instanceof Error ? error : new Error(String(error)))
     return {
       success: false,
       error: 'Failed to send email'
@@ -402,7 +394,7 @@ export async function sendWelcomeEmail(data: {
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="http://localhost:3000" style="display: inline-block; background: #06b6d4; color: white; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+            <a href="${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://xplorium.com'}" style="display: inline-block; background: #06b6d4; color: white; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
               Start Exploring
             </a>
           </div>

@@ -24,12 +24,14 @@ export async function getUsers({
   role,
   blocked,
   search,
+  includeDeleted = false,
   limit = 50,
   offset = 0,
 }: {
   role?: string
   blocked?: boolean
   search?: string
+  includeDeleted?: boolean
   limit?: number
   offset?: number
 } = {}) {
@@ -40,6 +42,8 @@ export async function getUsers({
   }
 
   const where = {
+    // Filter out deleted users by default unless explicitly requested
+    deleted: includeDeleted ? undefined : false,
     ...(role && { role: role as any }),
     ...(blocked !== undefined && { blocked }),
     ...(search && {
@@ -406,7 +410,9 @@ export async function toggleUserBlock(data: ToggleUserBlockInput) {
 }
 
 /**
- * Delete a user
+ * Soft delete a user account
+ * Marks user as deleted and anonymizes email to prevent conflicts
+ * Preserves all related records for data integrity
  * @param id - User ID
  * @returns Success status
  */
@@ -423,14 +429,30 @@ export async function deleteUser(id: string) {
       return { error: 'You cannot delete your own account' }
     }
 
-    // Get user to check role
+    // Get user with related records count
     const userToDelete = await prisma.user.findUnique({
       where: { id },
-      select: { role: true },
+      select: {
+        role: true,
+        email: true,
+        name: true,
+        deleted: true,
+        _count: {
+          select: {
+            bookings: true,
+            notifications: true,
+            auditLogs: true,
+          }
+        }
+      },
     })
 
     if (!userToDelete) {
       return { error: 'User not found' }
+    }
+
+    if (userToDelete.deleted) {
+      return { error: 'User is already deleted' }
     }
 
     // Prevent deleting SUPER_ADMIN users unless you're also SUPER_ADMIN
@@ -438,23 +460,57 @@ export async function deleteUser(id: string) {
       return { error: 'Only super admins can delete super admin accounts' }
     }
 
-    await prisma.user.delete({
-      where: { id },
+    // Log related records for transparency
+    logger.info('Deleting user with related records', {
+      userId: id,
+      email: userToDelete.email,
+      bookingsCount: userToDelete._count.bookings,
+      notificationsCount: userToDelete._count.notifications,
+      auditLogsCount: userToDelete._count.auditLogs,
+      performedBy: session.user.id,
     })
 
-    // Log audit
+    // Soft delete: Mark as deleted and anonymize email
+    await prisma.user.update({
+      where: { id },
+      data: {
+        deleted: true,
+        deletedAt: new Date(),
+        deletedBy: session.user.id,
+        originalEmail: userToDelete.email, // Store original email for audit
+        // Anonymize email to prevent conflicts with new signups
+        email: `deleted_${id}@deleted.local`,
+        // Clear password hash for security
+        password: '',
+        // Keep name and other data for audit trail
+      },
+    })
+
+    // Create detailed audit log
     await logAudit({
       userId: session.user.id,
       action: 'DELETE',
       entity: 'User',
       entityId: id,
+      changes: {
+        email: userToDelete.email,
+        name: userToDelete.name,
+        relatedRecords: {
+          bookings: userToDelete._count.bookings,
+          notifications: userToDelete._count.notifications,
+          auditLogs: userToDelete._count.auditLogs,
+        },
+        deletedAt: new Date(),
+      },
     })
 
     revalidatePath('/admin/users')
 
+    const totalRelatedRecords = userToDelete._count.bookings + userToDelete._count.notifications + userToDelete._count.auditLogs
+
     return {
       success: true,
-      message: 'User deleted successfully',
+      message: `User deleted successfully. ${totalRelatedRecords} related record(s) preserved for data integrity.`,
     }
   } catch (error) {
     logger.serverActionError('deleteUser', error)
@@ -469,6 +525,110 @@ export async function deleteUser(id: string) {
     return {
       success: false,
       error: 'Failed to delete user',
+    }
+  }
+}
+
+/**
+ * Restore a soft-deleted user account
+ * Only SUPER_ADMIN can restore users
+ * @param id - User ID
+ * @returns Success status
+ */
+export async function restoreUser(id: string) {
+  try {
+    const session = await auth()
+
+    if (!session || session.user.role !== 'SUPER_ADMIN') {
+      return { error: 'Unauthorized - Super Admin access required' }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        deleted: true,
+        originalEmail: true,
+        email: true,
+        name: true,
+      }
+    })
+
+    if (!user) {
+      return { error: 'User not found' }
+    }
+
+    if (!user.deleted) {
+      return { error: 'User is not deleted' }
+    }
+
+    // Check if original email is now taken by another active user
+    if (user.originalEmail) {
+      const emailConflict = await prisma.user.findFirst({
+        where: {
+          email: user.originalEmail,
+          deleted: false,
+          id: { not: id } // Exclude the user being restored
+        }
+      })
+
+      if (emailConflict) {
+        return {
+          error: 'Cannot restore: Email address is now in use by another account',
+        }
+      }
+    }
+
+    // Restore user
+    await prisma.user.update({
+      where: { id },
+      data: {
+        deleted: false,
+        deletedAt: null,
+        deletedBy: null,
+        // Restore original email if available
+        email: user.originalEmail || user.email,
+        originalEmail: null,
+        // Note: Password remains cleared - user must reset password
+      },
+    })
+
+    await logAudit({
+      userId: session.user.id,
+      action: 'UPDATE',
+      entity: 'User',
+      entityId: id,
+      changes: {
+        restored: true,
+        restoredBy: session.user.id,
+        email: user.originalEmail,
+      },
+    })
+
+    logger.info('User account restored', {
+      userId: id,
+      email: user.originalEmail,
+      restoredBy: session.user.id,
+    })
+
+    revalidatePath('/admin/users')
+
+    return {
+      success: true,
+      message: 'User restored successfully. They will need to reset their password.',
+    }
+  } catch (error) {
+    logger.serverActionError('restoreUser', error)
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    return {
+      success: false,
+      error: 'Failed to restore user',
     }
   }
 }

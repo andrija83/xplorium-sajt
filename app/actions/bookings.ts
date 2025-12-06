@@ -15,13 +15,14 @@ import {
 } from '@/lib/validations'
 import { notifyAllAdmins, createNotification } from './notifications'
 import { checkBookingConflict, suggestAlternativeTimes, type ExistingBooking } from '@/lib/scheduling'
-import { getBufferTime } from './settings'
+import { getBufferTime, getBookingRateLimit } from './settings'
 import { startOfDay, endOfDay, format } from 'date-fns'
 import {
   sendBookingConfirmationEmail,
   sendBookingApprovedEmail,
   sendBookingRejectedEmail
 } from '@/lib/email'
+import { createDynamicRateLimiter, checkRateLimit } from '@/lib/rate-limit'
 
 /**
  * Get all bookings with optional filtering
@@ -293,39 +294,92 @@ export async function createBooking(data: CreateBookingInput) {
   try {
     const session = await requireAuth()
 
-    // Validate input
-    const validatedData = createBookingSchema.parse(data)
+    // Get rate limit settings from database
+    const rateLimitSettings = await getBookingRateLimit()
+    const { maxRequests, windowMinutes } = rateLimitSettings.rateLimit
 
-    // Check for booking conflicts (default 120 minute duration)
-    const conflictCheck = await checkBookingConflicts(
-      validatedData.date,
-      validatedData.time,
-      120 // Default duration in minutes
-    )
+    // Apply dynamic rate limiting per user
+    const rateLimitKey = `booking:create:${session.user.id}`
+    const bookingRateLimiter = await createDynamicRateLimiter(maxRequests, windowMinutes)
+    const rateLimitResult = await checkRateLimit(rateLimitKey, bookingRateLimiter)
 
-    if (conflictCheck.success && conflictCheck.conflict?.hasConflict) {
+    if (!rateLimitResult.success) {
+      const resetInMinutes = Math.ceil((rateLimitResult.reset * 1000 - Date.now()) / 60000)
+      logger.warn('Booking creation rate limit exceeded', {
+        userId: session.user.id,
+        email: session.user.email,
+        limit: rateLimitResult.limit,
+        remaining: rateLimitResult.remaining,
+        resetInMinutes
+      })
+
       return {
         success: false,
-        error: conflictCheck.conflict.message || 'Booking conflicts with existing bookings',
-        conflictType: conflictCheck.conflict.conflictType,
-        suggestedTimes: conflictCheck.conflict.suggestedTimes
+        error: `Too many booking requests. You can create up to ${maxRequests} bookings per ${windowMinutes} minutes. Please try again in ${resetInMinutes} minute${resetInMinutes > 1 ? 's' : ''}.`,
       }
     }
 
-    // Create booking
+    // Validate input
+    const validatedData = createBookingSchema.parse(data)
+
     // Combine date and time into scheduledAt timestamp
     const [hours, minutes] = validatedData.time.split(':').map(Number)
     const scheduledAt = new Date(validatedData.date)
     scheduledAt.setHours(hours, minutes, 0, 0)
 
-    const booking = await prisma.booking.create({
-      data: {
-        ...validatedData,
-        userId: session.user.id,
-        status: 'PENDING',
-        scheduledAt,
-      },
-    })
+    // Use transaction to prevent race conditions
+    // The unique index on (scheduledAt, type) will prevent double-bookings
+    let booking
+    try {
+      booking = await prisma.$transaction(async (tx) => {
+        // Double-check for conflicts within transaction
+        // This provides user-friendly error messages before hitting unique constraint
+        const conflictCheck = await checkBookingConflicts(
+          validatedData.date,
+          validatedData.time,
+          120 // Default duration in minutes
+        )
+
+        if (conflictCheck.success && conflictCheck.conflict?.hasConflict) {
+          throw new Error(conflictCheck.conflict.message || 'Booking conflicts with existing bookings')
+        }
+
+        // Create booking - unique index will catch any race condition
+        return await tx.booking.create({
+          data: {
+            ...validatedData,
+            userId: session.user.id,
+            status: 'PENDING',
+            scheduledAt,
+          },
+        })
+      })
+    } catch (transactionError) {
+      // Handle unique constraint violation from database
+      if (transactionError instanceof Error) {
+        // Check if it's a unique constraint violation
+        if (transactionError.message.includes('Unique constraint') ||
+            transactionError.message.includes('unique_violation')) {
+          // Race condition caught by database - suggest alternative times
+          const conflictCheck = await checkBookingConflicts(
+            validatedData.date,
+            validatedData.time,
+            120
+          )
+
+          return {
+            success: false,
+            error: 'This time slot was just booked by another user. Please choose a different time.',
+            conflictType: 'TIME_CONFLICT',
+            suggestedTimes: conflictCheck.conflict?.suggestedTimes || []
+          }
+        }
+
+        // Re-throw other errors
+        throw transactionError
+      }
+      throw transactionError
+    }
 
     // Notify all admins of new booking
     try {

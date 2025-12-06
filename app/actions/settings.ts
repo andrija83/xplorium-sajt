@@ -379,6 +379,13 @@ export async function initializeDefaultSettings() {
         key: 'scheduling.bufferTime',
         value: { minutes: 45 },
         category: 'scheduling'
+      },
+
+      // Rate Limiting Settings
+      {
+        key: 'rateLimit.bookingCreation',
+        value: { maxRequests: 10, windowMinutes: 60 },
+        category: 'security'
       }
     ]
 
@@ -534,6 +541,106 @@ export async function updateBufferTime(minutes: number) {
     return {
       success: false,
       error: 'Failed to update buffer time'
+    }
+  }
+}
+
+/**
+ * Get booking creation rate limit settings
+ */
+export async function getBookingRateLimit() {
+  try {
+    const setting = await prisma.siteSettings.findUnique({
+      where: { key: 'rateLimit.bookingCreation' }
+    })
+
+    // Default to 10 requests per 60 minutes if not set
+    const rateLimit = setting?.value && typeof setting.value === 'object'
+      ? {
+          maxRequests: ('maxRequests' in setting.value ? setting.value.maxRequests : 10) as number,
+          windowMinutes: ('windowMinutes' in setting.value ? setting.value.windowMinutes : 60) as number
+        }
+      : { maxRequests: 10, windowMinutes: 60 }
+
+    return {
+      success: true,
+      rateLimit
+    }
+  } catch (error) {
+    logger.serverActionError('getBookingRateLimit', error)
+    return {
+      success: false,
+      error: 'Failed to fetch booking rate limit',
+      rateLimit: { maxRequests: 10, windowMinutes: 60 } // Return default on error
+    }
+  }
+}
+
+/**
+ * Update booking creation rate limit settings
+ */
+export async function updateBookingRateLimit(maxRequests: number, windowMinutes: number) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN') {
+      return { success: false, error: 'Unauthorized - Admin access required' }
+    }
+
+    // Validate: max requests must be between 1 and 100
+    if (maxRequests < 1 || maxRequests > 100) {
+      return {
+        success: false,
+        error: 'Max requests must be between 1 and 100'
+      }
+    }
+
+    // Validate: window must be between 1 and 1440 minutes (24 hours)
+    if (windowMinutes < 1 || windowMinutes > 1440) {
+      return {
+        success: false,
+        error: 'Time window must be between 1 and 1440 minutes (24 hours)'
+      }
+    }
+
+    const setting = await prisma.siteSettings.upsert({
+      where: { key: 'rateLimit.bookingCreation' },
+      update: {
+        value: { maxRequests, windowMinutes },
+        updatedBy: session.user.id
+      },
+      create: {
+        key: 'rateLimit.bookingCreation',
+        value: { maxRequests, windowMinutes },
+        category: 'security',
+        updatedBy: session.user.id
+      }
+    })
+
+    await logAudit({
+      userId: session.user.id,
+      action: 'UPDATE',
+      entity: 'Settings',
+      entityId: 'rateLimit.bookingCreation',
+      changes: { maxRequests, windowMinutes }
+    })
+
+    revalidatePath('/admin/settings')
+    revalidatePath('/admin/security')
+
+    return {
+      success: true,
+      rateLimit: { maxRequests, windowMinutes },
+      message: `Rate limit updated to ${maxRequests} requests per ${windowMinutes} minutes`
+    }
+  } catch (error) {
+    logger.serverActionError('updateBookingRateLimit', error)
+    return {
+      success: false,
+      error: 'Failed to update booking rate limit'
     }
   }
 }

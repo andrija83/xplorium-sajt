@@ -19,7 +19,7 @@
 - `full-stack-developer` - Full-stack development
 - `backend-architect` - API and backend architecture
 - `mobile-developer` - Mobile app development
-- `python-pro` - Python specialist
+- `python-pro` - Python speciUsealist
 - `golang-pro` - Go language expert
 - `electorn-pro` - Electron desktop apps
 - `dx-optimizer` - Developer experience
