@@ -92,6 +92,7 @@ model Booking {
   @@index([paymentDate])
   // Additional composite indexes for common dashboard queries
   @@index([userId, status]) // User's bookings filtered by status
+  @@index([userId, date]) // User's booking history by date
   @@index([date, time]) // Finding bookings by date and time (conflict checking)
   @@index([createdAt]) // Dashboard queries filtering by creation date
   @@index([type, date]) // Bookings by type and date (analytics)
@@ -213,6 +214,7 @@ model AuditLog {
   @@index([userId])
   @@index([entity, entityId])
   @@index([createdAt])
+  @@index([action]) // Filter by action type
   // Additional composite indexes for audit log queries
   @@index([action, createdAt]) // Audit logs by action type ordered by date
   @@index([userId, createdAt]) // User's audit logs ordered by date

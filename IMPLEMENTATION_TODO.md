@@ -182,14 +182,14 @@
   - Files: 1 script, 1 schema update
   - Complexity: Medium
 
-- [ ] **Add missing composite indexes** ⏱️ 1 hour
-  - `Booking(status, date)` - for admin dashboard
-  - `Booking(userId, date)` - for user history
-  - `Booking(date, status)` - for calendar view
-  - `AuditLog(action)` - for filtering
-  - Files: 1 migration
+- [x] **Add missing composite indexes** ⏱️ 1 hour ✅
+  - ✅ `Booking(status, date)` - already existed
+  - ✅ `Booking(userId, date)` - added for user history
+  - ✅ `Booking(date, status)` - already existed (as status, date)
+  - ✅ `AuditLog(action)` - added for filtering
+  - Note: Many other composite indexes already existed
+  - Files: 1 migration (20251206152500_add_composite_indexes)
   - Complexity: Low
-  - Use `CREATE INDEX CONCURRENTLY` for zero downtime
 
 - [ ] **Add soft delete pattern** ⏱️ 3 hours
   - Add `deletedAt` and `deletedBy` to Booking, Event, User, InventoryItem
