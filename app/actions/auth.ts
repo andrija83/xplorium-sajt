@@ -125,11 +125,11 @@ export async function signInAction(
 
       switch (error.type) {
         case 'CredentialsSignin':
-          throw new AuthenticationError('Invalid email or password')
+          return handleServerError('signInAction', new AuthenticationError('Invalid email or password'))
         case 'CallbackRouteError':
-          throw new AuthenticationError('Authentication callback failed. Please check your credentials.')
+          return handleServerError('signInAction', new AuthenticationError('Authentication callback failed. Please check your credentials.'))
         default:
-          throw new AuthenticationError(`Authentication failed: ${error.type}`)
+          return handleServerError('signInAction', new AuthenticationError(`Authentication failed: ${error.type}`))
       }
     }
 
