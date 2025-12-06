@@ -15,7 +15,7 @@ const CSP_HEADER = `
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' blob: data: https:;
     connect-src 'self' https://va.vercel-scripts.com https://vercel.live;
-    frame-src 'self' https://www.google.com;
+    frame-src 'self' https://www.google.com https://vercel.live;
 `.replace(/\s{2,}/g, ' ').trim()
 
 function addSecurityHeaders(response: NextResponse, includeCache = false) {
