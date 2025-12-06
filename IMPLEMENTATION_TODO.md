@@ -80,19 +80,20 @@
   - Files: 1 migration
   - Complexity: Low
 
-### Frontend Security (1 day)
+### Frontend Security (1 day) ✅
 
-- [ ] **Add error boundaries** ⏱️ 30 mins
-  - Wrap app in `<ErrorBoundary>` in `app/layout.tsx`
-  - ErrorBoundary already exists at `components/ErrorBoundary.tsx`
-  - Files: 1 modified
+- [x] **Add error boundaries** ⏱️ 30 mins ✅
+  - ✅ Already wrapped in `<ErrorBoundary>` in `app/layout.tsx` (line 113-115)
+  - ✅ ErrorBoundary exists at `components/ErrorBoundary.tsx`
+  - Files: Already implemented
   - Complexity: Low
 
-- [ ] **Fix useEffect dependency arrays** ⏱️ 2 hours
-  - Fix `features/cafe/CafeSection.tsx:111-164`
-  - Add cleanup functions for race conditions
-  - Test all data fetching flows
-  - Files: 3 (CafeSection, SensorySection, IgraonicaSection)
+- [x] **Fix useEffect dependency arrays** ⏱️ 2 hours ✅
+  - ✅ Fixed `features/cafe/CafeSection.tsx` - refactored 3 useEffect hooks
+  - ✅ Added cleanup functions with `cancelled` flag for race condition protection
+  - ✅ Moved async logic inline to useEffect, removed unnecessary useCallback wrappers
+  - ✅ SensorySection & IgraonicaSection - no useEffect hooks (only useMemo)
+  - Files: 1 modified (CafeSection.tsx)
   - Complexity: Medium
 
 **Phase 0 Deliverables:**

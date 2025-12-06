@@ -83,85 +83,125 @@ export const CafeSection = memo(() => {
     }
   }, [])
 
-  // Fetch published events from database
-  const fetchPublishedEvents = useCallback(async () => {
-    setEventsLoading(true)
-    try {
-      const result = await getPublishedEvents(10) // Get up to 10 upcoming events
-      if (result.success && result.events) {
-        // Filter only future events (compare by date only, not time)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-
-        const futureEvents = result.events.filter(event => {
-          const eventDate = new Date(event.date)
-          eventDate.setHours(0, 0, 0, 0)
-          return eventDate >= today
-        })
-        setPublishedEvents(futureEvents)
-      }
-    } catch (error) {
-      logger.error('Failed to fetch events', error instanceof Error ? error : new Error(String(error)))
-    } finally {
-      setEventsLoading(false)
-    }
-  }, [])
 
   // Load bookings on mount and when "zakup" view is opened
   useEffect(() => {
-    if (cafeSubView === 'zakup') {
-      fetchBookings()
+    if (cafeSubView !== 'zakup') return
+
+    let cancelled = false
+
+    async function loadBookings() {
+      const result = await getApprovedBookings()
+      if (cancelled) return // Race condition protection
+      if (result.success && result.bookings) {
+        // Transform database bookings to CalendarEvent format
+        const calendarEvents: CalendarEvent[] = result.bookings.map((booking) => ({
+          id: booking.id,
+          title: booking.title,
+          date: new Date(booking.date),
+          time: booking.time,
+          type: booking.type as CalendarEvent['type'],
+          guestCount: booking.guestCount || undefined,
+        }))
+        setEvents(calendarEvents)
+      }
     }
-  }, [cafeSubView, fetchBookings])
 
-  // Fetch pricing packages from database
-  const fetchPricingPackages = useCallback(async () => {
-    logger.debug('Fetching pricing packages')
-    setPricingLoading(true)
-    try {
-      // Fetch all categories in parallel
-      const [playgroundRes, sensoryRes, cafeRes, partyRes] = await Promise.all([
-        getPublishedPricingPackages('PLAYGROUND'),
-        getPublishedPricingPackages('SENSORY_ROOM'),
-        getPublishedPricingPackages('CAFE'),
-        getPublishedPricingPackages('PARTY'),
-      ])
+    loadBookings()
 
-      logger.debug('Pricing packages fetched', {
-        playground: playgroundRes.packages?.length,
-        sensory: sensoryRes.packages?.length,
-        cafe: cafeRes.packages?.length,
-        party: partyRes.packages?.length,
-      })
+    return () => { cancelled = true }
+  }, [cafeSubView])
 
-      setPricingPackages({
-        playground: playgroundRes.packages || [],
-        sensory: sensoryRes.packages || [],
-        cafe: cafeRes.packages || [],
-        party: partyRes.packages || [],
-      })
-
-      logger.info('Pricing packages loaded successfully')
-    } catch (error) {
-      logger.error('Failed to fetch pricing packages', error instanceof Error ? error : new Error(String(error)))
-    } finally {
-      setPricingLoading(false)
-    }
-  }, [])
 
   // Load published events when "dogadjaji" view is opened
   useEffect(() => {
-    if (cafeSubView === 'dogadjaji') {
-      fetchPublishedEvents()
+    if (cafeSubView !== 'dogadjaji') return
+
+    let cancelled = false
+
+    async function loadEvents() {
+      setEventsLoading(true)
+      try {
+        const result = await getPublishedEvents(10) // Get up to 10 upcoming events
+        if (cancelled) return // Race condition protection
+        if (result.success && result.events) {
+          // Filter only future events (compare by date only, not time)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+
+          const futureEvents = result.events.filter(event => {
+            const eventDate = new Date(event.date)
+            eventDate.setHours(0, 0, 0, 0)
+            return eventDate >= today
+          })
+          setPublishedEvents(futureEvents)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          logger.error('Failed to fetch events', error instanceof Error ? error : new Error(String(error)))
+        }
+      } finally {
+        if (!cancelled) {
+          setEventsLoading(false)
+        }
+      }
     }
-  }, [cafeSubView, fetchPublishedEvents])
+
+    loadEvents()
+
+    return () => { cancelled = true }
+  }, [cafeSubView])
 
   // Load pricing packages when "pricing" view is opened
   useEffect(() => {
-    if (cafeSubView === 'pricing') {
-      fetchPricingPackages()
+    if (cafeSubView !== 'pricing') return
+
+    let cancelled = false
+
+    async function loadPricingPackages() {
+      logger.debug('Fetching pricing packages')
+      setPricingLoading(true)
+      try {
+        // Fetch all categories in parallel
+        const [playgroundRes, sensoryRes, cafeRes, partyRes] = await Promise.all([
+          getPublishedPricingPackages('PLAYGROUND'),
+          getPublishedPricingPackages('SENSORY_ROOM'),
+          getPublishedPricingPackages('CAFE'),
+          getPublishedPricingPackages('PARTY'),
+        ])
+
+        if (cancelled) return // Race condition protection
+
+        logger.debug('Pricing packages fetched', {
+          playground: playgroundRes.packages?.length,
+          sensory: sensoryRes.packages?.length,
+          cafe: cafeRes.packages?.length,
+          party: partyRes.packages?.length,
+        })
+
+        setPricingPackages({
+          playground: playgroundRes.packages || [],
+          sensory: sensoryRes.packages || [],
+          cafe: cafeRes.packages || [],
+          party: partyRes.packages || [],
+        })
+
+        logger.info('Pricing packages loaded successfully')
+      } catch (error) {
+        if (!cancelled) {
+          logger.error('Failed to fetch pricing packages', error instanceof Error ? error : new Error(String(error)))
+        }
+      } finally {
+        if (!cancelled) {
+          setPricingLoading(false)
+        }
+      }
     }
-  }, [cafeSubView, fetchPricingPackages])
+
+    loadPricingPackages()
+
+    return () => { cancelled = true }
+  }, [cafeSubView])
 
   // Handle new booking submission (memoized)
   const handleBookingSubmit = useCallback(async (newEvent: Omit<CalendarEvent, 'id'> & { specialRequests?: string }) => {
