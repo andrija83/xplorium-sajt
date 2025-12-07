@@ -4,8 +4,10 @@ import { LoadingSpinner } from './LoadingSpinner'
 
 describe('LoadingSpinner', () => {
   it('renders without crashing', () => {
-    render(<LoadingSpinner />)
-    expect(screen.getByRole('generic')).toBeInTheDocument()
+    const { container } = render(<LoadingSpinner />)
+    // Check that the spinner exists (it's a div with rounded-full class)
+    const spinner = container.querySelector('.rounded-full')
+    expect(spinner).toBeInTheDocument()
   })
 
   it('renders with text when provided', () => {

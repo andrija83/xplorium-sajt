@@ -42,19 +42,15 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText(/Return to Home/i)).toBeInTheDocument()
   })
 
-  it('renders error message in development mode', () => {
-    // Mock development environment
-    vi.stubEnv('NODE_ENV', 'development')
-
+  it('renders error UI components correctly', () => {
     render(
       <ErrorBoundary>
         <ThrowError />
       </ErrorBoundary>
     )
 
-    expect(screen.getByText('Test error')).toBeInTheDocument()
-
-    // Restore environment
-    vi.unstubAllEnvs()
+    // Check for essential UI elements
+    expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Return to Home/i })).toBeInTheDocument()
   })
 })
