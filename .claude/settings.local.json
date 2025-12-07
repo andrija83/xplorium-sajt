@@ -120,7 +120,11 @@
       "Bash(node scripts/sanitize-emails.mjs:*)",
       "Bash(del \"scripts\\sanitize-emails.mjs\")",
       "Bash(grep:*)",
-      "Bash(node scripts/test-booking-rate-limit.mjs:*)"
+      "Bash(node scripts/test-booking-rate-limit.mjs:*)",
+      "Bash(npx @sentry/wizard@latest -i nextjs --skip-connect)",
+      "Bash(git reset:*)",
+      "Bash(npx @sentry/wizard@latest -i nextjs --saas:*)",
+      "Bash(npm run test:unit:coverage:*)"
     ],
     "deny": [],
     "ask": []

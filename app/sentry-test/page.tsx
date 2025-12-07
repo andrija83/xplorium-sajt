@@ -20,11 +20,19 @@ export default function SentryTestPage() {
 
   // Test 1: Throw a client-side error
   const testClientError = () => {
+    console.log('=== CLIENT ERROR TEST ===')
+    console.log('Sentry DSN configured:', !!process.env.NEXT_PUBLIC_SENTRY_DSN)
+    console.log('Sentry object:', typeof Sentry)
+
     try {
       throw new Error('Sentry Test: Client-side error thrown')
     } catch (error) {
-      Sentry.captureException(error)
-      setResult('✅ Client error sent to Sentry!')
+      const eventId = Sentry.captureException(error)
+      console.log('Sentry Event ID:', eventId)
+      Sentry.flush(2000).then(() => {
+        console.log('Sentry flushed successfully')
+        setResult(`✅ Client error sent to Sentry! Event ID: ${eventId}`)
+      })
     }
   }
 

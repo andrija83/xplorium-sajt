@@ -1,5 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
 
+console.log('=== SENTRY CLIENT INIT ===')
+console.log('DSN:', process.env.NEXT_PUBLIC_SENTRY_DSN?.substring(0, 30) + '...')
+console.log('Enabled:', process.env.NODE_ENV === 'production' || true)
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 

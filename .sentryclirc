@@ -3,5 +3,5 @@ token=
 
 [defaults]
 url=https://sentry.io/
-org=
-project=
+org=mycompany-qzw
+project=javascript-nextjs-p0
