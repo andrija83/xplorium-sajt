@@ -479,11 +479,21 @@
 
 ### Monitoring & Observability (1 week)
 
-- [ ] **Install Sentry** ⏱️ 2 hours
-  - `npm install @sentry/nextjs`
-  - Configure error tracking
-  - Add source maps upload
-  - Files: 2 new config files
+- [x] **Install Sentry** ⏱️ 2 hours ✅
+  - ✅ Installed `@sentry/nextjs`
+  - ✅ Created config files: `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
+  - ✅ Updated `next.config.mjs` with `withSentryConfig`
+  - ✅ Source maps upload configured (requires SENTRY_AUTH_TOKEN)
+  - ✅ Features enabled:
+    - Automatic error tracking in production
+    - Session replay on errors
+    - Performance monitoring (10% sample rate)
+    - React component annotations
+    - Vercel Cron monitoring
+    - Ad-blocker circumvention via `/monitoring` route
+  - ✅ Updated `.env.example` with Sentry variables
+  - ✅ Created `lib/sentry-test.ts` for testing
+  - Files: 5 new files, 2 modified
   - Complexity: Low
 
 - [x] **Add Vercel Analytics** ⏱️ 1 hour ✅
