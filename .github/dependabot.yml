@@ -1,0 +1,31 @@
+# Dependabot Configuration
+# Automatically checks for outdated dependencies and creates PRs to update them
+
+version: 2
+updates:
+  # Check for npm package updates
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"  # Check every Monday
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5  # Max 5 PRs at once
+    reviewers:
+      - "andrija83"  # Your GitHub username
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Check for GitHub Actions updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
