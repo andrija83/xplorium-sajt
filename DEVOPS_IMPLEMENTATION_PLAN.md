@@ -1,8 +1,15 @@
-# DevOps Implementation Plan (v1.2)
+# DevOps Implementation Plan (v1.3)
 
 **Project:** Xplorium - Family Entertainment Venue Platform
-**Status:** Phase 1 & 2 Complete! ✅ CI/CD + Quality Gates + Security Scanning Operational
+**Status:** Phase 3 In Progress! ✅ CI/CD + Quality + Security + Monitoring Stack
 **Last Updated:** 2025-12-11
+
+**What changed in v1.3 (IMPLEMENTING)**
+- ✅ **Sentry Configured:** Production-ready error tracking with session replay, performance monitoring, and privacy settings
+- ✅ **Health Endpoint:** Robust health check at /api/health with database monitoring and latency tracking
+- 📝 **Better Uptime:** Ready to configure (requires account setup) - 3 monitors planned
+- 📊 **Vercel Analytics:** Already enabled and tracking Core Web Vitals
+- 📋 **Monitoring Guide:** Comprehensive setup documentation in docs/MONITORING_SETUP.md
 
 **What changed in v1.2 (IMPLEMENTED)**
 - ✅ **Phase 1 Complete:** GitHub Actions workflow with lint, typecheck, unit tests (97 tests), SonarCloud scan, and automated Vercel deployment
@@ -1195,14 +1202,29 @@ k6 run tests/load/booking-flow.js
 
 ---
 
-### Week 5-6: Monitoring & Observability
-- [ ] Integrate Sentry
-- [ ] Set up Better Uptime monitoring
-- [ ] Implement Logtail logging
-- [ ] Create health check endpoint
-- [ ] Configure Slack alerts
+### Week 5-6: Monitoring & Observability ⏳ IN PROGRESS
+- [x] Integrate Sentry (error tracking with session replay)
+- [x] Optimize Sentry configuration for production
+- [x] Create health check endpoint (/api/health)
+- [x] Create monitoring setup documentation
+- [ ] Set up Better Uptime monitoring (requires account creation)
+- [ ] Configure Better Uptime monitors (3 monitors: homepage, API, booking)
+- [ ] Set up Slack alerts for Better Uptime
+- [ ] Optional: Implement Logtail logging (currently using custom logger)
 
-**Milestone:** Full observability stack operational
+**Milestone:** ⏳ Sentry and health checks operational, Better Uptime pending account setup
+
+**Completed:**
+- ✅ Sentry fully configured with privacy-first session replay
+- ✅ Production health endpoint monitoring database connectivity
+- ✅ Vercel Analytics enabled (Core Web Vitals tracking)
+- ✅ Comprehensive monitoring guide in docs/MONITORING_SETUP.md
+
+**Next Steps:**
+1. Create Better Uptime account at https://betteruptime.com
+2. Configure 3 monitors (see docs/MONITORING_SETUP.md)
+3. Set up Slack integration for alerts
+4. Test all monitoring endpoints
 
 ---
 

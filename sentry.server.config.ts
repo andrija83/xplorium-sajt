@@ -3,14 +3,23 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
-  // Adjust this value in production
+  // Environment detection
+  environment: process.env.NODE_ENV,
+  enabled: process.env.NODE_ENV === 'production',
+
+  // Performance Monitoring
+  // Sample 10% in production, 100% in development
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: true, // Enable debug logging to troubleshoot
+  // Debug mode only in development
+  debug: process.env.NODE_ENV === 'development',
 
-  // TEMPORARY: Enable in all environments for testing
-  // Change back to: process.env.NODE_ENV === 'production' after confirming it works
-  enabled: true,
+  // Filter out low-priority errors
+  beforeSend(event, hint) {
+    // Don't send warnings in production
+    if (event.level === 'warning' && process.env.NODE_ENV === 'production') {
+      return null;
+    }
+    return event;
+  },
 });
