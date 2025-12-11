@@ -67,10 +67,13 @@ jobs:
       - name: Run Vitest unit tests
         run: npm run test:unit:run  # Run all 97 unit tests
 
-  # Job 3: Run E2E tests
+  # Job 3: Run E2E tests (only on master branch for faster feedback)
   e2e-tests:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
+
+    # 🎯 Only run E2E tests on master branch (skip on PRs/feature branches for speed)
+    if: github.ref == 'refs/heads/master'
 
     # 🔑 Environment variables from GitHub Secrets
     env:
