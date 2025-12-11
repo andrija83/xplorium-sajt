@@ -21,7 +21,7 @@ jobs:
     steps:
       # Step 1: Get the code
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Step 2: Install Node.js
       - name: Setup Node.js
@@ -57,7 +57,7 @@ jobs:
     steps:
       # Step 1: Get the code
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Step 2: Install Node.js
       - name: Setup Node.js
@@ -84,7 +84,7 @@ jobs:
   #     AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
   #   steps:
   #     - name: Checkout code
-  #       uses: actions/checkout@v4
+  #       uses: actions/checkout@v6
   #     - name: Setup Node.js
   #       uses: actions/setup-node@v4
   #       with:
@@ -118,7 +118,7 @@ jobs:
     steps:
       # Step 1: Get the code
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Step 2: Install Node.js
       - name: Setup Node.js
