@@ -129,7 +129,9 @@
       "Bash(curl:*)",
       "Bash(mkdir:*)",
       "Bash(npm test:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npx husky:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
