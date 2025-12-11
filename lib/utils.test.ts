@@ -46,6 +46,7 @@ describe('cn (className utility)', () => {
   })
 
   it('should handle complex nesting', () => {
+    const isIncluded = true
     const result = cn(
       'base',
       ['nested', 'array'],
@@ -53,7 +54,7 @@ describe('cn (className utility)', () => {
         'conditional': true,
         'excluded': false
       },
-      true && 'included'
+      isIncluded && 'included'
     )
     expect(result).toContain('base')
     expect(result).toContain('nested')
