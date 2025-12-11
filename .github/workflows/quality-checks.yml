@@ -1,0 +1,43 @@
+# 🎯 Quality Checks Workflow
+# This workflow runs on every push and pull request
+# It checks code quality (linting and type checking)
+
+name: Code Quality Checks
+
+# When should this run?
+on:
+  push:
+    branches: [master]  # Run when pushing to master
+  pull_request:
+    branches: [master]  # Run when creating PR to master
+
+# What should it do?
+jobs:
+  # Job 1: Check code quality
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest  # Use Ubuntu Linux virtual machine
+
+    steps:
+      # Step 1: Get the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'  # Cache npm packages for faster builds
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm ci  # 'ci' is like 'install' but faster and more reliable
+
+      # Step 4: Run ESLint
+      - name: Run ESLint
+        run: npm run lint
+
+      # Step 5: Run TypeScript type checking
+      - name: TypeScript type check
+        run: npx tsc --noEmit  # Check types without building
