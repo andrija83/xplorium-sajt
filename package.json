@@ -19,7 +19,14 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate --schema=./prisma/schema.prisma || true"
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma || true",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "git add"
+    ]
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
@@ -131,7 +138,9 @@
     "eslint-config-next": "^16.0.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
     "jsdom": "^27.2.0",
+    "lint-staged": "^16.2.7",
     "postcss": "^8.5",
     "prisma": "^6.19.0",
     "tailwindcss": "^4.1.9",
