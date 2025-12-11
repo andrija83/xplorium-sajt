@@ -1,8 +1,15 @@
-# DevOps Implementation Plan
+# DevOps Implementation Plan (v1.1)
 
 **Project:** Xplorium - Family Entertainment Venue Platform
-**Date:** December 6, 2025
-**Status:** Planning Phase
+**Status:** Phase 1 Complete! ✅ CI/CD pipeline with automated testing and deployment
+**Last Updated:** 2025-12-11
+
+**What changed in v1.1**
+- Tightened CI/CD to reuse build artifacts, add concurrency control, staging smoke, and manual gate before prod deploy.
+- Aligned branch/secret naming to `master`/`develop`, added preview deploy + ephemeral Neon branch guidance.
+- Added SLOs/alerts, access/secret hygiene (action pinning, secret scanning), and cost guardrails.
+- Baked in rollback playbooks (Vercel redeploy + Prisma/Neon fallback), backup drills, and PII-masked staging refresh.
+- Added governance/docs asks: CODEOWNERS, PR/issue templates, CONTRIBUTING, deploy/runbooks, RACI.
 
 ---
 
@@ -80,21 +87,21 @@
 
 ## Pre-Implementation Checklist (Close These Gaps First)
 
-- [ ] Confirm owners, budget, and target dates; update status/date here if they change
-- [ ] Create `develop` branch and apply branch protection rules on `main` and `develop`
-- [ ] Stand up Vercel staging project + Neon staging branch; map env vars from the table below
-- [ ] Add required GitHub secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `DATABASE_URL`, `DATABASE_URL_TEST`, `NEXTAUTH_SECRET`, Sentry/Snyk/Sonar/AWS as needed)
-- [ ] Ensure referenced scripts/configs exist (`scripts/backup-database.sh`, health check route, logger config) and are executable
-- [ ] Decide on monitoring/logging vendors (Sentry project, Better Uptime monitors, Logtail source token) and create accounts
-- [ ] Decide on code-quality vendor (SonarCloud org/project key) and add `sonar-project.properties`
-- [ ] Decide on dependency scanning approach (Snyk token or Dependabot) and add `.github/workflows/security.yml`
-- [ ] Define backup bucket/credentials (AWS S3 or alternative) and retention policy
-- [ ] Document rollback and recovery runbooks before enabling auto-deploy to production
-- [ ] Define SLOs and alert thresholds (uptime, p95 latency, error rate) and wire alerts to Slack/Email
-- [ ] Set cost guardrails (CI minutes, log volume, monitoring events) and usage alerts
-- [ ] Write flaky test handling policy (retry/quarantine) and Playwright timeout defaults for CI
-- [ ] Confirm release gating (green CI + staging deploy + smoke tests + manual approval) before prod deploys
-- [ ] Decide on staging data refresh/obfuscation policy (masked snapshots from prod)
+- [ ] Confirm owners, budget, target dates, and escalation contacts; update the Last Updated field.
+- [ ] Align branch strategy (`master` = production, `develop` = staging); enforce branch protection + required status checks.
+- [ ] Stand up Vercel staging project + Neon staging branch; enable preview deploys per PR and ephemeral Neon branches with masked seed data.
+- [ ] Add GitHub secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `DATABASE_URL`, `DATABASE_URL_STAGING`, `DATABASE_URL_TEST`, `NEXTAUTH_SECRET`, `LOGTAIL_SOURCE_TOKEN`, `SENTRY_*`, `AWS_*`, `SONAR_TOKEN`, `SNYK_TOKEN`, `SLACK_WEBHOOK`, and Doppler token if used.
+- [ ] Create CODEOWNERS, PR/issue templates, CONTRIBUTING, deployment and rollback runbooks; define RACI.
+- [ ] Enable GitHub secret scanning and pin third-party actions to digests; decide on Doppler vs Vercel-only secret management and rotation cadence.
+- [ ] Ensure referenced scripts/configs exist (`scripts/backup-database.sh`, `/api/health`, logger config) and are executable.
+- [ ] Decide on monitoring/logging vendors (Sentry, Better Uptime monitors, Logtail source token) and create accounts.
+- [ ] Decide on code-quality vendor (SonarCloud org/project key) and add `sonar-project.properties`.
+- [ ] Decide on dependency/update approach: Dependabot (npm + actions) and/or Snyk; add `.github/workflows/security.yml`.
+- [ ] Define backup bucket/credentials (AWS S3 or alternative), retention, and monthly restore drill schedule.
+- [ ] Define SLOs and alert thresholds (uptime, p95 latency, error rate) wired to Slack/Email; set default log sampling/retention.
+- [ ] Set cost guardrails (CI minutes, log/monitoring volume) and usage alerts.
+- [ ] Write flaky-test policy (retry/quarantine) and CI defaults for Playwright timeouts; set coverage threshold.
+- [ ] Confirm release gating (green CI + staging deploy + smoke tests + manual approval) before prod deploys.
 
 ---
 
@@ -147,99 +154,95 @@
 
 ## Decisions & Policies
 
-- **Ownership & Dates:** Assign an owner per phase/stream and pin real calendar dates; update the Status/Date at the top accordingly.
-- **Environment Parity:** Staging matches prod (Node/Prisma versions, middleware, feature flags); staging DB refreshed from prod with masked PII on a schedule.
-- **Secrets Management:** Decide Vercel-only vs. adding Doppler; set rotation cadence and access rules.
-- **Release Gating:** Prod deploy requires green CI, staging deploy, smoke tests, and a manual approval step in GitHub Actions.
-- **Rollback Runbooks:** Document app rollback (revert deploy), Prisma migration rollback, and Neon branch fallback; link from the deploy pipeline.
-- **Infrastructure as Code:** Use Terraform (or chosen tool) for Vercel/Neon/S3/secrets; plan a state backend and repo layout.
-- **SLOs & Alerts:** Define target SLOs (e.g., 99.9% uptime, p95 latency) and alert thresholds (warning/critical) wired to Slack/Email.
-- **Cost Guardrails:** Set monthly caps/alerts for CI minutes, log ingestion, monitoring events, and backups/storage.
-- **Flaky Tests:** Policy for retries, quarantine list, and default CI timeouts (especially Playwright) to keep pipelines reliable.
-- **Security Scans:** Per-PR dependency review + weekly full scan; include secret scanning (GitHub secret scanning or TruffleHog).
+- **Ownership & Dates:** Assign an owner per phase/stream, publish a RACI, and pin real calendar dates; update Status/Last Updated when changed.
+- **Branching:** `master` = production, `develop` = staging, `feature/*` = preview; hotfix branches go direct to `master` with back-merge to `develop`.
+- **Environment Parity & Data:** Staging mirrors prod (Node/Prisma versions, middleware, feature flags). Preview envs per PR on Vercel; ephemeral Neon branches seeded with masked data; scheduled staging refresh with PII masking.
+- **Secrets & Access:** Prefer Doppler syncing to Vercel/GitHub; otherwise Vercel env vars. Enable GitHub secret scanning. Rotate secrets quarterly; least-privilege access to Vercel/Neon/GitHub.
+- **Release Gating:** Prod deploy requires green CI, staging deploy + smoke, and a manual approval step. Concurrency blocks overlapping deploys; reuse tested build artifacts for deploy.
+- **Rollback:** Link runbooks for Vercel rollback (redeploy previous build), Prisma migration rollback/`migrate resolve`, and Neon branch fallback; store in repo and surface in pipeline summary.
+- **Infrastructure as Code:** Terraform (or chosen tool) for Vercel/Neon/S3/monitoring/secrets with remote state backend.
+- **SLOs & Alerts:** Baseline: uptime 99.9%, p95 latency < 500ms, error rate < 1%. Warning/critical thresholds wired to Slack/Email; log sampling + retention defaults documented.
+- **Cost Guardrails:** Alerts on CI minutes, log ingestion, monitoring events, and backup storage; budget owners identified.
+- **Flaky Tests:** Retry first failure once, quarantine repeat offenders, and set CI-friendly Playwright timeouts; document override path.
+- **Security Scans:** Per-PR dependency review, Dependabot for npm + actions, weekly Snyk/CodeQL/Semgrep run; all actions pinned to version/digest.
 
 ---
 
 ## Implementation Phases
 
 ### Phase 1: Foundation (Week 1-2)
-**Goal:** Establish basic CI/CD pipeline and testing automation
+**Goal:** Establish CI/CD, staging, and preview parity
 
-- ✅ Set up GitHub Actions
-- ✅ Automate testing (E2E + Unit)
-- ✅ Automate linting and type checking
-- ✅ Set up staging environment
-- ✅ Configure environment variables
+- GitHub Actions: lint/typecheck/unit on PRs; Playwright smoke on PRs; full E2E on `develop`/`master`; concurrency cancels superseded runs; cache npm; upload build artifact once and reuse for deploy.
+- Deployment: staging auto-deploy on `develop`; prod deploy on `master` behind manual approval; staging smoke (health + key pages) before approval.
+- Environments: create Vercel staging project + Neon staging branch; `vercel env pull` in CI; preview deploys per PR; ephemeral Neon branches for PRs seeded with masked data.
+- Branch protections: require status checks, no force-push to `master`, require review on `master` and `develop`.
+- Governance: add CODEOWNERS, PR/issue templates, CONTRIBUTING, deploy/rollback runbook links in repo.
 
 **Deliverables:**
-- Working CI/CD pipeline
-- Staging environment on Vercel
-- Automated test execution
+- CI/CD workflow with gated prod deploy and staging smoke
+- Staging + preview environments wired with secrets
+- Basic rollback runbook linked from pipeline
 
 ---
 
 ### Phase 2: Quality & Security (Week 3-4)
 **Goal:** Implement quality gates and security scanning
 
-- ✅ Dependency vulnerability scanning
-- ✅ Code quality metrics (SonarCloud/CodeClimate)
-- ✅ Pre-commit hooks (Husky)
-- ✅ Branch protection rules
-- ✅ Security headers audit
+- Dependency and secret scanning: Dependabot (npm + actions) and/or Snyk; GitHub secret scanning on; pin actions to digests.
+- Code quality: SonarCloud with coverage + duplicated code; coverage threshold enforced in tests.
+- Local hygiene: Husky + lint-staged; pre-push optional Playwright smoke.
+- Security: security headers audit, Next.js security headers, and CSP where feasible.
 
 **Deliverables:**
-- Automated security scans
-- Code quality dashboard
-- Protected main branch
+- Automated security scans (PR + weekly schedule)
+- Code quality dashboard and coverage trend
+- Protected `master`/`develop` with required checks
 
 ---
 
 ### Phase 3: Monitoring & Observability (Week 5-6)
 **Goal:** Implement comprehensive monitoring
 
-- ✅ Error tracking (Sentry)
-- ✅ Performance monitoring (Vercel Analytics Pro or alternative)
-- ✅ Uptime monitoring (UptimeRobot/Better Uptime)
-- ✅ Log aggregation (Logtail/Datadog)
-- ✅ Alerting (Slack/Email)
+- Error tracking: Sentry with release + environment tagging and source maps; alert rules for error rate.
+- Uptime: Better Uptime monitors for `/`, `/api/health`, and `/booking`; Slack/Email alerts; status page.
+- Logging: Logtail/Winston with sampling + retention defaults; trace IDs in logs; PII scrubbing.
+- Performance: Vercel Analytics; p95 latency alerts based on SLOs.
 
 **Deliverables:**
-- Real-time error alerts
-- Performance dashboards
-- Uptime status page
+- Real-time error + uptime alerts
+- Performance dashboards and log search
+- Health endpoint monitored in CI and uptime checks
 
 ---
 
 ### Phase 4: Database & Backup (Week 7-8)
 **Goal:** Automate database operations and backups
 
-- ✅ Automated database migrations
-- ✅ Automated backups (Neon native + S3)
-- ✅ Backup restoration testing
-- ✅ Database staging environment
-- ✅ Migration rollback procedures
+- Migrations: gated workflow for Prisma `migrate deploy` with environment input; rollback steps documented (down migration or Neon branch failback); pre-migration backup trigger.
+- Backups: Neon native backups + S3 pg_dump with retention; monthly restore drills with success log.
+- Data hygiene: staging refresh cadence with masking; preview branch lifecycle rules.
+- Observability: migration pipeline posts Slack notifications with links to runbook.
 
 **Deliverables:**
-- Automated migration pipeline
-- Daily backups with retention policy
-- Recovery runbook
+- Automated migration workflow with rollback path
+- Daily backups + documented restore drill cadence
+- Recovery and data-masking runbooks
 
 ---
 
 ### Phase 5: Advanced DevOps (Week 9-12)
 **Goal:** Implement advanced features and optimization
 
-- ✅ Feature flags (LaunchDarkly/Unleash)
-- ✅ A/B testing framework
-- ✅ Performance budgets
-- ✅ Lighthouse CI
-- ✅ Load testing (k6/Artillery)
-- ✅ Disaster recovery plan
+- Feature flags (LaunchDarkly/Unleash) and A/B testing framework.
+- Performance budgets and Lighthouse CI; load testing (k6/Artillery) on staging nightly or weekly.
+- Disaster recovery plan with RPO/RTO, contact tree, and tabletop exercise.
+- Team onboarding/training for pipelines, rollbacks, and observability.
 
 **Deliverables:**
-- Feature flag system
-- Performance monitoring with budgets
-- Comprehensive DR plan
+- Feature flag system with rollout policy
+- Performance and load testing with budgets/thresholds
+- DR plan exercised and reviewed
 
 ---
 
@@ -407,13 +410,17 @@ npx @sentry/wizard -i nextjs
 **File: `.github/workflows/ci.yml`**
 
 ```yaml
-name: CI/CD Pipeline
+name: CI/CD (app + deploy)
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [master, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   NODE_VERSION: '20'
@@ -421,162 +428,123 @@ env:
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
-  # Job 1: Lint and Type Check
-  quality-checks:
-    name: Code Quality
+  quality:
+    name: Lint, Type, Unit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: TypeScript type check
-        run: npx tsc --noEmit
-
-  # Job 2: Unit Tests
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
-        run: npm run test:unit:run
-
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run test:unit:coverage
       - name: Upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
-          files: ./coverage/coverage-final.json
+          files: ./coverage/lcov.info
 
-  # Job 3: E2E Tests
-  e2e-tests:
-    name: E2E Tests
+  e2e:
+    name: Playwright E2E
     runs-on: ubuntu-latest
+    needs: quality
+    if: github.event_name == 'push' || github.ref == 'refs/heads/develop'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-
-      - name: Build Next.js app
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Build
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-
-      - name: Run Playwright tests
-        run: npm test
+      - name: Run Playwright
+        run: npm run test:e2e -- --reporter=line
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
-
-      - name: Upload test results
+      - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
 
-  # Job 4: Build Check
   build:
-    name: Production Build
+    name: Build artifact
     runs-on: ubuntu-latest
-    needs: [quality-checks, unit-tests]
+    needs: quality
+    env:
+      DATABASE_URL: ${{ github.ref == 'refs/heads/master' && secrets.DATABASE_URL || secrets.DATABASE_URL_STAGING }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
+          cache: npm
+      - run: npm ci
+      - name: Build
         run: npm run build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: .next
 
-  # Job 5: Deploy to Staging (on develop branch)
   deploy-staging:
-    name: Deploy to Staging
+    name: Deploy to staging
     runs-on: ubuntu-latest
-    needs: [quality-checks, unit-tests, e2e-tests, build]
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    needs: [build, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-
-      - name: Pull Vercel Environment
+      - uses: actions/checkout@v4
+      - run: npm install --global vercel@latest
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .next
+      - name: Pull env
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Project
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy to Staging
+      - name: Deploy staging
+        id: deploy
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Staging smoke (health + key pages)
+        run: |
+          curl -f https://staging-xplorium.vercel.app/api/health
+          curl -f https://staging-xplorium.vercel.app/
+          curl -f https://staging-xplorium.vercel.app/booking
 
-  # Job 6: Deploy to Production (on main branch)
   deploy-production:
-    name: Deploy to Production
+    name: Deploy to production
     runs-on: ubuntu-latest
-    needs: [quality-checks, unit-tests, e2e-tests, build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [build, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-
-      - name: Pull Vercel Environment
+      - uses: actions/checkout@v4
+      - run: npm install --global vercel@latest
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .next
+      - name: Pull env
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Project
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy to Production
+      - name: Deploy production
+        id: deploy
         run: vercel deploy --prod --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Create Sentry Release
+      - name: Create Sentry release
         uses: getsentry/action-release@v1
+        if: success()
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
@@ -590,39 +558,38 @@ jobs:
 VERCEL_TOKEN
 VERCEL_ORG_ID
 VERCEL_PROJECT_ID
-DATABASE_URL
+DATABASE_URL (prod)
+DATABASE_URL_STAGING
 DATABASE_URL_TEST (for testing)
 NEXTAUTH_SECRET
 SENTRY_AUTH_TOKEN (Phase 3)
 SENTRY_ORG (Phase 3)
 SENTRY_PROJECT (Phase 3)
+SLACK_WEBHOOK (for notifications)
 ```
 
 ---
 
 #### 1.2 Branch Strategy
 
-**Git Flow Model:**
+**Branch Model:**
 
 ```
-main (production)
-  ↑
-develop (staging)
-  ↑
-feature/* (preview deployments)
-hotfix/* (emergency fixes)
+master   (production)
+  -> develop   (staging)
+       -> feature/* (preview deployments)
+       -> hotfix/*  (emergency fixes; back-merge to develop)
 ```
 
-**Branch Protection Rules (main):**
-- ✅ Require pull request reviews (1 reviewer)
-- ✅ Require status checks to pass (all CI jobs)
-- ✅ Require branches to be up to date
-- ✅ No force pushes
-- ✅ No deletions
+**Branch Protection Rules (master):**
+- Require pull request reviews (1+ reviewer)
+- Require status checks to pass (all CI jobs)
+- Require branches to be up to date; no force pushes; no deletions
 
 **Branch Protection Rules (develop):**
-- ✅ Require status checks to pass
-- ✅ Allow squash merging
+- Require status checks to pass
+- Allow squash merges
+- Concurrency in CI cancels superseded runs
 
 ---
 
@@ -632,23 +599,24 @@ hotfix/* (emergency fixes)
 
 1. **Production Project**
    - Domain: `xplorium.com`
-   - Branch: `main`
+   - Branch: `master`
    - Database: Neon production branch
 
 2. **Staging Project**
    - Domain: `staging-xplorium.vercel.app`
    - Branch: `develop`
    - Database: Neon staging branch
+   - Preview deployments per PR with ephemeral Neon branches
 
 **Environment Variables per Environment:**
 
-| Variable | Production | Staging | Local |
-|----------|-----------|---------|-------|
-| `NODE_ENV` | `production` | `production` | `development` |
-| `NEXTAUTH_URL` | `https://xplorium.com` | `https://staging-xplorium.vercel.app` | `http://localhost:3000` |
-| `DATABASE_URL` | Neon Production | Neon Staging | Neon Dev |
-| `NEXTAUTH_SECRET` | Prod Secret | Staging Secret | Dev Secret |
-| `UPSTASH_REDIS_URL` | Prod Redis | Staging Redis | Local Redis |
+| Variable | Production | Staging | Preview | Local |
+|----------|-----------|---------|---------|-------|
+| `NODE_ENV` | `production` | `production` | `production` | `development` |
+| `NEXTAUTH_URL` | `https://xplorium.com` | `https://staging-xplorium.vercel.app` | Vercel preview URL | `http://localhost:3000` |
+| `DATABASE_URL` | Neon Production | Neon Staging | Neon Preview Branch | Neon Dev |
+| `NEXTAUTH_SECRET` | Prod Secret | Staging Secret | Preview Secret | Dev Secret |
+| `UPSTASH_REDIS_URL` | Prod Redis | Staging Redis | Preview Redis | Local Redis |
 
 ---
 
@@ -663,7 +631,7 @@ name: Security Scanning
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, develop]
   pull_request:
   schedule:
     # Run every Monday at 9 AM
@@ -1354,43 +1322,40 @@ k6 run tests/load/booking-flow.js
 ### Immediate Actions (This Week)
 
 1. **Decision Making:**
-   - [ ] Review and approve plan
-   - [ ] Confirm budget allocation
-   - [ ] Assign DevOps champion/owner
+   - [ ] Review and approve plan; confirm branch naming (`master`/`develop`) and release gating.
+   - [ ] Confirm budget allocation and cost guardrails for CI/logging/monitoring.
+   - [ ] Assign DevOps champion/owner and escalation contacts.
 
 2. **Account Setup:**
-   - [ ] Create Vercel staging project
-   - [ ] Sign up for Sentry
-   - [ ] Sign up for Better Uptime
-   - [ ] Sign up for Snyk
+   - [ ] Create Vercel staging project + Neon staging branch; enable preview deployments.
+   - [ ] Sign up/configure Sentry, Better Uptime, Logtail, and Snyk (or Dependabot).
+   - [ ] Decide on Doppler (or Vercel-only) for secrets; enable GitHub secret scanning.
 
 3. **Repository Preparation:**
-   - [ ] Create `develop` branch
-   - [ ] Set up branch protection
-   - [ ] Add GitHub secrets
+   - [ ] Ensure `develop` exists; set branch protection on `master` and `develop`.
+   - [ ] Add CODEOWNERS, PR/issue templates, CONTRIBUTING, and runbooks (deploy/rollback/migrations).
+   - [ ] Add GitHub secrets (`VERCEL_*`, `DATABASE_URL*`, `NEXTAUTH_SECRET`, Sentry, Logtail, AWS, SONAR_TOKEN, SNYK_TOKEN, SLACK_WEBHOOK, Doppler if used).
 
 4. **Documentation:**
-   - [ ] Create CONTRIBUTING.md
-   - [ ] Document environment setup
-   - [ ] Create deployment runbook
+   - [ ] Document environment setup and staging data masking policy.
+   - [ ] Publish rollback/recovery procedures and SLO/alert thresholds.
 
 ### Week 1 Implementation
 
 1. **GitHub Actions:**
-   - [ ] Create `.github/workflows/ci.yml`
-   - [ ] Test CI pipeline on feature branch
-   - [ ] Fix any failing tests
+   - [ ] Implement/upgrade `.github/workflows/ci.yml` with concurrency, artifacts, staging deploy, smoke, and manual prod gate.
+   - [ ] Keep/extend `quality-checks.yml` or fold it into the main pipeline.
+   - [ ] Test CI pipeline on feature branch and fix failing tests.
 
-2. **Vercel Staging:**
-   - [ ] Create staging project
-   - [ ] Configure environment variables
-   - [ ] Deploy develop branch
+2. **Vercel/Neon:**
+   - [ ] Create staging project and map env vars; configure preview branches with masked seed data.
+   - [ ] Set `vercel env pull` flow for CI/local parity.
 
 3. **Testing:**
-   - [ ] Run full test suite
-   - [ ] Fix flaky tests
-   - [ ] Add missing test coverage
+   - [ ] Run full test suite; set coverage threshold.
+   - [ ] Fix/mark flaky tests; add smoke script for staging.
 
+---
 ---
 
 ## Conclusion
@@ -1462,7 +1427,7 @@ vercel logs                     # View deployment logs
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** December 6, 2025
+**Document Version:** 1.1
+**Last Updated:** 2025-12-11
 **Owner:** DevOps Team
-**Status:** Ready for Implementation 🚀
+**Status:** Ready for Implementation (planning)
