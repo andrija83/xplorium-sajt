@@ -1187,6 +1187,12 @@ k6 run tests/load/booking-flow.js
 
 **Milestone:** ✅ Automated quality gates in place
 
+**Optional Future Enhancement:**
+- [ ] Add code coverage tracking to SonarCloud
+  - Configure Vitest to generate `coverage/lcov.info`
+  - Add back `sonar.javascript.lcov.reportPaths=coverage/lcov.info` to `sonar-project.properties`
+  - This will show code coverage percentage in SonarCloud dashboard
+
 ---
 
 ### Week 5-6: Monitoring & Observability
