@@ -1,79 +1,77 @@
-# Documentation Archive Index
+# Archive Index
 
-This directory contains completed, obsolete, or reference documentation that is no longer actively used but preserved for historical purposes.
+This directory contains completed implementation plans and documentation that has been superseded or completed.
 
-## Archived Documents
-
-### Project Completion Summaries
-- **ADMIN_PANEL_TODO.md** - Complete admin panel implementation checklist (95% complete, production-ready)
-- **PHASE1_COMPLETE_SUMMARY.md** - Phase 1 implementation summary
-- **PHASE1_COMPLETE.md** (in parent docs/) - Phase 1 completion report
-- **PHASE2_COMPLETE.md** (in parent docs/) - Phase 2 completion report
-- **PHASE3_COMPLETE.md** (in parent docs/) - Phase 3 completion report
-- **FINAL_IMPLEMENTATION_SUMMARY.md** - Final implementation summary
-- **COMPLETE_REFACTORING_SUMMARY.md** - Refactoring completion summary
-
-### Code Quality & Reviews
-- **CODE_REVIEW.md** - Comprehensive code review (8.5/10 rating, completed 2025-01-24)
-- **CODE_REVIEW_FIXES_SUMMARY.md** - Summary of fixes applied from code review
-- **ESLINT_SETUP.md** - ESLint configuration documentation
-- **TAILWIND_DYNAMIC_CLASSES_FIX.md** - Fix for dynamic Tailwind class generation
-
-### Implementation Plans (Completed)
-- **IMPLEMENTATION_ROADMAP.md** - Original implementation roadmap
-- **AGENT_SETUP_COMPLETE.md** - Agent setup completion report
-- **LOGGING_IMPLEMENTATION.md** - Logging system implementation guide
-
-### Ideas & Planning
-- **IDEAS_FOR_ADMINPANEL.md** - Original brainstorming for admin panel features
-
-## Active Documentation (Not Archived)
-
-These files remain in the root or docs directory:
-
-### Root Directory
-- **CLAUDE.md** - Project instructions for Claude Code (actively maintained)
-- **PROJECT_STATUS.md** - Current project status and features
-- **OAUTH_IMPLEMENTATION_PLAN.md** - Future feature: OAuth integration
-- **TODO_RESEND_MIGRATION.md** - Pending: Email service migration to Resend
-
-### Docs Directory
-- **BACKEND_MIGRATION_PLAN.md** - Backend architecture guide
-- **DATABASE_SETUP_COMPLETE.md** - Database setup completion
-- **DATABASE_SETUP_GUIDE.md** - Database setup instructions
-- **PHASE_1_SSR_IMPLEMENTATION.md** - SSR implementation guide
-- **PHASE_1_2_MIDDLEWARE_OPTIMIZATION.md** - Middleware optimization
-- **PHASE_1_3_REMOVE_UNUSED_CODE.md** - Code cleanup guide
-- **CODE_SPLITTING_GUIDE.md** - Code splitting best practices
-- **SECURITY_GUIDE.md** - Security guidelines
-- **HYDRATION_SAFETY_GUIDE.md** - Hydration error prevention
-- **TESTING_GUIDE.md** - Testing strategy and examples
-- **SEO_CHECKLIST.md** - SEO optimization checklist
-- **USER_GUIDE.md** - End-user documentation
-- **IMPLEMENTATION_PLAN.md** - Current implementation plan
-- **ANALYTICS_IMPLEMENTATION.md** - Analytics setup
-- **REPORTS_EXPORT_IMPLEMENTATION.md** - Export functionality
-- **CUSTOMER_DATABASE_IMPLEMENTATION.md** - Customer database design
-- **USER_ROLES_PERMISSIONS.md** - Role-based access control
-
-## Archive Organization
-
-Files are archived when:
-- Feature/phase is 100% complete and documented elsewhere
-- Code review or audit is finished
-- Implementation plan has been executed
-- Document is superseded by newer documentation
-- Information is historical reference only
-
-## Retrieval
-
-If you need to reference archived documentation:
-1. Check this index for the file location
-2. Files remain in `docs/archive/` directory
-3. Git history preserves all versions
-4. Use `git log -- <filename>` to see change history
+**Last Updated:** 2025-12-07
 
 ---
 
-**Last Updated:** 2025-11-27
-**Total Archived Files:** 11
+## Completed Implementation Plans
+
+### Security & Fixes (Phase 0-1)
+
+**BOOKING_RACE_CONDITION_FIX.md**
+- **Status:** ✅ Completed
+- **Date:** 2025-01-27
+- **Summary:** Fixed race conditions in booking calendar with proper useEffect cleanup
+- **Related:** Phase 0 - Frontend Security
+
+**CODE_REVIEW_FIXES.md**
+- **Status:** ✅ Completed
+- **Date:** 2025-01-27
+- **Summary:** Comprehensive fixes from code review (security, database, frontend)
+- **Related:** Phases 0-3 implementation
+
+**FRONTEND_RACE_CONDITION_IMPLEMENTATION.md**
+- **Status:** ✅ Completed
+- **Date:** 2025-01-27
+- **Summary:** Fixed all useEffect race conditions with cleanup functions
+- **Implementation:** CafeSection.tsx refactored with \`cancelled\` flags
+- **Related:** Phase 0 - Frontend Security
+
+**FRONTEND_RATE_LIMIT_IMPLEMENTATION.md**
+- **Status:** ✅ Completed
+- **Date:** 2025-01-27
+- **Summary:** Implemented Upstash Redis rate limiting on frontend flows
+- **Related:** Phase 0 - Backend Security
+
+**RATE_LIMIT_IMPLEMENTATION.md**
+- **Status:** ✅ Completed
+- **Date:** 2025-01-27
+- **Summary:** Implemented backend rate limiting with Upstash Redis
+- **Implementation:** \`lib/rate-limit.ts\` with 3 limiters (auth, API, strict)
+- **Related:** Phase 0 - Backend Security
+
+**QA_FIXES_IMPLEMENTATION.md**
+- **Status:** ✅ Completed
+- **Date:** 2025-01-27
+- **Summary:** Quality assurance fixes and improvements
+- **Related:** Phases 1-2
+
+---
+
+## Deferred/Not Implemented
+
+**FRONTEND_SOFT_DELETE_IMPLEMENTATION.md**
+- **Status:** ⏸️ Deferred to Phase 5
+- **Reason:** Soft delete pattern not needed for MVP
+- **Future:** Will implement when user data management requires it
+
+**SOFT_DELETE_IMPLEMENTATION.md**
+- **Status:** ⏸️ Deferred to Phase 5
+- **Reason:** Database soft delete pattern not critical for launch
+- **Future:** Will add \`deletedAt\` fields when needed
+
+---
+
+## Reference & Examples
+
+**ZUSTAND_DEMO.md**
+- **Status:** ✅ Reference Complete
+- **Summary:** Demo/example file for Zustand state management
+- **Note:** Zustand implemented in Phase 2 (\`stores/navigationStore.ts\`)
+
+**ADMIN_PANEL_IDEAS.md**
+- **Status:** 💡 Ideas Archive
+- **Summary:** Collection of admin panel feature ideas and enhancements
+- **Note:** Many features already implemented; remaining ideas for future phases

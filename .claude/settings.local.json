@@ -124,7 +124,10 @@
       "Bash(npx @sentry/wizard@latest -i nextjs --skip-connect)",
       "Bash(git reset:*)",
       "Bash(npx @sentry/wizard@latest -i nextjs --saas:*)",
-      "Bash(npm run test:unit:coverage:*)"
+      "Bash(npm run test:unit:coverage:*)",
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
