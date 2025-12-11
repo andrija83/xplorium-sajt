@@ -569,9 +569,9 @@ export async function getCustomerInsights() {
 
     const now = new Date()
     const _thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) // Reserved for future use
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+    const _sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000) // Reserved for future use
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-    const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+    const _oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000) // Reserved for future use
 
     // Get all customers and bookings
     const [

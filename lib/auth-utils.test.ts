@@ -44,7 +44,7 @@ describe('requireRole', () => {
   })
 
   it('should throw error when user is not authenticated', async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as any)
 
     await expect(requireRole([Role.ADMIN])).rejects.toThrow('Unauthorized: Not authenticated')
   })
@@ -54,7 +54,7 @@ describe('requireRole', () => {
       user: {
         id: 'user-1',
         email: 'customer@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -119,7 +119,7 @@ describe('requireAdmin', () => {
       user: {
         id: 'customer-1',
         email: 'customer@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -185,7 +185,7 @@ describe('hasRole', () => {
       user: {
         id: 'customer-1',
         email: 'customer@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -196,7 +196,7 @@ describe('hasRole', () => {
   })
 
   it('should return false when not authenticated', async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as any)
 
     const result = await hasRole([Role.ADMIN])
     expect(result).toBe(false)
@@ -239,7 +239,7 @@ describe('isAdmin', () => {
       user: {
         id: 'customer-1',
         email: 'customer@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -256,7 +256,7 @@ describe('getCurrentSession', () => {
       user: {
         id: 'user-1',
         email: 'user@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -267,7 +267,7 @@ describe('getCurrentSession', () => {
   })
 
   it('should return null when not authenticated', async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as any)
 
     const result = await getCurrentSession()
     expect(result).toBeNull()
@@ -280,7 +280,7 @@ describe('requireAuth', () => {
       user: {
         id: 'user-1',
         email: 'user@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -291,7 +291,7 @@ describe('requireAuth', () => {
   })
 
   it('should throw error when not authenticated', async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as any)
 
     await expect(requireAuth()).rejects.toThrow('Unauthorized: Authentication required')
   })
@@ -303,7 +303,7 @@ describe('isResourceOwner', () => {
       user: {
         id: 'user-123',
         email: 'owner@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -318,7 +318,7 @@ describe('isResourceOwner', () => {
       user: {
         id: 'user-123',
         email: 'owner@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -329,7 +329,7 @@ describe('isResourceOwner', () => {
   })
 
   it('should return false when not authenticated', async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as any)
 
     const result = await isResourceOwner('user-123')
     expect(result).toBe(false)
@@ -346,7 +346,7 @@ describe('requireOwnerOrAdmin', () => {
       user: {
         id: 'user-123',
         email: 'owner@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
@@ -391,7 +391,7 @@ describe('requireOwnerOrAdmin', () => {
       user: {
         id: 'user-456',
         email: 'other@example.com',
-        role: Role.CUSTOMER
+        role: Role.USER
       }
     }
 
