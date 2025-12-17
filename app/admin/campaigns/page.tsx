@@ -58,7 +58,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Campaign, CampaignType, CampaignStatus } from '@prisma/client'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { NeonLoader } from '@/components/common'
 
 type CampaignListItem = Pick<Campaign, 'id' | 'name' | 'description' | 'type' | 'status' | 'subject' | 'scheduledDate' | 'sentDate' | 'totalRecipients' | 'sentCount' | 'openedCount' | 'clickedCount' | 'unsubscribeCount' | 'createdAt' | 'updatedAt'>
 
@@ -321,7 +321,7 @@ export default function CampaignsPage() {
           <div className="mt-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <LoadingSpinner />
+                <NeonLoader size="md" color="cyan" text="Loading campaigns..." />
               </div>
             ) : campaigns.length === 0 ? (
               <div className="text-center py-8">

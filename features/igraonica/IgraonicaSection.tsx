@@ -260,7 +260,7 @@ export const IgraonicaSection = memo(() => {
                     <h2
                       className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-center uppercase tracking-wider"
                       style={{
-                        fontFamily: '"Neon Light", Monoton, sans-serif',
+                        fontFamily: 'var(--font-bungee-shade), "Bungee Shade", cursive',
                         color: '#22d3ee',
                         textShadow: birthdayGlow.default,
                       }}
@@ -295,7 +295,7 @@ export const IgraonicaSection = memo(() => {
                     <h2
                       className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-center uppercase tracking-wider"
                       style={{
-                        fontFamily: '"Neon Light", Monoton, sans-serif',
+                        fontFamily: 'var(--font-bungee-shade), "Bungee Shade", cursive',
                         color: '#ec4899',
                         textShadow: playroomGlow.default,
                       }}

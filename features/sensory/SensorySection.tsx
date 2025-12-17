@@ -101,7 +101,7 @@ export const SensorySection = memo(() => {
           >
             <div className="text-center bg-transparent">
               <motion.h2
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-4 sm:mb-6 tracking-tight font-['Great_Vibes'] capitalize"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-4 sm:mb-6 tracking-tight font-orbitron capitalize"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -118,7 +118,7 @@ export const SensorySection = memo(() => {
               transition={{ duration: 0.8, delay: 0.5 }}
             >
               <motion.p
-                className="text-white/60 text-sm font-['Great_Vibes']"
+                className="text-white/60 text-sm font-orbitron"
                 animate={{ opacity: [0.6, 1, 0.6] }}
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
               >
@@ -149,7 +149,7 @@ export const SensorySection = memo(() => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <motion.p
-                className="text-white/60 text-base sm:text-lg mb-6 font-['Great_Vibes'] text-center"
+                className="text-white/60 text-base sm:text-lg mb-6 font-orbitron text-center"
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
               >

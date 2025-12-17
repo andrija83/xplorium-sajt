@@ -21,7 +21,7 @@ import { logger } from '@/lib/logger'
 import { createCampaign, getCampaignRecipients, type CreateCampaignInput } from '@/app/actions/campaigns'
 import { ArrowLeft, Users, Mail, MessageSquare, Send } from 'lucide-react'
 import type { CampaignType, LoyaltyTier } from '@prisma/client'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { NeonLoader } from '@/components/common'
 
 const LOYALTY_TIERS: LoyaltyTier[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'VIP']
 
@@ -290,7 +290,7 @@ export default function NewCampaignPage() {
                 </div>
                 <div className="text-2xl font-bold">
                   {isCalculatingRecipients ? (
-                    <LoadingSpinner size="sm" />
+                    <NeonLoader size="sm" color="cyan" />
                   ) : (
                     recipientCount.toLocaleString()
                   )}
@@ -402,7 +402,7 @@ export default function NewCampaignPage() {
               <Button type="submit" className="w-full" disabled={isSubmitting || isCalculatingRecipients}>
                 {isSubmitting ? (
                   <>
-                    <LoadingSpinner size="sm" />
+                    <NeonLoader size="sm" color="cyan" />
                   </>
                 ) : (
                   <>

@@ -4,6 +4,7 @@ import { useState, memo, useMemo, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { EventCalendar, BookingForm, type CalendarEvent } from '@/components/common'
 import { PricingCategory, type PricingPackage } from '@/components/pricing'
+import { EventsPage } from '@/components/events'
 import { getApprovedBookings, createBooking } from '@/app/actions/bookings'
 import { getPublishedEvents } from '@/app/actions/events'
 import { getPublishedPricingPackages } from '@/app/actions/pricing'
@@ -47,7 +48,7 @@ export const CafeSection = memo(() => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedPackage, setSelectedPackage] = useState<{ name: string, price: string | null, category: string } | null>(null)
 
-  // Published events state (for Dogadjaji section)
+  // Published events state (for Testing/Events page and Dogadjaji section)
   const [publishedEvents, setPublishedEvents] = useState<any[]>([])
   const [eventsLoading, setEventsLoading] = useState(false)
 
@@ -113,16 +114,16 @@ export const CafeSection = memo(() => {
   }, [cafeSubView])
 
 
-  // Load published events when "dogadjaji" view is opened
+  // Load published events when "dogadjaji" or "testing" view is opened
   useEffect(() => {
-    if (cafeSubView !== 'dogadjaji') return
+    if (cafeSubView !== 'dogadjaji' && cafeSubView !== 'testing') return
 
     let cancelled = false
 
     async function loadEvents() {
       setEventsLoading(true)
       try {
-        const result = await getPublishedEvents(10) // Get up to 10 upcoming events
+        const result = await getPublishedEvents(50) // Get up to 50 upcoming events
         if (cancelled) return // Race condition protection
         if (result.success && result.events) {
           // Filter only future events (compare by date only, not time)
@@ -277,6 +278,13 @@ export const CafeSection = memo(() => {
       ringClass: "focus-visible:ring-cyan-400",
       shadow: "0 0 20px #22d3ee, 0 0 40px #22d3ee, 0 0 60px #22d3ee",
     },
+    {
+      label: "Testing",
+      section: "testing",
+      textClass: "text-pink-400",
+      ringClass: "focus-visible:ring-pink-400",
+      shadow: "0 0 20px #ec4899, 0 0 40px #ec4899, 0 0 60px #ec4899",
+    },
   ], [])
 
   // Memoized corner screws positions
@@ -342,7 +350,7 @@ export const CafeSection = memo(() => {
                   }}
                   aria-label={`View ${item.label} information`}
                   tabIndex={0}
-                  className={`${item.textClass} ${item.ringClass} text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-['Great_Vibes'] cursor-pointer transition-all duration-300 hover:scale-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-lg px-4 py-2`}
+                  className={`${item.textClass} ${item.ringClass} text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-orbitron font-bold cursor-pointer transition-all duration-300 hover:scale-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-lg px-4 py-2`}
                   style={{
                     textShadow: item.shadow,
                   }}
@@ -362,8 +370,19 @@ export const CafeSection = memo(() => {
             </nav>
           </motion.div>
         </motion.div>
+      ) : cafeSubView === "testing" ? (
+        // Testing View - Events Page with Cosmic Sticker Collection design
+        <motion.div
+          className="relative w-full min-h-screen"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        >
+          <EventsPage events={publishedEvents} />
+        </motion.div>
       ) : (
-        // Subsection Content
+        // Other Subsections - With glass frame
         <motion.div
           className="relative w-full max-w-2xl mx-auto aspect-[3/4] flex items-center justify-center"
           initial={{ opacity: 0 }}
@@ -405,7 +424,7 @@ export const CafeSection = memo(() => {
             <div className={`h-full p-8 sm:p-12 ${cafeSubView === "kontakt" || cafeSubView === "zakup" || cafeSubView === "meni" || cafeSubView === "dogadjaji" || cafeSubView === "pricing" ? "overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-cyan-400/30 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-white/5" : "flex items-center justify-center"}`}>
               <div className="text-center w-full">
                 <motion.h2
-                  className="text-4xl sm:text-5xl md:text-6xl text-cyan-400 mb-6 tracking-tight font-['Great_Vibes'] capitalize"
+                  className="text-4xl sm:text-5xl md:text-6xl text-cyan-400 mb-6 tracking-tight font-orbitron capitalize"
                   style={{
                     textShadow: "0 0 20px #22d3ee, 0 0 40px #22d3ee",
                   }}
@@ -423,7 +442,9 @@ export const CafeSection = memo(() => {
                           ? "Dogadjaji"
                           : cafeSubView === "radno"
                             ? "Radno vreme"
-                            : "Kontakt"}
+                            : cafeSubView === "testing"
+                              ? "Testing"
+                              : "Kontakt"}
                 </motion.h2>
 
                 {/* Meni Subsection */}
@@ -436,7 +457,7 @@ export const CafeSection = memo(() => {
                   >
                     {/* Pricing Section */}
                     <div className="mb-8">
-                      <h3 className="text-cyan-400 font-['Great_Vibes'] text-3xl mb-6">
+                      <h3 className="text-cyan-400 font-orbitron text-3xl mb-6">
                         Cenovnik
                       </h3>
                       <div className="space-y-3">
@@ -574,7 +595,7 @@ export const CafeSection = memo(() => {
                               }}
                             >
                               <div className="flex justify-between items-start mb-2">
-                                <h4 className="text-white font-['Great_Vibes'] text-xl">
+                                <h4 className="text-white font-orbitron text-xl">
                                   {event.title}
                                 </h4>
                                 <span className="text-purple-400 text-xs font-medium">
@@ -646,7 +667,7 @@ export const CafeSection = memo(() => {
                             backgroundColor: "rgba(255, 255, 255, 0.08)"
                           }}
                         >
-                          <span className="text-white/90 font-['Great_Vibes'] text-xl">
+                          <span className="text-white/90 font-orbitron text-xl">
                             {item.day}
                           </span>
                           <span className="text-cyan-400 font-medium text-sm">
@@ -663,7 +684,7 @@ export const CafeSection = memo(() => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.6, delay: 1.2 }}
                     >
-                      <p className="text-cyan-400 font-['Great_Vibes'] text-2xl mb-2">
+                      <p className="text-cyan-400 font-orbitron text-2xl mb-2">
                         Napomena
                       </p>
                       <p className="text-white/80 text-sm leading-relaxed">
@@ -696,7 +717,7 @@ export const CafeSection = memo(() => {
                               }
                               setShowBookingForm(true)
                             }}
-                            className="px-6 py-2 bg-cyan-400/20 border-2 border-cyan-400/40 rounded-lg text-cyan-400 text-sm font-['Great_Vibes'] text-xl hover:bg-cyan-400/30 transition-all"
+                            className="px-6 py-2 bg-cyan-400/20 border-2 border-cyan-400/40 rounded-lg text-cyan-400 text-sm font-orbitron text-xl hover:bg-cyan-400/30 transition-all"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                           >
@@ -712,7 +733,7 @@ export const CafeSection = memo(() => {
                       </>
                     ) : (
                       <div className="max-w-lg mx-auto">
-                        <h3 className="text-cyan-400 font-['Great_Vibes'] text-3xl mb-6 text-center">
+                        <h3 className="text-cyan-400 font-orbitron text-3xl mb-6 text-center">
                           Nova rezervacija
                         </h3>
                         <BookingForm
@@ -747,17 +768,17 @@ export const CafeSection = memo(() => {
 
                       <div className="space-y-3 text-left bg-white/5 backdrop-blur-sm border border-cyan-400/20 rounded-lg p-4">
                         <div>
-                          <h3 className="text-cyan-400 font-['Great_Vibes'] text-xl mb-1">Adresa</h3>
+                          <h3 className="text-cyan-400 font-orbitron text-xl mb-1">Adresa</h3>
                           <p className="text-white/90 text-sm">Unesite vašu adresu ovde</p>
                         </div>
 
                         <div>
-                          <h3 className="text-cyan-400 font-['Great_Vibes'] text-xl mb-1">Telefon</h3>
+                          <h3 className="text-cyan-400 font-orbitron text-xl mb-1">Telefon</h3>
                           <p className="text-white/90 text-sm">+381 XX XXX XXXX</p>
                         </div>
 
                         <div>
-                          <h3 className="text-cyan-400 font-['Great_Vibes'] text-xl mb-1">Email</h3>
+                          <h3 className="text-cyan-400 font-orbitron text-xl mb-1">Email</h3>
                           <p className="text-white/90 text-sm">info@xplorium.com</p>
                         </div>
                       </div>

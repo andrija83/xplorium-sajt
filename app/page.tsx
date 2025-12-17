@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 import { Starfield } from "@/components/common/Starfield"
+import { NebulaBackground } from "@/components/backgrounds"
 import { HeroShell, NavigationLayer, SectionManager, AuthLayer } from "@/components/landing"
 import { useNavigationState, useLandingAnimation, useModalState } from "@/hooks"
 
@@ -55,6 +56,9 @@ export default function Landing() {
 
       {/* Starfield Background */}
       <Starfield activeView={navigation.activeView} />
+
+      {/* Nebula Background - Animated cosmic clouds */}
+      <NebulaBackground />
 
       {/* Auth Layer - Buttons and Modals */}
       <AuthLayer

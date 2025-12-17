@@ -6,6 +6,8 @@
 
 export { Starfield } from './Starfield'
 export { LoadingSpinner } from './LoadingSpinner'
+export { NeonLoader } from './NeonLoader'
+export { PageTransition } from './PageTransition'
 export { Skeleton, SkeletonGroup } from './Skeleton'
 export { EventCalendar, type CalendarEvent } from './EventCalendar'
 export { BookingForm } from './BookingForm'

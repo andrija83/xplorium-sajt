@@ -95,7 +95,7 @@ export const NavigationLayer = memo(function NavigationLayer({
 
           {/* "plorium" text with liquid morph animation */}
           <motion.h1
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light text-white tracking-tight relative overflow-visible"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-orbitron font-light text-white tracking-tight relative overflow-visible"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
@@ -204,7 +204,7 @@ export const NavigationLayer = memo(function NavigationLayer({
 
         {/* Tagline */}
         <motion.p
-          className="text-white/70 text-xs sm:text-sm md:text-base font-light tracking-wide"
+          className="text-white/70 text-xs sm:text-sm md:text-base font-space-mono font-normal tracking-wide"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.5 }}
@@ -235,7 +235,7 @@ export const NavigationLayer = memo(function NavigationLayer({
                   onNavigate(tab.section)
                 }
               }}
-              className={`absolute text-4xl sm:text-5xl md:text-6xl lg:text-7xl cursor-pointer z-10 px-6 py-6 leading-relaxed font-['Great_Vibes'] focus:outline-none focus-visible:ring-4 ${color.focusRing} focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-lg transition-shadow`}
+              className={`absolute text-4xl sm:text-5xl md:text-6xl lg:text-7xl cursor-pointer z-10 px-6 py-6 leading-relaxed font-orbitron font-bold uppercase tracking-wider focus:outline-none focus-visible:ring-4 ${color.focusRing} focus-visible:ring-offset-4 focus-visible:ring-offset-black rounded-lg transition-shadow`}
               style={{
                 ...tab.position,
                 color: color.main,

@@ -203,7 +203,7 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
                             style={{
                                 color: '#ec4899',
                                 textShadow: neonPinkGlow,
-                                fontFamily: '"Neon Light", Monoton, sans-serif'
+                                fontFamily: 'var(--font-bungee-shade), "Bungee Shade", cursive'
                             }}
                         >
                             PLAY ROOM

@@ -33,7 +33,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Campaign, CampaignType, CampaignStatus } from '@prisma/client'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { NeonLoader } from '@/components/common'
 
 export default function CampaignDetailPage() {
   const router = useRouter()
@@ -158,7 +158,7 @@ export default function CampaignDetailPage() {
   if (isLoading || !campaign) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingSpinner />
+        <NeonLoader size="md" color="cyan" text="Loading campaign..." />
       </div>
     )
   }
@@ -417,9 +417,7 @@ export default function CampaignDetailPage() {
                 disabled={isLoadingRecipients}
               >
                 {isLoadingRecipients ? (
-                  <>
-                    <LoadingSpinner size="sm" />
-                  </>
+                  <NeonLoader size="sm" color="cyan" />
                 ) : (
                   <>
                     <Users className="w-4 h-4 mr-2" />

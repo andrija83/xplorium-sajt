@@ -355,7 +355,7 @@ export const BirthdayBookingForm = ({
             style={{
               color: theme.hex,
               textShadow: theme.glow,
-              fontFamily: '"Neon Light", Monoton, sans-serif'
+              fontFamily: 'var(--font-bungee-shade), "Bungee Shade", cursive'
             }}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
