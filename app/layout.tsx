@@ -111,7 +111,6 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preload" as="image" href="/crystal-x-logo.jpg" fetchPriority="high" />
         <SchemaMarkup />
       </head>
       <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable} ${_monoton.variable}`} suppressHydrationWarning>
