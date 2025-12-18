@@ -7,8 +7,10 @@
 
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
-import { PricingCard, PricingPackage, PricingCategory as Category } from './PricingCard'
+import { PricingCard, type PricingPackage, type PricingCategory as Category } from './PricingCard'
+import { PricingCardSkeleton } from '@/components/skeletons'
 
 interface PricingCategoryProps {
   title: string
@@ -42,13 +44,13 @@ const CATEGORY_COLORS = {
   },
 }
 
-export const PricingCategory = ({
+export const PricingCategory = memo(function PricingCategory({
   title,
   packages,
   category,
   isLoading,
   onBook,
-}: PricingCategoryProps) => {
+}: PricingCategoryProps) {
   const colors = CATEGORY_COLORS[category]
 
   return (
@@ -74,11 +76,12 @@ export const PricingCategory = ({
       {/* Pricing Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {isLoading ? (
-          // Loading State
-          <div className="col-span-3 text-center py-12">
-            <div className={`inline-block w-8 h-8 border-4 ${colors.spinnerBorder} border-t-transparent rounded-full animate-spin`} />
-            <p className="text-white/60 text-sm mt-4">Učitavanje paketa...</p>
-          </div>
+          // Loading State - Skeleton Cards
+          <>
+            {[...Array(3)].map((_, index) => (
+              <PricingCardSkeleton key={index} index={index} />
+            ))}
+          </>
         ) : packages.length > 0 ? (
           // Pricing Cards
           packages.map((pkg, index) => (
@@ -99,4 +102,6 @@ export const PricingCategory = ({
       </div>
     </motion.div>
   )
-}
+})
+
+PricingCategory.displayName = 'PricingCategory'

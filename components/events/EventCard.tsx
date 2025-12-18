@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, Clock, Users, MapPin, Ticket } from 'lucide-react'
 import { format } from 'date-fns'
@@ -199,13 +199,13 @@ const eventThemes = {
   },
 }
 
-export function EventCard({ event, index }: EventCardProps) {
+export const EventCard = memo(function EventCard({ event, index }: EventCardProps) {
   // Use manually selected theme if available, otherwise auto-detect
   const visualTheme = event.theme ? event.theme.toLowerCase() as VisualTheme : getVisualTheme(event)
   const theme = eventThemes[visualTheme]
   const ageRange = getAgeRange(event)
   const isFull = event.capacity ? event.registeredCount >= event.capacity : false
-  const spotsLeft = event.capacity ? event.capacity - event.registeredCount : null
+  const _spotsLeft = event.capacity ? event.capacity - event.registeredCount : null
 
   // Slight rotation for sticker effect
   const rotation = (index % 3 - 1) * 2 // -2, 0, or 2 degrees (reduced)
@@ -228,6 +228,7 @@ export function EventCard({ event, index }: EventCardProps) {
   return (
     <motion.div
       className="relative"
+      layout={false} // Prevent layout animations
       initial={{ opacity: 0, y: 30, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{
@@ -239,13 +240,15 @@ export function EventCard({ event, index }: EventCardProps) {
         scale: 1.03,
         transition: { duration: 0.2 },
       }}
-      style={{ rotate: rotation }}
+      style={{ rotate: rotation, willChange: 'transform, opacity' }}
     >
       {/* Main card with sticker-like border */}
       <motion.div
         className={`relative overflow-hidden rounded-2xl border-4 ${theme.borderColor} bg-white`}
+        layout={false} // Prevent layout animations
         style={{
           boxShadow: theme.shadowColor,
+          willChange: 'box-shadow',
         }}
         whileHover={{
           boxShadow: `${theme.shadowColor}, 0 0 50px ${theme.glowColor}`,
@@ -277,6 +280,7 @@ export function EventCard({ event, index }: EventCardProps) {
               <motion.div
                 key={particle.id}
                 className="absolute text-lg will-change-transform"
+                layout={false} // Prevent layout animations
                 style={{
                   left: `${particle.left}%`,
                   [startPos]: '-10%',
@@ -382,4 +386,6 @@ export function EventCard({ event, index }: EventCardProps) {
       </motion.div>
     </motion.div>
   )
-}
+})
+
+EventCard.displayName = 'EventCard'

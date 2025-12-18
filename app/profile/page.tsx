@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
-import { Loader2 } from "lucide-react"
 import ProfileHeader from "@/components/profile/ProfileHeader"
 import LoyaltyCard from "@/components/profile/LoyaltyCard"
 import BookingHistory from "@/components/profile/BookingHistory"
+import { ProfileSkeleton } from "@/components/skeletons"
 import { getUserBookings } from "@/app/actions/bookings"
 
 export default function ProfilePage() {
@@ -39,11 +39,7 @@ export default function ProfilePage() {
     }, [session, status])
 
     if (status === "loading" || isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
-                <Loader2 className="w-12 h-12 animate-spin text-cyan-400" />
-            </div>
-        )
+        return <ProfileSkeleton />
     }
 
     if (!session?.user) {

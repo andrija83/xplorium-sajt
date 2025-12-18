@@ -1,10 +1,11 @@
 'use client'
 
-import { memo, useMemo, useCallback } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { PlanetOrb } from '@/components/animations'
-import type { GalleryImage, PlanetConfig } from '@/types'
+import { ImageSkeleton } from '@/components/skeletons'
+import type { GalleryImage } from '@/types'
 import { useNavigationStore } from '@/stores/navigationStore'
 
 /**
@@ -31,6 +32,10 @@ import { useNavigationStore } from '@/stores/navigationStore'
 export const SensorySection = memo(() => {
   // Get navigation state directly from Zustand store - no props needed!
   const { sensorySubView, setSensorySubView } = useNavigationStore()
+
+  // Track which images have loaded
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set())
+
   const SENSORY_PLANETS = useMemo(() => [
     {
       label: "Floor",
@@ -157,27 +162,44 @@ export const SensorySection = memo(() => {
               </motion.p>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                {GALLERY_IMAGES.map((image, i) => (
-                  <motion.div
-                    key={image.id}
-                    className="aspect-square rounded-lg overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10"
-                    initial={{ opacity: 0, scale: 0.8, y: 30 }}
-                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                    viewport={{ once: false, amount: 0.3 }}
-                    transition={{
-                      duration: 0.6,
-                      delay: i * 0.1,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                    whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.3)" }}
-                  >
-                    <img
-                      src={`/placeholder.svg?height=400&width=400&query=${encodeURIComponent(image.query)}`}
-                      alt={`Sensory ${sensorySubView} ${image.id}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </motion.div>
-                ))}
+                {GALLERY_IMAGES.map((image, i) => {
+                  const isLoaded = loadedImages.has(image.id)
+
+                  return (
+                    <motion.div
+                      key={image.id}
+                      className="aspect-square rounded-lg overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 relative"
+                      initial={{ opacity: 0, scale: 0.8, y: 30 }}
+                      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                      viewport={{ once: false, amount: 0.3 }}
+                      transition={{
+                        duration: 0.6,
+                        delay: i * 0.1,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.3)" }}
+                    >
+                      {/* Show skeleton while image is loading */}
+                      {!isLoaded && (
+                        <div className="absolute inset-0">
+                          <ImageSkeleton index={i} aspectRatio="square" />
+                        </div>
+                      )}
+
+                      {/* Image with fade-in when loaded */}
+                      <img
+                        src={`/placeholder.svg?height=400&width=400&query=${encodeURIComponent(image.query)}`}
+                        alt={`Sensory ${sensorySubView} ${image.id}`}
+                        className={`w-full h-full object-cover transition-opacity duration-300 ${
+                          isLoaded ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        onLoad={() => {
+                          setLoadedImages(prev => new Set(prev).add(image.id))
+                        }}
+                      />
+                    </motion.div>
+                  )
+                })}
               </div>
             </motion.div>
           </motion.div>

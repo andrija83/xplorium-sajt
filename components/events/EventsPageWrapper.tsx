@@ -27,6 +27,7 @@ export async function EventsPageWrapper() {
         currency: event.currency,
         location: event.location,
         tags: event.tags,
+        theme: event.theme,
       }))
     : []
 

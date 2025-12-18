@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
@@ -31,7 +31,7 @@ interface EventCalendarProps {
  * - Click dates or events to interact
  * - Supports adding new events
  */
-export const EventCalendar = ({ events, onEventClick, onDateClick, showAddButton = false }: EventCalendarProps) => {
+export const EventCalendar = memo(function EventCalendar({ events, onEventClick, onDateClick, showAddButton = false }: EventCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [hoveredDay, setHoveredDay] = useState<number | null>(null)
   const [selectedDayEvents, setSelectedDayEvents] = useState<CalendarEvent[] | null>(null)
@@ -350,4 +350,6 @@ export const EventCalendar = ({ events, onEventClick, onDateClick, showAddButton
       </AnimatePresence>
     </div>
   )
-}
+})
+
+EventCalendar.displayName = 'EventCalendar'

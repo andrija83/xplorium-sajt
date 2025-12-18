@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Clock } from 'lucide-react'
 import type { CalendarEvent } from './EventCalendar'
@@ -28,7 +28,7 @@ interface BookingFormProps {
  * Prevents double-booking by checking existing events
  * Can accept an initial date from calendar click
  */
-export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDate = null, isLoading = false, initialPackage = null }: BookingFormProps) => {
+export const BookingForm = memo(function BookingForm({ onSubmit, onCancel, existingEvents = [], initialDate = null, isLoading = false, initialPackage = null }: BookingFormProps) {
   // Helper to format date without timezone issues
   const formatDateForInput = (date: Date | null) => {
     if (!date) return ''
@@ -611,4 +611,6 @@ export const BookingForm = ({ onSubmit, onCancel, existingEvents = [], initialDa
       </div>
     </form>
   )
-}
+})
+
+BookingForm.displayName = 'BookingForm'

@@ -2,9 +2,10 @@
 
 import { useState, memo, useMemo, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { EventCalendar, BookingForm, type CalendarEvent } from '@/components/common'
-import { PricingCategory, type PricingPackage } from '@/components/pricing'
-import { EventsPage } from '@/components/events'
+import dynamic from 'next/dynamic'
+import type { CalendarEvent } from '@/components/common'
+import { CalendarSkeleton } from '@/components/skeletons'
+import { Skeleton } from '@/components/ui/skeleton'
 import { getApprovedBookings, createBooking } from '@/app/actions/bookings'
 import { getPublishedEvents } from '@/app/actions/events'
 import { getPublishedPricingPackages } from '@/app/actions/pricing'
@@ -14,6 +15,27 @@ import { useSession } from 'next-auth/react'
 import { format } from 'date-fns'
 import { sr } from 'date-fns/locale'
 import { useNavigationStore } from '@/stores/navigationStore'
+
+// Lazy load heavy components to reduce initial bundle size
+const EventsPage = dynamic(() => import('@/components/events').then(mod => ({ default: mod.EventsPage })), {
+  loading: () => <div className="flex items-center justify-center min-h-screen"><div className="text-cyan-400">Loading events...</div></div>,
+  ssr: true,
+})
+
+const PricingCategory = dynamic(() => import('@/components/pricing').then(mod => ({ default: mod.PricingCategory })), {
+  loading: () => <div className="text-center py-8"><div className="inline-block w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>,
+  ssr: true,
+})
+
+const EventCalendar = dynamic(() => import('@/components/common').then(mod => ({ default: mod.EventCalendar })), {
+  loading: () => <CalendarSkeleton />,
+  ssr: true,
+})
+
+const BookingForm = dynamic(() => import('@/components/common').then(mod => ({ default: mod.BookingForm })), {
+  loading: () => <div className="text-center py-8"><div className="inline-block w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>,
+  ssr: true,
+})
 
 /**
  * CafeSection Component
@@ -44,6 +66,7 @@ export const CafeSection = memo(() => {
   // Event calendar state
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [calendarLoading, setCalendarLoading] = useState(false)
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedPackage, setSelectedPackage] = useState<{ name: string, price: string | null, category: string } | null>(null)
@@ -92,19 +115,26 @@ export const CafeSection = memo(() => {
     let cancelled = false
 
     async function loadBookings() {
-      const result = await getApprovedBookings()
-      if (cancelled) return // Race condition protection
-      if (result.success && result.bookings) {
-        // Transform database bookings to CalendarEvent format
-        const calendarEvents: CalendarEvent[] = result.bookings.map((booking) => ({
-          id: booking.id,
-          title: booking.title,
-          date: new Date(booking.date),
-          time: booking.time,
-          type: booking.type as CalendarEvent['type'],
-          guestCount: booking.guestCount || undefined,
-        }))
-        setEvents(calendarEvents)
+      setCalendarLoading(true)
+      try {
+        const result = await getApprovedBookings()
+        if (cancelled) return // Race condition protection
+        if (result.success && result.bookings) {
+          // Transform database bookings to CalendarEvent format
+          const calendarEvents: CalendarEvent[] = result.bookings.map((booking) => ({
+            id: booking.id,
+            title: booking.title,
+            date: new Date(booking.date),
+            time: booking.time,
+            type: booking.type as CalendarEvent['type'],
+            guestCount: booking.guestCount || undefined,
+          }))
+          setEvents(calendarEvents)
+        }
+      } finally {
+        if (!cancelled) {
+          setCalendarLoading(false)
+        }
       }
     }
 
@@ -379,7 +409,7 @@ export const CafeSection = memo(() => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
         >
-          <EventsPage events={publishedEvents} />
+          <EventsPage events={publishedEvents} isLoading={eventsLoading} />
         </motion.div>
       ) : (
         // Other Subsections - With glass frame
@@ -575,9 +605,26 @@ export const CafeSection = memo(() => {
                       </p>
 
                       {eventsLoading ? (
-                        <div className="text-center py-8">
-                          <div className="inline-block w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                          <p className="text-white/60 text-sm mt-4">Učitavanje događaja...</p>
+                        <div className="space-y-4">
+                          {[...Array(3)].map((_, index) => (
+                            <motion.div
+                              key={index}
+                              className="bg-white/5 border border-purple-400/20 rounded-lg p-4"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4, delay: index * 0.1 }}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <Skeleton className="h-6 w-32" />
+                                <Skeleton className="h-4 w-16" />
+                              </div>
+                              <Skeleton className="h-4 w-24 mb-2" />
+                              <div className="space-y-1">
+                                <Skeleton className="h-3 w-full" />
+                                <Skeleton className="h-3 w-5/6" />
+                              </div>
+                            </motion.div>
+                          ))}
                         </div>
                       ) : publishedEvents.length > 0 ? (
                         <div className="space-y-4">
@@ -725,11 +772,15 @@ export const CafeSection = memo(() => {
                           </motion.button>
                         </div>
 
-                        <EventCalendar
-                          events={events}
-                          onDateClick={handleDateClick}
-                          showAddButton={true}
-                        />
+                        {calendarLoading ? (
+                          <CalendarSkeleton />
+                        ) : (
+                          <EventCalendar
+                            events={events}
+                            onDateClick={handleDateClick}
+                            showAddButton={true}
+                          />
+                        )}
                       </>
                     ) : (
                       <div className="max-w-lg mx-auto">

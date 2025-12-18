@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Users, Clock, Mail, Phone, User, Cake, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import { validateEmail } from '@/lib/validation'
 import { ThemeCalendarPicker } from '@/components/common/ThemeCalendarPicker'
 import { ThemeTimePicker } from '@/components/common/ThemeTimePicker'
 import { createBooking } from '@/app/actions/bookings'
@@ -108,7 +107,7 @@ const BEVERAGE_OPTIONS = [
   { id: 'hot-chocolate', name: 'Hot Chocolate', icon: '☕', description: 'Warm hot chocolate' }
 ]
 
-export const BirthdayBookingForm = ({
+export const BirthdayBookingForm = memo(function BirthdayBookingForm({
   onBack,
   initialSelectedRooms = [],
   variant = 'birthday',
@@ -117,7 +116,7 @@ export const BirthdayBookingForm = ({
   initialDurationMinutes,
   initialDurationLabel,
   initialTotalPrice = 0
-}: BirthdayBookingFormProps) => {
+}: BirthdayBookingFormProps) {
   const [minDate, setMinDate] = useState<string>('')
   const [formData, setFormData] = useState<FormData>({
     childName: '',
@@ -1006,4 +1005,6 @@ export const BirthdayBookingForm = ({
       </motion.div>
     </div >
   )
-}
+})
+
+BirthdayBookingForm.displayName = 'BirthdayBookingForm'

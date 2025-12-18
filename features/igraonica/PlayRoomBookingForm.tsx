@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Plus, Check } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { BirthdayBookingForm } from './BirthdayBookingForm'
@@ -68,7 +68,7 @@ const TIME_DURATION_OPTIONS = [
     { id: '45-min', label: '45 Minutes', duration: 45, price: 1500, icon: '🕒' }
 ]
 
-export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
+export const PlayRoomBookingForm = memo(function PlayRoomBookingForm({ onBack }: PlayRoomBookingFormProps) {
     const { data: session, status } = useSession()
     const [step, setStep] = useState<'selection' | 'details'>('selection')
     // Initialize with mandatory items pre-selected
@@ -520,4 +520,6 @@ export const PlayRoomBookingForm = ({ onBack }: PlayRoomBookingFormProps) => {
             />
         </div>
     )
-}
+})
+
+PlayRoomBookingForm.displayName = 'PlayRoomBookingForm'
