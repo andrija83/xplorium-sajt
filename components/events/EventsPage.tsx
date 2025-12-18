@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion'
 import { EventCard, type Event } from './EventCard'
-import { Sparkles, PartyPopper } from 'lucide-react'
 
 interface EventsPageProps {
   events: Event[]
@@ -18,14 +17,6 @@ export function EventsPage({ events }: EventsPageProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Static decorative icons */}
-        <div className="absolute -left-8 top-0">
-          <Sparkles className="w-10 h-10 text-yellow-400" fill="currentColor" />
-        </div>
-        <div className="absolute -right-8 top-0">
-          <PartyPopper className="w-10 h-10 text-pink-400" />
-        </div>
-
         {/* Pulsing title animation restored */}
         <motion.h1
           className="font-bungee-shade text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-6"

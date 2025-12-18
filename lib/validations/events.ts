@@ -12,6 +12,7 @@ export const createEventSchema = z.object({
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format').optional().nullable(),
   category: z.enum(['WORKSHOP', 'PARTY', 'SPECIAL_EVENT', 'HOLIDAY', 'SEASONAL', 'CLASS', 'TOURNAMENT', 'OTHER']),
+  theme: z.enum(['WINTER', 'CHRISTMAS', 'HALLOWEEN', 'EASTER', 'SUMMER', 'SPACE', 'UNICORN', 'DINOSAUR', 'DEFAULT']).optional().nullable(),
   capacity: z.number().int().positive().optional().nullable(),
   price: z.number().nonnegative().optional().nullable(),
   currency: z.string().length(3).optional(),

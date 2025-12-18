@@ -120,6 +120,7 @@ model Event {
   isRecurring     Boolean       @default(false)
   recurrenceRule  String?
   tags            String[]
+  theme           EventTheme?   // Visual theme for event card animations
   createdBy       String?
   order           Int           @default(0)
   createdAt       DateTime      @default(now())
@@ -373,6 +374,18 @@ enum EventCategory {
   CLASS
   TOURNAMENT
   OTHER
+}
+
+enum EventTheme {
+  WINTER
+  CHRISTMAS
+  HALLOWEEN
+  EASTER
+  SUMMER
+  SPACE
+  UNICORN
+  DINOSAUR
+  DEFAULT
 }
 
 enum RSVPStatus {

@@ -55,6 +55,19 @@ const EVENT_STATUSES = [
   { value: 'ARCHIVED', label: 'Archived' }
 ] as const
 
+const EVENT_THEMES = [
+  { value: 'AUTO', label: 'Auto (from tags/category)' },
+  { value: 'WINTER', label: '❄️ Winter' },
+  { value: 'CHRISTMAS', label: '🎄 Christmas' },
+  { value: 'HALLOWEEN', label: '🎃 Halloween' },
+  { value: 'EASTER', label: '🐰 Easter' },
+  { value: 'SUMMER', label: '☀️ Summer' },
+  { value: 'SPACE', label: '🚀 Space' },
+  { value: 'UNICORN', label: '🦄 Unicorn' },
+  { value: 'DINOSAUR', label: '🦕 Dinosaur' },
+  { value: 'DEFAULT', label: '🎉 Default (Party)' }
+] as const
+
 export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -66,6 +79,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     endTime: event?.endTime || '',
     category: event?.category || 'WORKSHOP',
     status: event?.status || 'DRAFT',
+    theme: event?.theme || 'AUTO',
     capacity: event?.capacity || '',
     price: event?.price || '',
     currency: event?.currency || 'RSD',
@@ -101,6 +115,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         endTime: formData.endTime || null,
         category: formData.category as any,
         status: formData.status as any,
+        theme: formData.theme === 'AUTO' ? null : formData.theme as any,
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
         price: formData.price ? parseFloat(formData.price) : null,
         currency: formData.currency,
@@ -273,6 +288,31 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Theme Selector */}
+      <div className="space-y-2">
+        <Label htmlFor="theme" className="text-cyan-400">
+          Card Theme
+        </Label>
+        <Select
+          value={formData.theme}
+          onValueChange={(value) => setFormData(prev => ({ ...prev, theme: value }))}
+        >
+          <SelectTrigger className="bg-black/20 border-cyan-400/30 text-cyan-100">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {EVENT_THEMES.map(theme => (
+              <SelectItem key={theme.value} value={theme.value}>
+                {theme.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-cyan-100/50">
+          Choose the visual theme for the event card animations. "Auto" will determine theme from tags/category.
+        </p>
       </div>
 
       {/* Capacity & Price */}

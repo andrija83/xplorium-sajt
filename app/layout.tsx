@@ -15,13 +15,15 @@ const _geist = Geist({
   display: "swap",
   preload: true,
   variable: "--font-geist",
+  adjustFontFallback: true, // Adjust fallback metrics to reduce CLS
 })
 
 const _geistMono = Geist_Mono({
   subsets: ["latin"],
-  display: "swap",
+  display: "optional", // Don't swap if not loaded quickly - reduces CLS
   preload: false, // Less critical, load after main font
   variable: "--font-geist-mono",
+  adjustFontFallback: true,
 })
 
 const _greatVibes = Great_Vibes({
@@ -30,14 +32,16 @@ const _greatVibes = Great_Vibes({
   display: "swap",
   preload: true, // Used heavily in navigation
   variable: "--font-great-vibes",
+  adjustFontFallback: true, // Critical for CLS - this font causes most shift
 })
 
 const _monoton = Monoton({
   weight: "400",
   subsets: ["latin"],
-  display: "swap",
+  display: "optional", // Don't swap if not loaded - only used in one section
   preload: false, // Used only in Igraonica section
   variable: "--font-monoton",
+  adjustFontFallback: true,
 })
 
 export const metadata: Metadata = {
@@ -107,6 +111,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preload" as="image" href="/crystal-x-logo.jpg" fetchPriority="high" />
         <SchemaMarkup />
       </head>
       <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable} ${_monoton.variable}`} suppressHydrationWarning>

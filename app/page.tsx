@@ -3,10 +3,16 @@
 import { useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
+import dynamic from "next/dynamic"
 import { Starfield } from "@/components/common/Starfield"
 import { NebulaBackground } from "@/components/backgrounds"
 import { HeroShell, NavigationLayer, SectionManager, AuthLayer } from "@/components/landing"
 import { useNavigationState, useLandingAnimation, useModalState } from "@/hooks"
+
+// Dynamically import CosmicDust with SSR disabled to prevent hydration mismatch
+const CosmicDust = dynamic(() => import("@/components/effects").then(mod => mod.CosmicDust), {
+  ssr: false
+})
 
 /**
  * XPLORIUM LANDING PAGE
@@ -60,6 +66,9 @@ export default function Landing() {
       {/* Nebula Background - Animated cosmic clouds */}
       <NebulaBackground />
 
+      {/* Cosmic Dust Particles - Floating atmospheric particles */}
+      <CosmicDust density="medium" />
+
       {/* Auth Layer - Buttons and Modals */}
       <AuthLayer
         showBrand={animation.showBrand}
@@ -105,7 +114,7 @@ export default function Landing() {
 
       {/* Main Content Container */}
       <div className="min-h-screen w-full flex items-center justify-center relative">
-        <div id="main-content" className="relative z-10 flex flex-col items-center justify-center px-4 w-full" role="main">
+        <div id="main-content" className="relative z-10 flex flex-col items-center justify-center px-4 w-full min-h-[600px] sm:min-h-[700px] md:min-h-[800px]" role="main" style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 800px' }}>
           <AnimatePresence mode="wait">
             {/* Hero Shell - X Logo Animation */}
             {!animation.showBrand && (

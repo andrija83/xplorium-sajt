@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, Clock, Users, MapPin, Ticket } from 'lucide-react'
 import { format } from 'date-fns'
@@ -21,6 +22,7 @@ export interface Event {
   currency: string
   location: string | null
   tags: string[]
+  theme: 'WINTER' | 'CHRISTMAS' | 'HALLOWEEN' | 'EASTER' | 'SUMMER' | 'SPACE' | 'UNICORN' | 'DINOSAUR' | 'DEFAULT' | null
 }
 
 interface EventCardProps {
@@ -198,7 +200,8 @@ const eventThemes = {
 }
 
 export function EventCard({ event, index }: EventCardProps) {
-  const visualTheme = getVisualTheme(event)
+  // Use manually selected theme if available, otherwise auto-detect
+  const visualTheme = event.theme ? event.theme.toLowerCase() as VisualTheme : getVisualTheme(event)
   const theme = eventThemes[visualTheme]
   const ageRange = getAgeRange(event)
   const isFull = event.capacity ? event.registeredCount >= event.capacity : false
@@ -206,6 +209,21 @@ export function EventCard({ event, index }: EventCardProps) {
 
   // Slight rotation for sticker effect
   const rotation = (index % 3 - 1) * 2 // -2, 0, or 2 degrees (reduced)
+
+  // Memoize particle configurations to prevent recalculation on every render
+  const particles = useMemo(() => {
+    const count = 6 // Reduced from 8-15 to 6 for performance
+    return Array.from({ length: count }, (_, i) => ({
+      id: `${event.id}-particle-${i}`,
+      left: Math.random() * 100,
+      startY: Math.random() * 20 - 10, // -10% to 10%
+      endX: (Math.random() - 0.5) * 40,
+      duration: 3 + Math.random() * 2,
+      delay: (i / count) * 2, // Stagger based on index instead of random
+      rotateEnd: Math.random() * 360,
+      scaleMax: 0.8 + Math.random() * 0.4,
+    }))
+  }, [event.id]) // Only recalculate when event changes
 
   return (
     <motion.div
@@ -223,16 +241,6 @@ export function EventCard({ event, index }: EventCardProps) {
       }}
       style={{ rotate: rotation }}
     >
-      {/* Reduced decorations - only 2 per card */}
-      <div className="absolute -inset-4 pointer-events-none">
-        <div className="absolute text-2xl" style={{ left: '10%', top: '-5%' }}>
-          {theme.emoji}
-        </div>
-        <div className="absolute text-2xl" style={{ right: '10%', top: '-5%' }}>
-          {theme.emoji}
-        </div>
-      </div>
-
       {/* Main card with sticker-like border */}
       <motion.div
         className={`relative overflow-hidden rounded-2xl border-4 ${theme.borderColor} bg-white`}
@@ -243,10 +251,60 @@ export function EventCard({ event, index }: EventCardProps) {
           boxShadow: `${theme.shadowColor}, 0 0 50px ${theme.glowColor}`,
         }}
       >
-        {/* Gradient header with theme emoji - simplified */}
-        <div className={`relative h-32 bg-gradient-to-br ${theme.gradient} p-6 flex items-center justify-center`}>
-          {/* Large theme emoji - no animation */}
-          <div className="text-6xl filter drop-shadow-lg">
+        {/* Gradient header with theme emoji and optimized animations */}
+        <div className={`relative h-32 bg-gradient-to-br ${theme.gradient} p-6 flex items-center justify-center overflow-hidden`}>
+          {/* Optimized theme-specific animations - using memoized particles */}
+          {particles.map((particle, i) => {
+            // Get emoji based on theme and particle index
+            let emoji = theme.emoji
+            if (visualTheme === 'winter') emoji = '❄️'
+            else if (visualTheme === 'christmas') emoji = i % 2 === 0 ? '⭐' : '❄️'
+            else if (visualTheme === 'halloween') emoji = i % 3 === 0 ? '👻' : i % 3 === 1 ? '🦇' : '🕷️'
+            else if (visualTheme === 'easter') emoji = i % 3 === 0 ? '🌸' : i % 3 === 1 ? '🥚' : '🐣'
+            else if (visualTheme === 'summer') emoji = i % 2 === 0 ? '☀️' : '🌊'
+            else if (visualTheme === 'space') emoji = i % 4 === 0 ? '⭐' : i % 4 === 1 ? '✨' : i % 4 === 2 ? '🌟' : '💫'
+            else if (visualTheme === 'unicorn') emoji = i % 3 === 0 ? '✨' : i % 3 === 1 ? '💖' : '🌈'
+            else if (visualTheme === 'dinosaur') emoji = i % 2 === 0 ? '🍃' : '🌿'
+            else emoji = theme.decorations[i % theme.decorations.length]
+
+            // Determine if particle floats up or falls down
+            const floatsUp = ['halloween', 'easter', 'summer', 'unicorn'].includes(visualTheme)
+            const startPos = floatsUp ? 'bottom' : 'top'
+            const yStart = floatsUp ? '0%' : `${particle.startY}%`
+            const yEnd = floatsUp ? '-150%' : '150%'
+
+            return (
+              <motion.div
+                key={particle.id}
+                className="absolute text-lg will-change-transform"
+                style={{
+                  left: `${particle.left}%`,
+                  [startPos]: '-10%',
+                  willChange: 'transform, opacity',
+                }}
+                initial={{ opacity: 0 }}
+                animate={{
+                  y: [yStart, yEnd],
+                  x: [0, particle.endX],
+                  rotate: [0, particle.rotateEnd],
+                  opacity: [0, 0.6, 0],
+                  scale: [0.8, particle.scaleMax, 0.8],
+                }}
+                transition={{
+                  duration: particle.duration,
+                  delay: particle.delay,
+                  repeat: Infinity,
+                  ease: 'linear',
+                  times: [0, 0.5, 1],
+                }}
+              >
+                {emoji}
+              </motion.div>
+            )
+          })}
+
+          {/* Large theme emoji - stays on top */}
+          <div className="relative z-10 text-6xl filter drop-shadow-lg">
             {theme.emoji}
           </div>
         </div>

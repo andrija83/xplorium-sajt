@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useMemo } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { PenStrokeReveal } from '@/components/animations'
 import {
@@ -84,11 +85,14 @@ export const NavigationLayer = memo(function NavigationLayer({
             transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
             className="-mr-2 sm:-mr-3 md:-mr-4"
           >
-            <div className="rounded-2xl overflow-hidden">
-              <img
+            <div className="rounded-2xl overflow-hidden w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28">
+              <Image
                 src="/crystal-x-logo.jpg"
                 alt="X Logo"
-                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28"
+                width={112}
+                height={112}
+                priority
+                className="w-full h-full object-cover"
               />
             </div>
           </motion.div>

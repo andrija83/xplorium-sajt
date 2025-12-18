@@ -1,6 +1,7 @@
 'use client'
 
 import { memo } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
   ANIMATION_TIMING,
@@ -157,11 +158,14 @@ export const HeroShell = memo(function HeroShell({
       })}
 
       {/* X Logo Image */}
-      <div className="rounded-3xl overflow-hidden relative z-10">
-        <img
+      <div className="rounded-3xl overflow-hidden relative z-10 w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48">
+        <Image
           src="/crystal-x-logo.jpg"
           alt="X Logo"
-          className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 group-hover:brightness-125 transition-all duration-300"
+          width={192}
+          height={192}
+          priority
+          className="w-full h-full object-cover group-hover:brightness-125 transition-all duration-300"
         />
       </div>
     </motion.button>

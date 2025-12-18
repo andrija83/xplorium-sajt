@@ -237,3 +237,28 @@
   flex: 1;
   min-width: 0;
 }
+
+/* CSS Containment for CLS Optimization */
+/* Prevent layout shifts from animated sections */
+#main-content {
+  contain: layout style;
+}
+
+/* Optimize rendering for animated components */
+[class*="framer-motion"],
+[class*="motion-"] {
+  will-change: transform, opacity;
+  contain: layout;
+}
+
+/* Optimize Starfield background */
+.fixed.inset-0.overflow-hidden {
+  contain: strict;
+  content-visibility: auto;
+}
+
+/* Optimize section containers */
+.aspect-square,
+.aspect-\[3\/4\] {
+  contain: layout size;
+}
