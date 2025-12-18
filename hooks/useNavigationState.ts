@@ -1,12 +1,17 @@
+import { useEffect } from 'react'
 import { useNavigationStore } from '@/stores/navigationStore'
 
 /**
  * useNavigationState Hook
  *
- * Wrapper hook that uses Zustand store for navigation state management.
- * Provides the same API as before, but now uses global state instead of local useState.
+ * Wrapper hook that uses Zustand store for navigation state management with URL sync.
+ * Provides the same API as before, but now uses global state + URL query params.
  *
- * This allows any component to access navigation without prop drilling!
+ * Features:
+ * - Syncs state with URL on mount (enables deep linking)
+ * - Updates URL when navigation changes
+ * - Supports browser back/forward buttons
+ * - No prop drilling needed!
  *
  * @returns Object containing navigation state and handlers
  */
@@ -21,7 +26,13 @@ export function useNavigationState() {
     navigateToSection,
     goBackToMenu,
     handleProfileClick,
+    syncFromURL,
   } = useNavigationStore()
+
+  // Sync from URL on mount (for deep linking)
+  useEffect(() => {
+    syncFromURL()
+  }, [syncFromURL])
 
   return {
     // State
