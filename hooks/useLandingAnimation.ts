@@ -11,8 +11,11 @@ import { seededRandom } from '@/lib/seeded-random'
  * @returns Object containing animation state and configurations
  */
 export function useLandingAnimation() {
+  // Check if URL has section param (for deep linking) - if so, skip X logo animation
+  const hasDeepLink = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('section')
+
   const [isAnimating, setIsAnimating] = useState(false)
-  const [showBrand, setShowBrand] = useState(false)
+  const [showBrand, setShowBrand] = useState(hasDeepLink) // Skip animation if deep linked
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
