@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useQuery } from "@tanstack/react-query"
 import { AdminSidebar } from "@/components/admin/AdminSidebar"
 import { AdminHeader } from "@/components/admin/AdminHeader"
 import { getBookings } from "@/app/actions/bookings"
@@ -43,7 +44,6 @@ export default function AdminLayout({
   const router = useRouter()
   const { data: session, status } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [pendingCount, setPendingCount] = useState(0)
 
   // Track admin activity to prevent session timeout
   useActivityTracker()
@@ -66,26 +66,27 @@ export default function AdminLayout({
     }
   }, [session, status, router])
 
-  // Fetch pending bookings count
-  useEffect(() => {
-    const fetchPendingCount = async () => {
+  // Fetch pending bookings count with React Query
+  // Refetch every 60 seconds (increased from 30s for better performance)
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ['pending-bookings-count'],
+    queryFn: async () => {
       try {
         const result = await getBookings({ status: 'PENDING' })
         if (result.success && result.bookings) {
-          setPendingCount(result.bookings.length)
+          return result.bookings.length
         }
+        return 0
       } catch (error) {
         logger.error('Failed to fetch pending bookings count', error instanceof Error ? error : new Error(String(error)))
+        return 0
       }
-    }
-
-    fetchPendingCount()
-
-    // Refresh count every 30 seconds
-    const interval = setInterval(fetchPendingCount, 30000)
-
-    return () => clearInterval(interval)
-  }, [])
+    },
+    refetchInterval: 60000, // Refetch every 60 seconds
+    staleTime: 30000, // Consider data stale after 30 seconds
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: status === 'authenticated' && !!session?.user, // Only fetch if authenticated
+  })
 
   return (
     <div className="flex min-h-screen bg-black">
@@ -105,7 +106,7 @@ export default function AdminLayout({
         />
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden bg-black">
           {children}
         </main>
       </div>

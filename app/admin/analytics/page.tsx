@@ -14,8 +14,10 @@ import {
 } from '@/app/actions/revenue'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { subMonths } from 'date-fns'
+
+// Regular imports (page is already lazy-loaded via Next.js route-based code splitting)
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 
 /**
  * Advanced Analytics Dashboard

@@ -160,7 +160,7 @@ export const HeroShell = memo(function HeroShell({
       {/* X Logo Image */}
       <div className="rounded-3xl overflow-hidden relative z-10 w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48">
         <Image
-          src="/crystal-x-logo.jpg"
+          src="/crystal-x-logo-optimized.jpg"
           alt="X Logo"
           width={192}
           height={192}

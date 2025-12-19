@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { SessionProvider } from "next-auth/react"
 import { Toaster } from "sonner"
 import { SchemaMarkup } from "@/components/common/SchemaMarkup"
+import { ReactQueryProvider } from "@/lib/react-query/ReactQueryProvider"
 import "./globals.css"
 
 // Optimized font loading with display swap and preload
@@ -115,10 +116,12 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased ${_geist.variable} ${_geistMono.variable} ${_greatVibes.variable} ${_monoton.variable}`} suppressHydrationWarning>
         <SessionProvider>
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
-          <Toaster position="top-right" richColors closeButton />
+          <ReactQueryProvider>
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+            <Toaster position="top-right" richColors closeButton />
+          </ReactQueryProvider>
         </SessionProvider>
         <Analytics />
         <SpeedInsights />

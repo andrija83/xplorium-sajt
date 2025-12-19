@@ -1,7 +1,5 @@
-import * as XLSX from 'xlsx';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import Papa from 'papaparse';
+// Lazy load heavy export libraries only when needed
+// This significantly reduces initial bundle size by ~700KB
 
 export type ExportFormat = 'csv' | 'xlsx' | 'json' | 'pdf';
 export type DataType = 'bookings' | 'events' | 'users' | 'backup';
@@ -15,9 +13,13 @@ interface ExportData {
 
 /**
  * Export data to CSV format
+ * Uses dynamic import to load Papa Parse only when needed
  */
-export function exportToCSV(exportData: ExportData): Blob {
+export async function exportToCSV(exportData: ExportData): Promise<Blob> {
   const { data, headers } = exportData;
+
+  // Lazy load Papa Parse (~45KB)
+  const Papa = (await import('papaparse')).default;
 
   const csv = Papa.unparse(data, {
     columns: headers,
@@ -29,9 +31,13 @@ export function exportToCSV(exportData: ExportData): Blob {
 
 /**
  * Export data to Excel (XLSX) format
+ * Uses dynamic import to load XLSX library only when needed (~500KB savings)
  */
-export function exportToExcel(exportData: ExportData): Blob {
+export async function exportToExcel(exportData: ExportData): Promise<Blob> {
   const { data, filename } = exportData;
+
+  // Lazy load XLSX library (~500KB)
+  const XLSX = await import('xlsx');
 
   // Create a new workbook
   const wb = XLSX.utils.book_new();
@@ -72,9 +78,14 @@ export function exportToJSON(exportData: ExportData): Blob {
 
 /**
  * Export data to PDF format
+ * Uses dynamic import to load jsPDF library only when needed (~200KB savings)
  */
-export function exportToPDF(exportData: ExportData): Blob {
+export async function exportToPDF(exportData: ExportData): Promise<Blob> {
   const { data, title, headers } = exportData;
+
+  // Lazy load jsPDF and autoTable (~200KB)
+  const { jsPDF } = await import('jspdf');
+  const autoTable = (await import('jspdf-autotable')).default;
 
   const doc = new jsPDF();
 
@@ -104,20 +115,21 @@ export function exportToPDF(exportData: ExportData): Blob {
 
 /**
  * Main export function that routes to the appropriate exporter
+ * Now async to support lazy loading of heavy libraries
  */
-export function exportData(
+export async function exportData(
   format: ExportFormat,
   exportData: ExportData
-): Blob {
+): Promise<Blob> {
   switch (format) {
     case 'csv':
-      return exportToCSV(exportData);
+      return await exportToCSV(exportData);
     case 'xlsx':
-      return exportToExcel(exportData);
+      return await exportToExcel(exportData);
     case 'json':
       return exportToJSON(exportData);
     case 'pdf':
-      return exportToPDF(exportData);
+      return await exportToPDF(exportData);
     default:
       throw new Error(`Unsupported export format: ${format}`);
   }
@@ -139,8 +151,12 @@ export function downloadBlob(blob: Blob, filename: string): void {
 
 /**
  * Parse CSV file to JSON
+ * Uses dynamic import to load Papa Parse only when needed
  */
-export function parseCSV<T = any>(file: File): Promise<T[]> {
+export async function parseCSV<T = any>(file: File): Promise<T[]> {
+  // Lazy load Papa Parse
+  const Papa = (await import('papaparse')).default;
+
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
@@ -157,8 +173,12 @@ export function parseCSV<T = any>(file: File): Promise<T[]> {
 
 /**
  * Parse Excel file to JSON
+ * Uses dynamic import to load XLSX library only when needed
  */
 export async function parseExcel<T = any>(file: File): Promise<T[]> {
+  // Lazy load XLSX
+  const XLSX = await import('xlsx');
+
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: 'array' });
   const sheetName = workbook.SheetNames[0];

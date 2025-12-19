@@ -1,18 +1,18 @@
 'use server'
 
+import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth-utils'
 import { sanitizeErrorForClient } from '@/lib/sanitize'
+import { CACHE_KEYS, CACHE_TAGS, createCacheConfig } from '@/lib/cache'
 
 /**
- * Get enhanced dashboard statistics with analytics
- * @returns Dashboard stats with revenue, trends, and breakdowns
+ * Cached dashboard data fetching (excludes auth check)
+ * Cache: 5 minutes, tags: dashboard, bookings, users, events
  */
-export async function getDashboardStats() {
-  try {
-    await requireAdmin()
-
+const getCachedDashboardData = unstable_cache(
+  async () => {
     const now = new Date()
     const todayStart = new Date(now.setHours(0, 0, 0, 0))
     const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000)
@@ -384,6 +384,28 @@ export async function getDashboardStats() {
         count: item._count.id,
       })),
     }
+  },
+  [CACHE_KEYS.DASHBOARD_STATS],
+  createCacheConfig('MODERATE', [
+    CACHE_TAGS.DASHBOARD,
+    CACHE_TAGS.BOOKINGS,
+    CACHE_TAGS.USERS,
+    CACHE_TAGS.EVENTS,
+  ])
+)
+
+/**
+ * Get enhanced dashboard statistics with analytics
+ * Auth check NOT cached, data IS cached for 5 minutes
+ * @returns Dashboard stats with revenue, trends, and breakdowns
+ */
+export async function getDashboardStats() {
+  try {
+    // Check admin auth (not cached)
+    await requireAdmin()
+
+    // Get cached dashboard data
+    return await getCachedDashboardData()
   } catch (error) {
     logger.serverActionError('getDashboardStats', error)
     return {

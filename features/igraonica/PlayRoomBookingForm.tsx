@@ -1,12 +1,17 @@
 'use client'
 
 import { useState, useMemo, useEffect, memo } from 'react'
+import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { BirthdayBookingForm } from './BirthdayBookingForm'
-import { SignInModal } from '@/components/auth/SignInModal'
+
+// Lazy load SignInModal - only loads when user clicks to sign in
+const SignInModal = dynamic(() => import('@/components/auth/SignInModal').then(m => ({ default: m.SignInModal })), {
+  ssr: false
+})
 
 interface PlayRoomBookingFormProps {
     onBack: () => void

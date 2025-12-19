@@ -135,7 +135,10 @@
       "Bash(gh pr list:*)",
       "Skill(frontend-design)",
       "Bash(TASKKILL:*)",
-      "Bash(del \"components\\\\animations\\\\CharacterReveal.tsx\" \"components\\\\animations\\\\HandwritingEffect.tsx\" \"components\\\\animations\\\\HandwritingText.tsx\")"
+      "Bash(del \"components\\\\animations\\\\CharacterReveal.tsx\" \"components\\\\animations\\\\HandwritingEffect.tsx\" \"components\\\\animations\\\\HandwritingText.tsx\")",
+      "Bash(xargs cat:*)",
+      "Bash(node scripts/optimize-images.mjs:*)",
+      "Bash(set ANALYZE=true)"
     ],
     "deny": [],
     "ask": []

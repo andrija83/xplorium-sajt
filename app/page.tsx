@@ -115,6 +115,7 @@ export default function Landing() {
             {/* Hero Shell - X Logo Animation */}
             {!animation.showBrand && (
               <HeroShell
+                key="hero-shell"
                 isAnimating={animation.isAnimating}
                 showBrand={animation.showBrand}
                 prefersReducedMotion={animation.prefersReducedMotion}
@@ -127,6 +128,7 @@ export default function Landing() {
             {/* Navigation Layer - Brand + Menu */}
             {animation.showBrand && !navigation.activeView && (
               <NavigationLayer
+                key="navigation-layer"
                 showBrand={animation.showBrand}
                 onNavigate={navigation.navigateToSection}
                 liquidDripConfig={animation.liquidDripConfig}
@@ -134,7 +136,7 @@ export default function Landing() {
             )}
 
             {/* Section Manager - Feature Sections */}
-            {navigation.activeView && <SectionManager />}
+            {navigation.activeView && <SectionManager key={`section-${navigation.activeView}`} />}
           </AnimatePresence>
 
           {/* Helper Text */}

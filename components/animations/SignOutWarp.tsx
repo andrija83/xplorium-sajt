@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { Starfield } from "../common/Starfield"
 
@@ -30,11 +31,13 @@ export const SignOutWarp = () => {
                 }}
                 className="relative z-10"
             >
-                <div className="rounded-3xl overflow-hidden">
-                    <img
-                        src="/crystal-x-logo.jpg"
+                <div className="rounded-3xl overflow-hidden w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48">
+                    <Image
+                        src="/crystal-x-logo-optimized.jpg"
                         alt="X Logo"
-                        className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48"
+                        width={192}
+                        height={192}
+                        className="w-full h-full object-cover"
                     />
                 </div>
             </motion.div>

@@ -61,7 +61,7 @@ export function ExportImportSection() {
       }
 
       const filename = generateFilename(dataType, exportFormat);
-      const blob = exportData(exportFormat, {
+      const blob = await exportData(exportFormat, {
         data: result.data as any[],
         filename,
         title,
@@ -367,7 +367,7 @@ export function ExportImportSection() {
           <Button
             variant="outline"
             className="w-full justify-start"
-            onClick={() => {
+            onClick={async () => {
               const template = [
                 {
                   Date: '2025-01-15',
@@ -379,7 +379,7 @@ export function ExportImportSection() {
                   'Special Requests': '',
                 },
               ];
-              const blob = exportData('csv', {
+              const blob = await exportData('csv', {
                 data: template,
                 filename: 'bookings-template.csv',
               });
@@ -392,7 +392,7 @@ export function ExportImportSection() {
           <Button
             variant="outline"
             className="w-full justify-start"
-            onClick={() => {
+            onClick={async () => {
               const template = [
                 {
                   Title: 'Example Event',
@@ -403,7 +403,7 @@ export function ExportImportSection() {
                   'Image URL': '',
                 },
               ];
-              const blob = exportData('csv', {
+              const blob = await exportData('csv', {
                 data: template,
                 filename: 'events-template.csv',
               });

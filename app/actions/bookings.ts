@@ -4,7 +4,8 @@ import { prisma } from '@/lib/db'
 import { logAudit } from '@/lib/audit'
 import { logger } from '@/lib/logger'
 import { requireAdmin, requireAuth } from '@/lib/auth-utils'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/cache'
 import {
   createBookingSchema,
   updateBookingSchema,
@@ -430,6 +431,9 @@ export async function createBooking(data: CreateBookingInput) {
     }
 
     revalidatePath('/admin/bookings')
+    // Invalidate dashboard and booking caches
+    revalidateTag(CACHE_TAGS.BOOKINGS, 'max')
+    revalidateTag(CACHE_TAGS.DASHBOARD, 'max')
 
     return {
       success: true,
@@ -515,6 +519,9 @@ export async function updateBooking(id: string, data: UpdateBookingInput) {
 
     revalidatePath('/admin/bookings')
     revalidatePath(`/admin/bookings/${id}`)
+    // Invalidate dashboard and booking caches
+    revalidateTag(CACHE_TAGS.BOOKINGS, 'max')
+    revalidateTag(CACHE_TAGS.DASHBOARD, 'max')
 
     return {
       success: true,
@@ -607,6 +614,9 @@ export async function approveBooking(bookingId: string, adminNotes?: string) {
 
     revalidatePath('/admin/bookings')
     revalidatePath(`/admin/bookings/${validatedData.bookingId}`)
+    // Invalidate dashboard and booking caches
+    revalidateTag(CACHE_TAGS.BOOKINGS, 'max')
+    revalidateTag(CACHE_TAGS.DASHBOARD, 'max')
 
     return {
       success: true,
@@ -690,6 +700,9 @@ export async function rejectBooking(bookingId: string, reason: string) {
 
     revalidatePath('/admin/bookings')
     revalidatePath(`/admin/bookings/${validatedData.bookingId}`)
+    // Invalidate dashboard and booking caches
+    revalidateTag(CACHE_TAGS.BOOKINGS, 'max')
+    revalidateTag(CACHE_TAGS.DASHBOARD, 'max')
 
     return {
       success: true,
@@ -735,6 +748,9 @@ export async function deleteBooking(id: string) {
     })
 
     revalidatePath('/admin/bookings')
+    // Invalidate dashboard and booking caches
+    revalidateTag(CACHE_TAGS.BOOKINGS, 'max')
+    revalidateTag(CACHE_TAGS.DASHBOARD, 'max')
 
     return {
       success: true,

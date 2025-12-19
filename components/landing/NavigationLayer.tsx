@@ -87,7 +87,7 @@ export const NavigationLayer = memo(function NavigationLayer({
           >
             <div className="rounded-2xl overflow-hidden w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28">
               <Image
-                src="/crystal-x-logo.jpg"
+                src="/crystal-x-logo-optimized.jpg"
                 alt="X Logo"
                 width={112}
                 height={112}
